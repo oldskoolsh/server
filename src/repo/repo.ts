@@ -107,7 +107,7 @@ export class PathRepoReference implements IRepoRef {
         console.log("intermediate", intermediate);
         this.baseDirectory = path.resolve(intermediate, ".oldskool");
         console.log("baseDirectory", this.baseDirectory);
-        // make sure this exists
+        // make sure this exists, but the constructor is definitely not the place to do it
         let stats = fs.statSync(this.baseDirectory);
         if (!stats) {
             throw new Error(`Can't find directory ${this.baseDirectory}`);
@@ -118,9 +118,9 @@ export class PathRepoReference implements IRepoRef {
         let tomlPath = path.resolve(this.baseDirectory, relativePath);
         switch (encoding) {
             case 'utf8':
-                return fs.readFileSync(tomlPath, {encoding: 'utf8'});
+                return await fs.promises.readFile(tomlPath, {encoding: 'utf8'});
             case 'base64':
-                return fs.readFileSync(tomlPath, {encoding: 'base64'});
+                return await fs.promises.readFile(tomlPath, {encoding: 'base64'});
             default:
                 throw new Error("Unknown encoding " + encoding);
         }
