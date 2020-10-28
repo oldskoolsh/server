@@ -22,7 +22,7 @@ export class Repository {
     }
 
     async readTomlDescriptor(): Promise<Repository> {
-        let tomlString = await this.myRef.readTextFile("oldskool.toml");
+        let tomlString = await this.myRef.readFileContents("oldskool.toml");
         // @ts-ignore
         let toml: IRepoDescriptor = TOML.parse(tomlString);
         this.name = toml.name;
@@ -50,12 +50,12 @@ export class Repository {
     }
 
     // whoever has the asset returns it.
-    async recursivelyGetRawAsset(assetPath: string): Promise<string> {
-        let myOwn = await this.ownGetAssetOrNull(assetPath);
+    async recursivelyGetRawAsset(assetPath: string, encoding: string = 'utf8'): Promise<string> {
+        let myOwn = await this.ownGetAssetOrNull(assetPath, encoding);
         if (myOwn) return myOwn;
 
         for (const usedRepo of this.uses) {
-            let childAsset = usedRepo.recursivelyGetRawAsset(assetPath);
+            let childAsset = usedRepo.recursivelyGetRawAsset(assetPath, encoding);
             if (childAsset) {
                 return childAsset;
             }
@@ -64,9 +64,9 @@ export class Repository {
         throw new Error(`Could not find asset ${assetPath} anywhere!`);
     }
 
-    async ownGetAssetOrNull(assetPath: string): Promise<string|null> {
+    async ownGetAssetOrNull(assetPath: string, encoding: string = 'utf8'): Promise<string | null> {
         try {
-            return await this.myRef.readTextFile(assetPath);
+            return await this.myRef.readFileContents(assetPath, encoding);
         } catch (err) {
             return null;
         }
@@ -79,17 +79,17 @@ export class Recipe {
 }
 
 export interface IRepoRef {
-    readTextFile(relativePath: string): Promise<string>;
+    readFileContents(relativePath: string): Promise<string>;
 }
 
 
 export class PathRepoReference implements IRepoRef {
     id: string;
-    basePath: string; // the path of the previous ref
+    basePath: string;
     ownPath: string;
     readonly parentRef: PathRepoReference | undefined;
     readonly refDescriptor: IRepoUsesDescriptor;
-    private baseDirectory: string;
+    private readonly baseDirectory: string;
 
     constructor(parentReference: PathRepoReference | undefined, refDescriptor: IRepoUsesDescriptor) {
         this.parentRef = parentReference;
@@ -114,8 +114,15 @@ export class PathRepoReference implements IRepoRef {
         }
     }
 
-    async readTextFile(relativePath: string): Promise<string> {
+    async readFileContents(relativePath: string, encoding: String = 'utf8'): Promise<string> {
         let tomlPath = path.resolve(this.baseDirectory, relativePath);
-        return fs.readFileSync(tomlPath, {encoding: 'utf8'});
+        switch (encoding) {
+            case 'utf8':
+                return fs.readFileSync(tomlPath, {encoding: 'utf8'});
+            case 'base64':
+                return fs.readFileSync(tomlPath, {encoding: 'base64'});
+            default:
+                throw new Error("Unknown encoding " + encoding);
+        }
     }
 }

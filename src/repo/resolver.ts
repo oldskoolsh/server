@@ -21,8 +21,12 @@ export class RepoResolver {
     }
 
 
-    async getRawAsset(assetPath: string): Promise<string> {
-        return await this.rootRepo.recursivelyGetRawAsset(assetPath);
+    async getRawAsset(assetPath: string, encoding: string = 'utf8'): Promise<string> {
+        return await this.rootRepo.recursivelyGetRawAsset(assetPath, encoding);
+    }
+
+    async getRawBinaryAsset(path: string) {
+        return Promise.resolve(undefined);
     }
 }
 
