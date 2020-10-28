@@ -8,12 +8,14 @@
   },
   "nodemonConfig": {
     "watch": [
-      "src"
+      "src",
+      "@types"
     ],
     "ext": "ts",
     "exec": "ts-node ./src"
   },
   "dependencies": {
+    "@iarna/toml": "^2.2.5",
     "cookie-parser": "^1.4.5",
     "express": "^4.17.1",
     "express-async-errors": "^3.1.1",
