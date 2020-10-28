@@ -1,16 +1,17 @@
 import path from "path";
 import * as fs from "fs";
 import TOML from "@iarna/toml";
-import {IRepoDescriptor, IRepoUsesDescriptor} from "./descriptor";
+import {IRecipeLauncher, IRepoDescriptor, IRepoRecipe, IRepoUsesDescriptor} from "./descriptor";
 import {RepoResolver} from "./resolver";
 
 export class Repository {
     public name: string | undefined;
     public desc: string | undefined;
 
+    rawRecipes: IRepoRecipe[] = [];
     recipes: Recipe[] = [];
-    rawUsesRef: IRepoUsesDescriptor[] = [];
 
+    rawUsesRef: IRepoUsesDescriptor[] = [];
     uses: Repository[] = [];
 
     private readonly myRef: PathRepoReference;
@@ -25,6 +26,7 @@ export class Repository {
         let tomlString = await this.myRef.readFileContents("oldskool.toml");
         // @ts-ignore
         let toml: IRepoDescriptor = TOML.parse(tomlString);
+        console.log("TOML", toml);
         this.name = toml.name;
         this.desc = toml.desc;
         if (toml.uses) {
@@ -34,6 +36,21 @@ export class Repository {
                 this.rawUsesRef.push(rawRef);
             }
         }
+        if (toml.recipes) {
+            for (let recipeName of Object.keys(toml.recipes)) {
+                let recipe: IRepoRecipe = toml.recipes[recipeName];
+                recipe.id = recipeName;
+
+                if (recipe.launchers) {
+                    for (let launcherName of Object.keys(recipe.launchers)) {
+                        let launcher: IRecipeLauncher = recipe.launchers[launcherName];
+                        launcher.id = launcherName;
+                    }
+                }
+                this.rawRecipes.push(recipe);
+            }
+        }
+        console.log("Final TOML Recipe parsed", this);
         return this;
     }
 

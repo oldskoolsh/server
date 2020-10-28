@@ -19,7 +19,7 @@ async function faz() {
     let context = new RenderingContext("https://cloud-init.pardini.net/");
 
     let rendered = await (new BashScriptAsset(context, resolver, "base.sh")).render();
-    console.log("rendered", rendered);
+    //console.log("rendered", rendered);
 
 
 }

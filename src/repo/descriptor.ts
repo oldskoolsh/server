@@ -4,12 +4,32 @@ export interface IRepoUsesDescriptor {
     path_ref: string;
 }
 
+export interface IRepoRecipe {
+    id: string;
+    launchers: IRecipeLaunchersMap;
+}
+
+export interface IRecipeLauncher {
+    id: string;
+    script: string;
+}
+
 export interface IRepoUsesMap {
     [name: string]: IRepoUsesDescriptor
 }
+
+export interface IRecipesMap {
+    [name: string]: IRepoRecipe
+}
+
+export interface IRecipeLaunchersMap {
+    [name: string]: IRecipeLauncher;
+}
+
 
 export interface IRepoDescriptor {
     name: string;
     desc: string;
     uses: IRepoUsesMap;
+    recipes: IRecipesMap;
 }
