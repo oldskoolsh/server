@@ -6,7 +6,14 @@ export interface IRepoUsesDescriptor {
 
 export interface IRepoRecipe {
     id: string;
-    launchers: IRecipeLaunchersMap;
+    yaml: string;
+    launchers: IRecipeLaunchersMap | null | undefined;
+    always_include: boolean;
+    include_if_not_recipe: string[];
+    include_if_recipe: string[];
+    virtual: boolean;
+    expand: string[];
+    auto_launchers: string[];
 }
 
 export interface IRecipeLauncher {

@@ -1,8 +1,8 @@
-import path from "path";
-import * as fs from "fs";
 import TOML from "@iarna/toml";
 import {IRecipeLauncher, IRepoDescriptor, IRepoRecipe, IRepoUsesDescriptor} from "./descriptor";
 import {RepoResolver} from "./resolver";
+import {Recipe} from "./recipe";
+import {PathRepoReference} from "./reference";
 
 export class Repository {
     public name: string | undefined;
@@ -10,6 +10,7 @@ export class Repository {
 
     rawRecipes: IRepoRecipe[] = [];
     recipes: Recipe[] = [];
+    recipesById: Map<string, Recipe> = new Map<string, Recipe>();
 
     rawUsesRef: IRepoUsesDescriptor[] = [];
     uses: Repository[] = [];
@@ -26,7 +27,7 @@ export class Repository {
         let tomlString = await this.myRef.readFileContents("oldskool.toml");
         // @ts-ignore
         let toml: IRepoDescriptor = TOML.parse(tomlString);
-        console.log("TOML", toml);
+        //console.log("TOML", toml);
         this.name = toml.name;
         this.desc = toml.desc;
         if (toml.uses) {
@@ -36,6 +37,7 @@ export class Repository {
                 this.rawUsesRef.push(rawRef);
             }
         }
+
         if (toml.recipes) {
             for (let recipeName of Object.keys(toml.recipes)) {
                 let recipe: IRepoRecipe = toml.recipes[recipeName];
@@ -50,12 +52,15 @@ export class Repository {
                 this.rawRecipes.push(recipe);
             }
         }
-        console.log("Final TOML Recipe parsed", this);
+
+        //console.log("Final TOML Recipe parsed", this);
         return this;
     }
 
     async recursivelyResolve() {
+        await console.group(`recursivelyResolve '${this.myRef.id}'...`);
         await this.readTomlDescriptor();
+        await this.processRecipes();
         // for each rawUsesRef, resolve it as well...
         for (let rawUseRef of this.rawUsesRef) {
             let childRef = new PathRepoReference(this.myRef, rawUseRef);
@@ -63,10 +68,12 @@ export class Repository {
             await childRepo.recursivelyResolve();
             this.uses.push(childRepo);
         }
-
+        // once done with it release it
+        this.rawUsesRef = [];
+        await console.groupEnd();
     }
 
-    // whoever has the asset returns it.
+    // @TODO: syntax, if (let ..) would help here
     async recursivelyGetRawAsset(assetPath: string, encoding: string = 'utf8'): Promise<string> {
         let myOwn = await this.ownGetAssetOrNull(assetPath, encoding);
         if (myOwn) return myOwn;
@@ -89,57 +96,60 @@ export class Repository {
         }
     }
 
+    // the ordering could be important and i'm not sure of Map semantics
+    async recursivelyGetFullFlatRecipeList(): Promise<Map<string, Recipe>> {
+        let map: Map<string, Recipe> = new Map<string, Recipe>();
+        // add all from our children first
+        for (const module of this.uses) {
+            let child = await module.recursivelyGetFullFlatRecipeList();
+            child.forEach((value, key) => map.set(key, value));
+        }
+        // then our own
+        this.recipesById.forEach((value, key) => map.set(key, value));
+        return map;
+    }
+
+    private async processRecipes() {
+        // explicitly-defined recipes loaded from toml first.
+        // we aggregate a list of ids for all "mentioned" yamls at this module level
+        for (const rawRecipe of this.rawRecipes) {
+            let recipe = new Recipe(rawRecipe, this);
+            this.recipes.push(recipe);
+        }
+        // complement with yamls that have no definition automatically
+        for (const autoAddId of await this.calcAutoRecipesFromYamls()) {
+            this.recipes.push(new Recipe(this.createDefaultRecipeForYaml(autoAddId), this));
+        }
+        // for easy lookups keep the map updated;
+        for (let recipe of this.recipes) {
+            this.recipesById.set(recipe.id, recipe);
+        }
+    }
+
+    private async calcAutoRecipesFromYamls() {
+        let mentionedYamls = new Set<string>(this.recipes.flatMap(recipe => recipe.getMentionedYamls()));
+        // now glob the ci dir, find yamls that are not already of the mentioned, and create recipes with the default values for them
+        let existingYamls: string[] = await this.myRef.getCloudInitYamlFiles();
+        let toAutoAdd: string[] = existingYamls.filter(value => !mentionedYamls.has(value));
+        return toAutoAdd;
+    }
+
+    private createDefaultRecipeForYaml(yamlId: string): IRepoRecipe {
+        return {
+            always_include: false,
+            auto_launchers: [],
+            expand: [],
+            include_if_not_recipe: [],
+            include_if_recipe: [],
+            id: yamlId,
+            launchers: undefined,
+            virtual: false,
+            yaml: yamlId
+        };
+    }
 }
 
-export class Recipe {
-
-}
 
 export interface IRepoRef {
     readFileContents(relativePath: string): Promise<string>;
-}
-
-
-export class PathRepoReference implements IRepoRef {
-    id: string;
-    basePath: string;
-    ownPath: string;
-    readonly parentRef: PathRepoReference | undefined;
-    readonly refDescriptor: IRepoUsesDescriptor;
-    private readonly baseDirectory: string;
-
-    constructor(parentReference: PathRepoReference | undefined, refDescriptor: IRepoUsesDescriptor) {
-        this.parentRef = parentReference;
-        this.refDescriptor = refDescriptor;
-        this.id = this.refDescriptor.id;
-        // If we have a parent reference, compute the path relative to that.
-        if (this.parentRef) {
-            this.basePath = this.parentRef.ownPath;
-            this.ownPath = this.refDescriptor.path_ref;
-        } else {
-            this.basePath = this.refDescriptor.path_ref;
-            this.ownPath = "";
-        }
-        let intermediate = path.resolve(this.basePath, this.ownPath);
-        console.log("intermediate", intermediate);
-        this.baseDirectory = path.resolve(intermediate, ".oldskool");
-        console.log("baseDirectory", this.baseDirectory);
-        // make sure this exists, but the constructor is definitely not the place to do it
-        let stats = fs.statSync(this.baseDirectory);
-        if (!stats) {
-            throw new Error(`Can't find directory ${this.baseDirectory}`);
-        }
-    }
-
-    async readFileContents(relativePath: string, encoding: String = 'utf8'): Promise<string> {
-        let tomlPath = path.resolve(this.baseDirectory, relativePath);
-        switch (encoding) {
-            case 'utf8':
-                return await fs.promises.readFile(tomlPath, {encoding: 'utf8'});
-            case 'base64':
-                return await fs.promises.readFile(tomlPath, {encoding: 'base64'});
-            default:
-                throw new Error("Unknown encoding " + encoding);
-        }
-    }
 }

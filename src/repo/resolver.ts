@@ -1,10 +1,12 @@
-import {PathRepoReference, Repository} from "./repo";
+import {Repository} from "./repo";
 import path from "path";
+import {PathRepoReference} from "./reference";
+import {Recipe} from "./recipe";
 
 export class RepoResolver {
 
     private readonly rootRef: PathRepoReference;
-    private rootRepo: Repository;
+    private readonly rootRepo: Repository;
 
     constructor(basePath: string, thisPath: string) {
         this.rootRef = new PathRepoReference(undefined, {
@@ -25,8 +27,8 @@ export class RepoResolver {
         return await this.rootRepo.recursivelyGetRawAsset(assetPath, encoding);
     }
 
-    async getRawBinaryAsset(path: string) {
-        return Promise.resolve(undefined);
+    async getFullFlatRecipeList(): Promise<Map<string, Recipe>> {
+        return await this.rootRepo.recursivelyGetFullFlatRecipeList();
     }
 }
 
