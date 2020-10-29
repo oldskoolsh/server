@@ -31,7 +31,7 @@ async function faz() {
     // and get a new list.
     // that will generate an intermediate URL with the expanded list and parameters etc for the merger
 
-    let newList: string[] = await (new CloudInitRecipeReferenceExpander(context, resolver, ['k8s_adm_ng'])).expand();
+    let newList: string[] = await (new CloudInitRecipeReferenceExpander(context, resolver, ['k8s'])).expand();
     console.log("Expanded list", newList);
 
 }
