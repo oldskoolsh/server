@@ -3,6 +3,7 @@ import {IRecipeLauncher, IRepoDescriptor, IRepoRecipe, IRepoUsesDescriptor} from
 import {RepoResolver} from "./resolver";
 import {Recipe} from "./recipe";
 import {PathRepoReference} from "./reference";
+import YAML from 'yaml';
 
 export class Repository {
     public name: string | undefined;
@@ -26,21 +27,25 @@ export class Repository {
     async readTomlDescriptor(): Promise<Repository> {
         let tomlString = await this.myRef.readFileContents("oldskool.toml");
         // @ts-ignore
-        let toml: IRepoDescriptor = TOML.parse(tomlString);
+        let descriptor: IRepoDescriptor = TOML.parse(tomlString);
+
+        await this.convertToYamlDescriptor(descriptor);
+        await this.convertToTomlDescriptor(descriptor);
+
         //console.log("TOML", toml);
-        this.name = toml.name;
-        this.desc = toml.desc;
-        if (toml.uses) {
-            for (let usesKey of Object.keys(toml.uses)) {
-                let rawRef = toml.uses[usesKey];
+        this.name = descriptor.name;
+        this.desc = descriptor.desc;
+        if (descriptor.uses) {
+            for (let usesKey of Object.keys(descriptor.uses)) {
+                let rawRef = descriptor.uses[usesKey];
                 rawRef.id = usesKey;
                 this.rawUsesRef.push(rawRef);
             }
         }
 
-        if (toml.recipes) {
-            for (let recipeName of Object.keys(toml.recipes)) {
-                let recipe: IRepoRecipe = toml.recipes[recipeName];
+        if (descriptor.recipes) {
+            for (let recipeName of Object.keys(descriptor.recipes)) {
+                let recipe: IRepoRecipe = descriptor.recipes[recipeName];
                 recipe.id = recipeName;
 
                 if (recipe.launchers) {
@@ -147,6 +152,17 @@ export class Repository {
             yaml: yamlId
         };
     }
+
+    private async convertToYamlDescriptor(toml: IRepoDescriptor) {
+        let yamlStr = YAML.stringify(toml, {});
+        await this.myRef.writeFileContents("oldskool.yaml", yamlStr);
+    }
+
+    private async convertToTomlDescriptor(toml: IRepoDescriptor) {
+        let tomlStr = TOML.stringify(<any>toml);
+        await this.myRef.writeFileContents("oldskool.rewritten.toml", tomlStr);
+    }
+
 }
 
 

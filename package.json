@@ -24,7 +24,8 @@
     "http-status-codes": "^2.1.4",
     "jet-logger": "^1.0.2",
     "morgan": "^1.10.0",
-    "string-replace-async": "^2.0.0"
+    "string-replace-async": "^2.0.0",
+    "yaml": "^2.0.0-1"
   },
   "devDependencies": {
     "@types/cookie-parser": "^1.4.2",

@@ -2,7 +2,7 @@ import {RenderingContext} from "./context";
 import {RepoResolver} from "../repo/resolver";
 import {Recipe} from "../repo/recipe";
 
-export class CloudInitRecipeReferenceExpander {
+export class CloudInitRecipeListExpander {
     protected readonly context: RenderingContext;
     protected readonly repoResolver: RepoResolver;
     protected readonly initialRecipes: string[];
@@ -19,7 +19,7 @@ export class CloudInitRecipeReferenceExpander {
         this.explanations = [];
     }
 
-    async expand(): Promise<string[]> {
+    async expand(): Promise<Recipe[]> {
         // get a full flat list of available recipes in the repo; those closest to root override those farthest away
         let availableRecipesMap: Map<string, Recipe> = await this.repoResolver.getFullFlatRecipeList();
         let availableRecipesArr: Recipe[] = [...availableRecipesMap.values()];
@@ -45,16 +45,14 @@ export class CloudInitRecipeReferenceExpander {
         }
 
         // now each of those picked can 'expand' into more
-        this.expandedRecipes = pickedRecipes.flatMap((recipe: Recipe) => {
-            return this.expandRecipe(recipe)
-        });
+        this.expandedRecipes = pickedRecipes.flatMap((recipe: Recipe) => this.expandRecipe(recipe));
 
         // hmm, then filters should kick in, by os or something else;
         console.log("Final expanded recipes", this.expandedRecipes);
 
         console.log("this.explanations", this.explanations);
 
-        return this.expandedRecipes;
+        return this.expandedRecipes.map(recipe => <Recipe>availableRecipesMap.get(recipe));
     }
 
     private shouldAutoIncludeRecipe(recipe: Recipe): boolean {
@@ -82,7 +80,8 @@ export class CloudInitRecipeReferenceExpander {
     }
 
     private expandRecipe(recipe: Recipe): string[] {
-        let expanded = [recipe.id];
+        let expanded = [];
+        if (!recipe.def.virtual) expanded.push(recipe.id);
         if (recipe.def.expand) expanded.push(...recipe.def.expand);
         console.log(`Recipe ${recipe.id} expanded to ${expanded}`);
         return expanded;

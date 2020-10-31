@@ -2,7 +2,9 @@ import {RepoResolver} from "./repo/resolver";
 import {Repository} from "./repo/repo";
 import {BashScriptAsset} from "./assets/bash";
 import {RenderingContext} from "./assets/context";
-import {CloudInitRecipeReferenceExpander} from "./assets/ci_expander";
+import {CloudInitRecipeListExpander} from "./assets/ci_expander";
+import {Recipe} from "./repo/recipe";
+import {CloudInitYamlMerger} from "./assets/ci_yaml_merger";
 
 
 async function faz() {
@@ -31,8 +33,28 @@ async function faz() {
     // and get a new list.
     // that will generate an intermediate URL with the expanded list and parameters etc for the merger
 
-    let newList: string[] = await (new CloudInitRecipeReferenceExpander(context, resolver, ['k8s'])).expand();
-    console.log("Expanded list", newList);
+    let newList: Recipe[] = await (new CloudInitRecipeListExpander(context, resolver, ['k8s'])).expand();
+    console.log("Expanded list", newList.map(value => value.id));
+
+
+    // now given the final list of recipes
+    // read and merge all the yamls
+    // process it for runtime-dependent values (esp: os, release, client IP/hostname/etc) and hack into the yaml
+    // write resulting yaml
+
+
+    let smth = await (new CloudInitYamlMerger(context, resolver, newList)).mergeYamls();
+
+
+
+
+
+
+
+
+
+
+
 
 }
 

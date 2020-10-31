@@ -1,12 +1,9 @@
 import {IRepoUsesDescriptor} from "./descriptor";
 import path from "path";
 import fs from "fs";
-import {IRepoRef} from "./repo";
-
-
 import fg from "fast-glob";
 
-export class PathRepoReference implements IRepoRef {
+export class PathRepoReference {
     id: string;
     basePath: string;
     ownPath: string;
@@ -53,5 +50,10 @@ export class PathRepoReference implements IRepoRef {
         let ciPath = path.resolve(this.baseDirectory, "ci");
         const entries: string[] = await fg([`${ciPath}/**/*.yaml`], {dot: false});
         return entries.map(value => path.basename(value, ".yaml"));
+    }
+
+    async writeFileContents(relativePath: string, contents: string) {
+        let filePath = path.resolve(this.baseDirectory, relativePath);
+        await fs.promises.writeFile(filePath, contents, {encoding: "utf8"});
     }
 }
