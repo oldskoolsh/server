@@ -35,6 +35,10 @@ async function faz() {
 
     let newList: Recipe[] = await (new CloudInitRecipeListExpander(context, resolver, ['k8s'])).expand();
     console.log("Expanded list", newList.map(value => value.id));
+    let required = newList.filter(value => value.id === "k8s_docker_ng");
+    if (!(required.length > 0)){
+        throw new Error("Did not expand docker.");
+    }
 
 
     // now given the final list of recipes
@@ -44,7 +48,7 @@ async function faz() {
 
 
     let smth = await (new CloudInitYamlMerger(context, resolver, newList)).mergeYamls();
-
+    console.log("merged yamls", smth);
 
 
 

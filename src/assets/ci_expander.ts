@@ -9,6 +9,8 @@ export class CloudInitRecipeListExpander {
     protected explanations: string[];
     protected preExpandRecipes: string[];
     private expandedRecipes: string[];
+    private availableRecipesMap!: Map<string, Recipe>;
+    private availableRecipesArr!: Recipe[];
 
     constructor(context: RenderingContext, resolver: RepoResolver, initialRecipes: string[]) {
         this.context = context;
@@ -21,13 +23,13 @@ export class CloudInitRecipeListExpander {
 
     async expand(): Promise<Recipe[]> {
         // get a full flat list of available recipes in the repo; those closest to root override those farthest away
-        let availableRecipesMap: Map<string, Recipe> = await this.repoResolver.getFullFlatRecipeList();
-        let availableRecipesArr: Recipe[] = [...availableRecipesMap.values()];
-        console.log("availableRecipes", availableRecipesArr.map(value => value.id));
+        this.availableRecipesMap = await this.repoResolver.getFullFlatRecipeList();
+        this.availableRecipesArr = [...this.availableRecipesMap.values()];
+        console.log("availableRecipes", this.availableRecipesArr.map(value => value.id));
 
         // iterate the available and evaluate expand_if and always_expand
         //   (against the initially specified list?)
-        let auto_included: string[] = availableRecipesArr
+        let auto_included: string[] = this.availableRecipesArr
             .filter(recipe => this.shouldAutoIncludeRecipe(recipe))
             .map(value => value.id);
         console.log("auto_included", auto_included);
@@ -41,7 +43,7 @@ export class CloudInitRecipeListExpander {
         //  (what if we can't find one?) throw!
         let pickedRecipes: Recipe[] = [];
         for (const initialRecipe of this.preExpandRecipes) {
-            pickedRecipes.push(<Recipe>availableRecipesMap.get(initialRecipe));
+            pickedRecipes.push(this.getRecipeById(initialRecipe));
         }
 
         // now each of those picked can 'expand' into more
@@ -52,7 +54,11 @@ export class CloudInitRecipeListExpander {
 
         console.log("this.explanations", this.explanations);
 
-        return this.expandedRecipes.map(recipe => <Recipe>availableRecipesMap.get(recipe));
+        return this.expandedRecipes.map(recipe => this.getRecipeById(recipe));
+    }
+
+    private getRecipeById(initialRecipe: string) {
+        return <Recipe>this.availableRecipesMap.get(initialRecipe);
     }
 
     private shouldAutoIncludeRecipe(recipe: Recipe): boolean {
@@ -82,7 +88,11 @@ export class CloudInitRecipeListExpander {
     private expandRecipe(recipe: Recipe): string[] {
         let expanded = [];
         if (!recipe.def.virtual) expanded.push(recipe.id);
-        if (recipe.def.expand) expanded.push(...recipe.def.expand);
+        if (recipe.def.expand) {
+            for (const expansion of recipe.def.expand) {
+                expanded.push(...this.expandRecipe(this.getRecipeById(expansion)));
+            }
+        }
         console.log(`Recipe ${recipe.id} expanded to ${expanded}`);
         return expanded;
     }

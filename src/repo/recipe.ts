@@ -1,5 +1,7 @@
 import {IRepoRecipe} from "./descriptor";
 import {Repository} from "./repo";
+import YAML, {Document} from 'yaml';
+import {CloudConfigFragment} from "./cifragment";
 
 export class Recipe {
 
@@ -14,6 +16,17 @@ export class Recipe {
     }
 
     getMentionedYamls(): string[] {
-        return [this.def.yaml ? this.def.yaml : this.def.id, "maybe_a_variant"]; // will add to variants later
+        return [this.def.yaml ? this.def.yaml : this.def.id/*, "maybe_a_variant"*/]; // will add to variants later
     }
+
+    async getCloudConfigDocs() {
+        let allDocs = [];
+        for (let mentionedFile of await this.getMentionedYamls()) {
+            let rawYaml = await this.repo.recursivelyGetRawAsset(`ci/${mentionedFile}.yaml`);
+            let docs: Document.Parsed[] = YAML.parseAllDocuments(rawYaml);
+            allDocs.push(...docs.map(value => value.toJS()).map(value => new CloudConfigFragment(value, this, mentionedFile)));
+        }
+        return allDocs;
+    }
+
 }
