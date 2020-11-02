@@ -6,7 +6,8 @@ import {CloudInitRecipeListExpander} from "./assets/ci_expander";
 import {Recipe} from "./repo/recipe";
 import {CloudInitYamlMerger} from "./assets/ci_yaml_merger";
 import YAML from 'yaml';
-import {CloudInitYamlProcessorAptSources} from "./assets/ci_processor";
+import {CloudInitYamlProcessorSSHKeys} from "./processors/ssh_keys";
+import {CloudInitYamlProcessorAptSources} from "./processors/apt_sources";
 
 
 async function faz() {
@@ -64,6 +65,10 @@ async function faz() {
         //  sources (with gpg lookup)
         let sourcesProcessed = await (new CloudInitYamlProcessorAptSources(context, resolver, smth)).process();
         await console.log("sourcesProcessed", YAML.stringify(sourcesProcessed));
+
+
+        let keysProcessed = await (new CloudInitYamlProcessorSSHKeys(context, resolver, smth)).process();
+        await console.log("keysProcessed", YAML.stringify(keysProcessed));
 
     } finally {
         await context.deinit();
