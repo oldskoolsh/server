@@ -25,18 +25,18 @@ export class CloudInitRecipeListExpander {
         // get a full flat list of available recipes in the repo; those closest to root override those farthest away
         this.availableRecipesMap = await this.repoResolver.getFullFlatRecipeList();
         this.availableRecipesArr = [...this.availableRecipesMap.values()];
-        console.log("availableRecipes", this.availableRecipesArr.map(value => value.id));
+        await console.log("availableRecipes", this.availableRecipesArr.map(value => value.id));
 
         // iterate the available and evaluate expand_if and always_expand
         //   (against the initially specified list?)
         let auto_included: string[] = this.availableRecipesArr
             .filter(recipe => this.shouldAutoIncludeRecipe(recipe))
             .map(value => value.id);
-        console.log("auto_included", auto_included);
+        await console.log("auto_included", auto_included);
 
         // preExpandRecipes is initial plus the auto included
         this.preExpandRecipes.unshift(...auto_included);
-        console.log("After auto includes, ", this.initialRecipes);
+        await console.log("After auto includes, ", this.initialRecipes);
 
 
         // pick the initially specified ones from the list and use that as starting point.
@@ -50,9 +50,9 @@ export class CloudInitRecipeListExpander {
         this.expandedRecipes = pickedRecipes.flatMap((recipe: Recipe) => this.expandRecipe(recipe));
 
         // hmm, then filters should kick in, by os or something else;
-        console.log("Final expanded recipes", this.expandedRecipes);
+        await console.log("Final expanded recipes", this.expandedRecipes);
 
-        console.log("this.explanations", this.explanations);
+        await console.log("this.explanations", this.explanations);
 
         return this.expandedRecipes.map(recipe => this.getRecipeById(recipe));
     }
@@ -93,7 +93,7 @@ export class CloudInitRecipeListExpander {
                 expanded.push(...this.expandRecipe(this.getRecipeById(expansion)));
             }
         }
-        console.log(`Recipe ${recipe.id} expanded to ${expanded}`);
+        //console.log(`Recipe ${recipe.id} expanded to ${expanded}`);
         return expanded;
     }
 }

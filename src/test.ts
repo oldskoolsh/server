@@ -23,47 +23,51 @@ async function faz() {
     */
 
     let context = new RenderingContext("https://cloud-init.pardini.net/");
+    await context.init();
+    try {
 
-    let rendered = await (new BashScriptAsset(context, resolver, "base.sh")).render();
-    //console.log("rendered", rendered);
+        let rendered = await (new BashScriptAsset(context, resolver, "base.sh")).render();
+        //console.log("rendered", rendered);
 
-    // for the main c-i stuff
-    // we have a prebuilt repo resolver reference (which has a root repo)
-    // and a list of wanted recipes;
-    // we'll first expand the list, processing toml directives like "always", "os", "release" etc
-    // and includes/conditional_includes are also processed in the expand step, for clarity (?)
-    // and get a new list.
-    // that will generate an intermediate URL with the expanded list and parameters etc for the merger
+        // for the main c-i stuff
+        // we have a prebuilt repo resolver reference (which has a root repo)
+        // and a list of wanted recipes;
+        // we'll first expand the list, processing toml directives like "always", "os", "release" etc
+        // and includes/conditional_includes are also processed in the expand step, for clarity (?)
+        // and get a new list.
+        // that will generate an intermediate URL with the expanded list and parameters etc for the merger
 
-    let newList: Recipe[] = await (new CloudInitRecipeListExpander(context, resolver, ['k8s'])).expand();
-    console.log("Expanded list", newList.map(value => value.id));
-    let required = newList.filter(value => value.id === "k8s_docker_ng");
-    if (!(required.length > 0)) {
-        throw new Error("Did not expand docker.");
+        let newList: Recipe[] = await (new CloudInitRecipeListExpander(context, resolver, ['k8s'])).expand();
+        await console.log("Expanded list", newList.map(value => value.id));
+        let required = newList.filter(value => value.id === "k8s_docker_ng");
+        if (!(required.length > 0)) {
+            throw new Error("Did not expand docker.");
+        }
+
+
+        // now given the final list of recipes
+        // read and merge all the yamls
+        // process it for runtime-dependent values (esp: os, release, client IP/hostname/etc) and hack into the yaml
+        // write resulting yaml
+
+        // @TODO: possibly "includes" in here? Back to the expander?
+        let smth = await (new CloudInitYamlMerger(context, resolver, newList)).mergeYamls();
+        await console.log("merged yamls", YAML.stringify(smth));
+
+
+        // ok now processing of the pre-merged yaml
+        // a lot of shit client related, geoip, reverse hostname lookup, etc
+        // to produce
+        //  proxy
+        //  mirror
+        //  keys
+        //  sources (with gpg lookup)
+        let sourcesProcessed = await (new CloudInitYamlProcessorAptSources(context, resolver, smth)).process();
+        await console.log("sourcesProcessed", YAML.stringify(sourcesProcessed));
+
+    } finally {
+        await context.deinit();
     }
-
-
-    // now given the final list of recipes
-    // read and merge all the yamls
-    // process it for runtime-dependent values (esp: os, release, client IP/hostname/etc) and hack into the yaml
-    // write resulting yaml
-
-    // @TODO: possibly "includes" in here? Back to the expander?
-    let smth = await (new CloudInitYamlMerger(context, resolver, newList)).mergeYamls();
-    console.log("merged yamls", YAML.stringify(smth));
-
-
-    // ok now processing of the pre-merged yaml
-    // a lot of shit client related, geoip, reverse hostname lookup, etc
-    // to produce
-    //  proxy
-    //  mirror
-    //  keys
-    //  sources (with gpg lookup)
-    let sourcesProcessed = await (new CloudInitYamlProcessorAptSources(context, resolver, smth)).process();
-    console.log("sourcesProcessed", YAML.stringify(sourcesProcessed));
-
-
 }
 
 faz().then(() => {

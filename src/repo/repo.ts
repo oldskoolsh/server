@@ -64,18 +64,21 @@ export class Repository {
 
     async recursivelyResolve() {
         await console.group(`recursivelyResolve '${this.myRef.id}'...`);
-        await this.readTomlDescriptor();
-        await this.processRecipes();
-        // for each rawUsesRef, resolve it as well...
-        for (let rawUseRef of this.rawUsesRef) {
-            let childRef = new PathRepoReference(this.myRef, rawUseRef);
-            let childRepo = new Repository(childRef, this.myResolver);
-            await childRepo.recursivelyResolve();
-            this.uses.push(childRepo);
+        try {
+            await this.readTomlDescriptor();
+            await this.processRecipes();
+            // for each rawUsesRef, resolve it as well...
+            for (let rawUseRef of this.rawUsesRef) {
+                let childRef = new PathRepoReference(this.myRef, rawUseRef);
+                let childRepo = new Repository(childRef, this.myResolver);
+                await childRepo.recursivelyResolve();
+                this.uses.push(childRepo);
+            }
+            // once done with it release it
+            this.rawUsesRef = [];
+        } finally {
+            await console.groupEnd();
         }
-        // once done with it release it
-        this.rawUsesRef = [];
-        await console.groupEnd();
     }
 
     // @TODO: syntax, if (let ..) would help here

@@ -24,9 +24,9 @@ export class PathRepoReference {
             this.ownPath = "";
         }
         let intermediate = path.resolve(this.basePath, this.ownPath);
-        console.log("intermediate", intermediate);
+        //console.log("intermediate", intermediate);
         this.baseDirectory = path.resolve(intermediate, ".oldskool");
-        console.log("baseDirectory", this.baseDirectory);
+        //console.log("baseDirectory", this.baseDirectory);
         // make sure this exists, but the constructor is definitely not the place to do it
         let stats = fs.statSync(this.baseDirectory);
         if (!stats) {
