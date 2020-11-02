@@ -39,7 +39,7 @@ export class CloudInitYamlMerger {
             }
         }
 
-        console.log(resolvedFragments);
+        //console.log(resolvedFragments);
 
         let result = {};
         for (const resolvedFragment of resolvedFragments) {

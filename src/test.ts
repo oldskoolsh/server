@@ -5,6 +5,8 @@ import {RenderingContext} from "./assets/context";
 import {CloudInitRecipeListExpander} from "./assets/ci_expander";
 import {Recipe} from "./repo/recipe";
 import {CloudInitYamlMerger} from "./assets/ci_yaml_merger";
+import YAML from 'yaml';
+import {CloudInitYamlProcessorAptSources} from "./assets/ci_processor";
 
 
 async function faz() {
@@ -36,7 +38,7 @@ async function faz() {
     let newList: Recipe[] = await (new CloudInitRecipeListExpander(context, resolver, ['k8s'])).expand();
     console.log("Expanded list", newList.map(value => value.id));
     let required = newList.filter(value => value.id === "k8s_docker_ng");
-    if (!(required.length > 0)){
+    if (!(required.length > 0)) {
         throw new Error("Did not expand docker.");
     }
 
@@ -46,18 +48,20 @@ async function faz() {
     // process it for runtime-dependent values (esp: os, release, client IP/hostname/etc) and hack into the yaml
     // write resulting yaml
 
-
+    // @TODO: possibly "includes" in here? Back to the expander?
     let smth = await (new CloudInitYamlMerger(context, resolver, newList)).mergeYamls();
-    console.log("merged yamls", smth);
+    console.log("merged yamls", YAML.stringify(smth));
 
 
-
-
-
-
-
-
-
+    // ok now processing of the pre-merged yaml
+    // a lot of shit client related, geoip, reverse hostname lookup, etc
+    // to produce
+    //  proxy
+    //  mirror
+    //  keys
+    //  sources (with gpg lookup)
+    let sourcesProcessed = await (new CloudInitYamlProcessorAptSources(context, resolver, smth)).process();
+    console.log("sourcesProcessed", YAML.stringify(sourcesProcessed));
 
 
 }
