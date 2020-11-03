@@ -53,7 +53,7 @@ async function faz() {
 
         // @TODO: possibly "includes" in here? Back to the expander?
         let smth = await (new CloudInitYamlMerger(context, resolver, newList)).mergeYamls();
-        await console.log("merged yamls", YAML.stringify(smth));
+        //await console.log("merged yamls", YAML.stringify(smth));
 
 
         // ok now processing of the pre-merged yaml
@@ -63,12 +63,12 @@ async function faz() {
         //  mirror
         //  keys
         //  sources (with gpg lookup)
-        let sourcesProcessed = await (new CloudInitYamlProcessorAptSources(context, resolver, smth)).process();
-        await console.log("sourcesProcessed", YAML.stringify(sourcesProcessed));
+        //let sourcesProcessed = await (new CloudInitYamlProcessorAptSources(context, resolver, smth)).process();
+        //await console.log("sourcesProcessed", YAML.stringify(sourcesProcessed));
 
 
         let keysProcessed = await (new CloudInitYamlProcessorSSHKeys(context, resolver, smth)).process();
-        await console.log("keysProcessed", YAML.stringify(keysProcessed));
+        await console.log("keysProcessed.users", YAML.stringify(keysProcessed.users));
 
     } finally {
         await context.deinit();
@@ -77,4 +77,6 @@ async function faz() {
 
 faz().then(() => {
     console.log("Done");
-});
+}).catch(reason => {
+    console.error("FIRST LEVEL THROW", reason);
+})

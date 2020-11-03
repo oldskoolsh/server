@@ -30,5 +30,9 @@ export class RepoResolver {
     async getFullFlatRecipeList(): Promise<Map<string, Recipe>> {
         return await this.rootRepo.recursivelyGetFullFlatRecipeList();
     }
+
+    getGithubRootRepoOwner() {
+        return "rpardini"; // @TODO: implement
+    }
 }
 

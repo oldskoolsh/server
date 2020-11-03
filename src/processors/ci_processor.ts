@@ -33,7 +33,7 @@ export class BaseYamlProcessor {
         }
     }
 
-    protected async cachedHTTPRequest(url: string, ttl: number) {
+    protected async cachedHTTPRequest(url: string, ttl: number): Promise<Buffer> {
         let httpContents = await this.cached(`http_${url}`, ttl, async () => {
             const response = await fetch(url);
             const buffer: Buffer = await response.buffer();

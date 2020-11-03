@@ -63,7 +63,8 @@ export class Repository {
     }
 
     async recursivelyResolve() {
-        await console.group(`recursivelyResolve '${this.myRef.id}'...`);
+        await console.log(`recursivelyResolve '${this.myRef.id}'...`);
+        await console.group();
         try {
             await this.readTomlDescriptor();
             await this.processRecipes();
@@ -78,6 +79,7 @@ export class Repository {
             this.rawUsesRef = [];
         } finally {
             await console.groupEnd();
+            await console.log(`done recursivelyResolve '${this.myRef.id}'...`)
         }
     }
 
