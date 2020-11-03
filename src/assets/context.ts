@@ -4,6 +4,7 @@ export class RenderingContext {
 
     public readonly baseUrl: string;
     public tedis!: Tedis;
+    public moduleUrl!: string;
 
     constructor(baseUrl: string) {
         this.baseUrl = baseUrl;

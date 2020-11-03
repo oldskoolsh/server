@@ -1,10 +1,12 @@
 import {Repository} from "../../src/repo/repo";
+import {RepoResolver} from "../../src/repo/resolver";
+import {RenderingContext} from "../../src/assets/context";
 
 declare global {
     namespace Express {
         interface Request {
-            my_custom_property: String
-            rootRepo: Repository
+            oldSkoolResolver: RepoResolver;
+            oldSkoolContext: RenderingContext;
         }
     }
 }

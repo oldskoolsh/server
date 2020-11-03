@@ -12,7 +12,7 @@ export class CloudInitYamlProcessorPackages extends BaseYamlProcessor {
                 finalPackages.push(packageVersion ? [packageName, packageVersion] : packageName);
                 packageSet.add(packageName);
             } else {
-                console.warn("Duplicated packageName ", packageName);
+                console.warn("Duplicated packageName", packageName);
             }
         }
         src.packages = finalPackages;

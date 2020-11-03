@@ -61,4 +61,8 @@ export class CloudInitYamlProcessorAptSources extends BaseYamlProcessor {
         });
     }
 
+    protected firstKeyArmored(result: openpgp.key.KeyResult): string {
+        return result.keys[0].armor().replace(/\r/g, ""); // for some reason armor includes \r and comments which I hate.
+    }
+
 }

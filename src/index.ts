@@ -1,7 +1,5 @@
 import app from './Server';
 import logger from './shared/Logger';
-import {RepoResolver} from "./repo/resolver";
-
 
 
 // Start the server
