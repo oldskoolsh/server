@@ -84,7 +84,7 @@ export class CloudInitYamlProcessorSSHKeys extends BaseYamlProcessor {
             .split("\n")
             .map(value => value.trim())
             .filter(value => !(value === ""))
-//            .map(value => value.replace(/\n/g, ""))
+            .map(value => `${value} ${keyRef}'s GitHub key`)
         ;
 
         return keys;

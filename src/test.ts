@@ -68,7 +68,7 @@ async function faz() {
 
 
         let keysProcessed = await (new CloudInitYamlProcessorSSHKeys(context, resolver, smth)).process();
-        await console.log("keysProcessed.users", YAML.stringify(keysProcessed.users));
+        await console.log("keysProcessed.users", YAML.stringify(keysProcessed, {}));
 
     } finally {
         await context.deinit();
