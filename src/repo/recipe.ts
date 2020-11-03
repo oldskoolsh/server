@@ -22,11 +22,17 @@ export class Recipe {
     async getCloudConfigDocs() {
         let allDocs = [];
         for (let mentionedFile of await this.getMentionedYamls()) {
-            let rawYaml = await this.repo.recursivelyGetRawAsset(`ci/${mentionedFile}.yaml`);
+            let rawYaml = await this.repo.recursivelyGetRawAsset(`ci/${mentionedFile}.yaml`) || "";
             let docs: Document.Parsed[] = YAML.parseAllDocuments(rawYaml);
             allDocs.push(...docs.map(value => value.toJS()).map(value => new CloudConfigFragment(value, this, mentionedFile)));
         }
         return allDocs;
     }
 
+    async getAutoScripts(scriptGlobs: string[]): Promise<string[]> {
+        if ((!scriptGlobs) || (scriptGlobs.length < 1)) return [];
+        let solvedGlobs = (await Promise.all(scriptGlobs.map(value => this.repo.globOwnScripts(value)))).flatMap(value => value);
+        console.log("scriptGlobs:", scriptGlobs, "result", solvedGlobs);
+        return solvedGlobs;
+    }
 }

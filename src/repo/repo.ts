@@ -1,5 +1,5 @@
 import TOML from "@iarna/toml";
-import {IRecipeLauncher, IRepoDescriptor, IRepoRecipe, IRepoUsesDescriptor} from "./descriptor";
+import {IRepoDescriptor, IRepoRecipe, IRepoUsesDescriptor} from "./descriptor";
 import {RepoResolver} from "./resolver";
 import {Recipe} from "./recipe";
 import {PathRepoReference} from "./reference";
@@ -48,12 +48,6 @@ export class Repository {
                 let recipe: IRepoRecipe = descriptor.recipes[recipeName];
                 recipe.id = recipeName;
 
-                if (recipe.launchers) {
-                    for (let launcherName of Object.keys(recipe.launchers)) {
-                        let launcher: IRecipeLauncher = recipe.launchers[launcherName];
-                        launcher.id = launcherName;
-                    }
-                }
                 this.rawRecipes.push(recipe);
             }
         }
@@ -84,18 +78,18 @@ export class Repository {
     }
 
     // @TODO: syntax, if (let ..) would help here
-    async recursivelyGetRawAsset(assetPath: string, encoding: string = 'utf8'): Promise<string> {
+    async recursivelyGetRawAsset(assetPath: string, encoding: string = 'utf8'): Promise<string | null> {
         let myOwn = await this.ownGetAssetOrNull(assetPath, encoding);
         if (myOwn) return myOwn;
 
         for (const usedRepo of this.uses) {
-            let childAsset = usedRepo.recursivelyGetRawAsset(assetPath, encoding);
+            let childAsset = await usedRepo.recursivelyGetRawAsset(assetPath, encoding);
             if (childAsset) {
                 return childAsset;
             }
         }
-
-        throw new Error(`Could not find asset ${assetPath} anywhere!`);
+        console.warn(`Could not find asset ${assetPath} anywhere - at '${this.name}', children: ${this.uses.map(value => `${value.desc}'`).join(", ")}`);
+        return null;
     }
 
     async ownGetAssetOrNull(assetPath: string, encoding: string = 'utf8'): Promise<string | null> {
@@ -117,6 +111,10 @@ export class Repository {
         // then our own
         this.recipesById.forEach((value, key) => map.set(key, value));
         return map;
+    }
+
+    public async globOwnScripts(value: string): Promise<string[]> {
+        return await this.myRef.globScripts(value);
     }
 
     private async processRecipes() {
@@ -147,12 +145,12 @@ export class Repository {
     private createDefaultRecipeForYaml(yamlId: string): IRepoRecipe {
         return {
             always_include: false,
+            auto_initscripts: [],
             auto_launchers: [],
             expand: [],
             include_if_not_recipe: [],
             include_if_recipe: [],
             id: yamlId,
-            launchers: undefined,
             virtual: false,
             yaml: yamlId
         };
@@ -167,7 +165,6 @@ export class Repository {
         let tomlStr = TOML.stringify(<any>toml);
         await this.myRef.writeFileContents("oldskool.rewritten.toml", tomlStr);
     }
-
 }
 
 

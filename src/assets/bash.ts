@@ -2,6 +2,7 @@ import {BaseAsset} from "./base_asset";
 import replaceAsync from "string-replace-async";
 
 const includeRegex = /##\ \*\*INCLUDE:(.+)/gm;
+const escapedIncludeRegex = /##\ \*\*ESCAPEDINCLUDE:(.+)/gm;
 const scriptNameRegex = /##\*\*SCRIPTNAME\*\*##/gm;
 const baseUrlRegex = /##\*\*BASEURL\*\*##/gm;
 const staticFileBase64Regex = /##\*\*STATICFILEBASE64\:(.+)\*\*##/gm;
@@ -22,16 +23,21 @@ export class BashScriptAsset extends BaseAsset {
                 hasReplaced = true;
                 return await this.repoResolver.getRawAsset(`scripts/${includedRef}`);
             }));
+            replaced = await replaceAsync(replaced, escapedIncludeRegex, (async (substring, includedRef) => {
+                hasReplaced = true;
+                return (await this.repoResolver.getRawAsset(`scripts/${includedRef}`)).replace(/\$/, "\\$" );
+            }));
             if (loopCounter > 10) {
                 throw new Error(`Too many include levels in ${this.assetPath}`);
             }
         }
 
+
         // once all includes are resolved we can replace more stuff.
         // comes to mind:
         // 1) the BASEURL thing, which will come from the context.
         replaced = await replaceAsync(replaced, baseUrlRegex, async (substring, args) => {
-            return this.context.baseUrl;
+            return this.context.moduleUrl;
         })
 
         // 2) SCRIPTNAME thing, which should always be this.assetPath

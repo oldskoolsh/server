@@ -24,7 +24,9 @@ export class RepoResolver {
 
 
     async getRawAsset(assetPath: string, encoding: string = 'utf8'): Promise<string> {
-        return await this.rootRepo.recursivelyGetRawAsset(assetPath, encoding);
+        let asset = await this.rootRepo.recursivelyGetRawAsset(assetPath, encoding);
+        if (asset === null) throw new Error(`Could not find asset ${assetPath} anywhere!`);
+        return asset;
     }
 
     async getFullFlatRecipeList(): Promise<Map<string, Recipe>> {

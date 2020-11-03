@@ -60,7 +60,9 @@ export class CloudInitRecipeListExpander {
     }
 
     private getRecipeById(initialRecipe: string) {
-        return <Recipe>this.availableRecipesMap.get(initialRecipe);
+        let newVar = <Recipe>this.availableRecipesMap.get(initialRecipe);
+        if (!newVar) throw new Error("Can't find recipe " + initialRecipe);
+        return newVar;
     }
 
     private shouldAutoIncludeRecipe(recipe: Recipe): boolean {
@@ -88,6 +90,9 @@ export class CloudInitRecipeListExpander {
     }
 
     private expandRecipe(recipe: Recipe): string[] {
+        if (recipe === undefined) {
+            console.warn("Here");
+        }
         let expanded = [];
         if (!recipe.def.virtual) expanded.push(recipe.id);
         if (recipe.def.expand) {

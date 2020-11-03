@@ -93,8 +93,24 @@ app.use("/:owner/:repo/:commitish", async (req, res, next) => {
 async function mainUserData(req: Request, res: Response) {
     // read recipes from request path
     let initialRecipes: string[] = req.params.recipes.split(",");
-    let newList: Recipe[] = await (new CloudInitRecipeListExpander(req.oldSkoolContext, req.oldSkoolResolver, initialRecipes)).expand();
-    let finalRecipes = newList.map(value => value.id);
+    let allRecipes: Recipe[] = await (new CloudInitRecipeListExpander(req.oldSkoolContext, req.oldSkoolResolver, initialRecipes)).expand();
+    let finalRecipes = allRecipes.map(value => value.id);
+
+    let finalInitScripts =
+        (
+            await Promise.all(
+                allRecipes
+                    .map(async (recipe: Recipe) => await recipe.getAutoScripts(recipe.def.auto_initscripts))
+            )
+        )
+            .flatMap(value => value);
+
+    let finalLauncherScripts = (
+        await Promise.all(
+            allRecipes
+                .map(async (recipe: Recipe) => await recipe.getAutoScripts(recipe.def.auto_launchers))
+        )
+    ).flatMap(value => value);
 
     let body = "#include\n";
 
@@ -103,13 +119,20 @@ async function mainUserData(req: Request, res: Response) {
     body += `${req.oldSkoolContext.moduleUrl}/${finalRecipes.join(',')}/cloudinityaml` + "\n";
 
     // @TODO: possibly use a launcher-script (that can gather info from the instance) and _then_ process that YAML.
-    // link to the laucher-creators...
+    // link to the launcher-creators...
     // consider: boot-cmd processor; cloud-init-per; etc.
+    finalLauncherScripts.forEach(script => {
+        body += `# launcher : ${script}\n`;
+        body += `${req.oldSkoolContext.moduleUrl}/launcher/${script}\n`;
+    });
 
 
     // link to the init-scripts, directly.
     //newList.map()
-    body += `${req.oldSkoolContext.moduleUrl}/bash/base.sh` + "\n";
+    finalInitScripts.forEach(script => {
+        body += `# initscript: ${script}\n`;
+        body += `${req.oldSkoolContext.moduleUrl}/bash/${script}\n`;
+    });
 
 
     return res.status(200).contentType("text/plain").send(body);
