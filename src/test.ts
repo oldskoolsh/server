@@ -11,6 +11,7 @@ import {CloudInitProcessorStack} from "./processors/stack";
 import YAML from 'yaml';
 import {CloudInitYamlProcessorAptProxy} from "./processors/proxy";
 import {CloudInitYamlProcessorAptMirror} from "./processors/mirror";
+import {CloudInitYamlProcessorPackages} from "./processors/packages";
 
 
 async function faz() {
@@ -81,8 +82,9 @@ async function faz() {
             .add(new CloudInitYamlProcessorSSHKeys())
             .add(new CloudInitYamlProcessorAptProxy())
             .add(new CloudInitYamlProcessorAptMirror())
+            .add(new CloudInitYamlProcessorPackages())
             .process();
-        await console.log("finalResult", YAML.stringify(finalResult, {}));
+        await console.log("finalResult\n---", YAML.stringify(finalResult, {}), "\n---");
 
 
     } finally {
