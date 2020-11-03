@@ -1,9 +1,9 @@
-import {BaseYamlProcessor} from "./ci_processor";
+import {BaseYamlProcessor} from "./base";
 import YAML from 'yaml';
 
 export class CloudInitYamlProcessorSSHKeys extends BaseYamlProcessor {
 
-    async process(): Promise<any> {
+    async process(src: any): Promise<any> {
         // at both root, and at the user level:
 
         // read and remove ssh_key_sets = (array, if not, default to default)
@@ -14,19 +14,18 @@ export class CloudInitYamlProcessorSSHKeys extends BaseYamlProcessor {
         // unique results
         // console.log("src", this.src)
 
-        let rootLevel = await this.handleKeySetLevel(this.src);
+        let rootLevel = await this.handleKeySetLevel(src);
         // clear root
-        let root = Object.assign(this.src, await this.handleKeySetLevel({}));
+        let root = Object.assign(src, await this.handleKeySetLevel({}));
         // new users array with the root user
 
         let newUsers = [Object.assign({name: "root"}, rootLevel)];
-        if ((root.users instanceof Array)) {
-            for (const user of root.users) {
-                if (user["name"] === "root") continue;
-                console.log("user", user);
-                newUsers.push(Object.assign(user, await this.handleKeySetLevel(user)));
-            }
+        //if ((true)) {
+        for (const user of root["users"]) {
+            if (user["name"] === "root") continue;
+            newUsers.push(Object.assign(user, await this.handleKeySetLevel(user)));
         }
+        //}
         root.users = newUsers;
 
         // root-level is "root" user; so we'll process
@@ -53,7 +52,6 @@ export class CloudInitYamlProcessorSSHKeys extends BaseYamlProcessor {
     }
 
     private async resolveKeySet(keySetName: string): Promise<string[]> {
-        console.log("resolving keyset", keySetName);
         let preExpand = await this.getKeysetContents(keySetName);
         return preExpand;
         // await Promise.all(preExpand)
@@ -62,6 +60,8 @@ export class CloudInitYamlProcessorSSHKeys extends BaseYamlProcessor {
 
     private async getKeysetContents(keySetName: string): Promise<string[]> {
         try {
+            // @TODO: repoResolver.getRawAsset is recursive, we need a non-recursive one for root repo only
+            // @TODO: also, maybe a assetExistsAtRoot() so we can fallback correcly.
             let yamlContents = await this.repoResolver.getRawAsset(`keys/${keySetName}.yaml`);
             return YAML.parse(yamlContents);
         } catch (e) {
@@ -79,7 +79,6 @@ export class CloudInitYamlProcessorSSHKeys extends BaseYamlProcessor {
         let body = await this.cachedHTTPRequest(`https://github.com/${keyRef}.keys`, 3600);
 
         let gitHubLines = body.toString("utf8");
-        console.log(gitHubLines);
         let keys = gitHubLines
             .split("\n")
             .map(value => value.trim())

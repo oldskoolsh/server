@@ -5,9 +5,12 @@ import {RenderingContext} from "./assets/context";
 import {CloudInitRecipeListExpander} from "./assets/ci_expander";
 import {Recipe} from "./repo/recipe";
 import {CloudInitYamlMerger} from "./assets/ci_yaml_merger";
-import YAML from 'yaml';
 import {CloudInitYamlProcessorSSHKeys} from "./processors/ssh_keys";
 import {CloudInitYamlProcessorAptSources} from "./processors/apt_sources";
+import {CloudInitProcessorStack} from "./processors/stack";
+import YAML from 'yaml';
+import {CloudInitYamlProcessorAptProxy} from "./processors/proxy";
+import {CloudInitYamlProcessorAptMirror} from "./processors/mirror";
 
 
 async function faz() {
@@ -67,8 +70,20 @@ async function faz() {
         //await console.log("sourcesProcessed", YAML.stringify(sourcesProcessed));
 
 
-        let keysProcessed = await (new CloudInitYamlProcessorSSHKeys(context, resolver, smth)).process();
-        await console.log("keysProcessed.users", YAML.stringify(keysProcessed, {}));
+        // let keysProcessed = await (new CloudInitYamlProcessorSSHKeys(context, resolver)).process(smth);
+        //await console.log("keysProcessed.users", YAML.stringify(keysProcessed, {}));
+
+
+        // Processor stack processing
+
+        let finalResult = await new CloudInitProcessorStack(context, resolver, smth)
+            .add(new CloudInitYamlProcessorAptSources())
+            .add(new CloudInitYamlProcessorSSHKeys())
+            .add(new CloudInitYamlProcessorAptProxy())
+            .add(new CloudInitYamlProcessorAptMirror())
+            .process();
+        await console.log("finalResult", YAML.stringify(finalResult, {}));
+
 
     } finally {
         await context.deinit();

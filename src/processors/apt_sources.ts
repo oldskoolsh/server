@@ -1,24 +1,24 @@
 import * as openpgp from "openpgp";
-import {BaseYamlProcessor} from "./ci_processor";
+import {BaseYamlProcessor} from "./base";
 
 export class CloudInitYamlProcessorAptSources extends BaseYamlProcessor {
-    async process(): Promise<any> {
-        if (!this.src["apt_sources"]) return this.src;
+    async process(src: any): Promise<any> {
+        if (!src["apt_sources"]) return src;
         // store, and remove from return
-        let orig_sources = this.src["apt_sources"];
+        let orig_sources = src["apt_sources"];
         let handled = await Promise.all(orig_sources.map((value: any) => this.handleAptSource(value)));
 
         if (handled.length > 0) {
-            this.src["apt"] = this.src["apt"] || {};
-            this.src["apt"]["sources"] = this.src["apt"]["sources"] || {};
+            src["apt"] = src["apt"] || {};
+            src["apt"]["sources"] = src["apt"]["sources"] || {};
             let counter = 1;
             for (let handledSource of handled) {
-                this.src["apt"]["sources"][`source_${counter++}`] = handledSource;
+                src["apt"]["sources"][`source_${counter++}`] = handledSource;
             }
         }
 
-        delete this.src["apt_sources"];
-        return this.src;
+        delete src["apt_sources"];
+        return src;
     }
 
     private async handleAptSource(sourceDef: any): Promise<any> {

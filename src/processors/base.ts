@@ -5,16 +5,16 @@ import fetch from "node-fetch";
 import * as openpgp from 'openpgp'
 
 
-export class BaseYamlProcessor {
-    protected readonly context: RenderingContext;
-    protected readonly repoResolver: RepoResolver;
-    protected readonly src: any;
+export abstract class BaseYamlProcessor {
+    protected context!: RenderingContext;
+    protected repoResolver!: RepoResolver;
 
-    constructor(context: RenderingContext, resolver: RepoResolver, srcYaml: any) {
+    prepare(context: RenderingContext, resolver: RepoResolver) {
         this.context = context;
         this.repoResolver = resolver;
-        this.src = srcYaml;
     }
+
+    abstract async process(input: any): Promise<any>;
 
     async cached(cacheKey: string, ttl: number, producer: () => Promise<string>): Promise<string> {
         try {
