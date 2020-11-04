@@ -31,7 +31,7 @@ async function faz() {
     await context.init();
     try {
 
-        let rendered = await (new BashScriptAsset(context, resolver, "base.sh")).render();
+        let rendered = await (new BashScriptAsset(context, resolver, "base.sh")).renderFromFile();
         //console.log("rendered", rendered);
 
         // for the main c-i stuff

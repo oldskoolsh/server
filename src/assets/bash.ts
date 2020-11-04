@@ -9,10 +9,16 @@ const staticFileBase64Regex = /##\*\*STATICFILEBASE64\:(.+)\*\*##/gm;
 
 export class BashScriptAsset extends BaseAsset {
 
-    async render(): Promise<string> {
-        // read the asset into text
-        let replaced = await this.repoResolver.getRawAsset(`scripts/${this.assetPath}`);
+    async renderFromFile(): Promise<string> {
+        return await this.doRenderFromString(await this.repoResolver.getRawAsset(`scripts/${this.assetPath}`));
+    }
 
+    async renderFromString(str: string): Promise<string> {
+        return await this.doRenderFromString(str);
+    }
+
+    private async doRenderFromString(read: string) {
+        let replaced = read;
         // resolve the extracted includes in a loop, so includes' includes are included. lol
         let loopCounter = 0;
         let hasReplaced = true;
@@ -25,13 +31,12 @@ export class BashScriptAsset extends BaseAsset {
             }));
             replaced = await replaceAsync(replaced, escapedIncludeRegex, (async (substring, includedRef) => {
                 hasReplaced = true;
-                return (await this.repoResolver.getRawAsset(`scripts/${includedRef}`)).replace(/\$/, "\\$" );
+                return (await this.repoResolver.getRawAsset(`scripts/${includedRef}`)).replace(/\$/g, "\\$");
             }));
             if (loopCounter > 10) {
                 throw new Error(`Too many include levels in ${this.assetPath}`);
             }
         }
-
 
         // once all includes are resolved we can replace more stuff.
         // comes to mind:
@@ -53,5 +58,4 @@ export class BashScriptAsset extends BaseAsset {
 
         return replaced;
     }
-
 }

@@ -16,6 +16,9 @@ import {RenderingContext} from "./assets/context";
 import YAML from 'yaml';
 import {BashScriptAsset} from "./assets/bash";
 
+import "./shared/utils";
+import * as path from "path";
+
 const app = express();
 const {BAD_REQUEST} = StatusCodes;
 
@@ -96,44 +99,28 @@ async function mainUserData(req: Request, res: Response) {
     let allRecipes: Recipe[] = await (new CloudInitRecipeListExpander(req.oldSkoolContext, req.oldSkoolResolver, initialRecipes)).expand();
     let finalRecipes = allRecipes.map(value => value.id);
 
-    let finalInitScripts =
-        (
-            await Promise.all(
-                allRecipes
-                    .map(async (recipe: Recipe) => await recipe.getAutoScripts(recipe.def.auto_initscripts))
-            )
-        )
-            .flatMap(value => value);
-
-    let finalLauncherScripts = (
-        await Promise.all(
-            allRecipes
-                .map(async (recipe: Recipe) => await recipe.getAutoScripts(recipe.def.auto_launchers))
-        )
-    ).flatMap(value => value);
+    let initScripts = await allRecipes.asyncFlatMap((recipe) => recipe.getAutoScripts(recipe.def.auto_initscripts));
+    let launcherScripts = await allRecipes.asyncFlatMap((recipe) => recipe.getAutoScripts(recipe.def.auto_launchers));
 
     let body = "#include\n";
 
     // @TODO: explanations!
+
+    // @TODO: possibly use a launcher-script (that can gather info from the instance) and _then_ process that YAML.
     // link to the yaml-merger
     body += `${req.oldSkoolContext.moduleUrl}/${finalRecipes.join(',')}/cloudinityaml` + "\n";
 
-    // @TODO: possibly use a launcher-script (that can gather info from the instance) and _then_ process that YAML.
     // link to the launcher-creators...
     // consider: boot-cmd processor; cloud-init-per; etc.
-    finalLauncherScripts.forEach(script => {
-        body += `# launcher : ${script}\n`;
-        body += `${req.oldSkoolContext.moduleUrl}/launcher/${script}\n`;
-    });
+    body += `# launchers : ${launcherScripts.join(", ")}\n`;
+    body += `${req.oldSkoolContext.moduleUrl}/${finalRecipes.join(',')}/launchers\n`;
 
 
     // link to the init-scripts, directly.
-    //newList.map()
-    finalInitScripts.forEach(script => {
+    initScripts.forEach(script => {
         body += `# initscript: ${script}\n`;
         body += `${req.oldSkoolContext.moduleUrl}/bash/${script}\n`;
     });
-
 
     return res.status(200).contentType("text/plain").send(body);
 }
@@ -160,9 +147,32 @@ app.get("/:owner/:repo/:commitish/:recipes/cloudinityaml", async (req, res) => {
     return res.status(200).contentType("text/plain").send(body);
 });
 
+// This produces a "initscript" that creates launchers
+app.get("/:owner/:repo/:commitish/:recipes/launchers", async (req, res) => {
+    // read recipes from request path
+    let initialRecipes: string[] = req.params.recipes.split(",");
+    // re-expand, although the main already expanded.
+    let allRecipes: Recipe[] = await (new CloudInitRecipeListExpander(req.oldSkoolContext, req.oldSkoolResolver, initialRecipes)).expand();
+    let launcherScripts = await allRecipes.asyncFlatMap((recipe) => recipe.getAutoScripts(recipe.def.auto_launchers));
+    let launcherDefs = launcherScripts.map(value => {
+        let parsed: path.ParsedPath = path.parse(value);
+        let pathNoExt = `${parsed.dir ? `${parsed.dir}/` : ""}${parsed.name}`;
+        let launcherName = parsed.name;
+
+        return ({launcher: launcherName, script: pathNoExt});
+    });
+
+    let bashTemplate: string = `#!/bin/bash\n## **INCLUDE:common.sh\n` +
+        launcherDefs.map(value => `createLauncherScript "${value.launcher}" "${value.script}"`).join("\n") +
+        `\n`;
+
+    let body = await (new BashScriptAsset(req.oldSkoolContext, req.oldSkoolResolver, "launcher_template")).renderFromString(bashTemplate);
+    return res.status(200).contentType("text/plain").send(body);
+});
+
 app.get("/:owner/:repo/:commitish/bash/:path(*)", async (req, res) => {
     console.log("asset path", req.params.path);
-    let body = await (new BashScriptAsset(req.oldSkoolContext, req.oldSkoolResolver, req.params.path)).render();
+    let body = await (new BashScriptAsset(req.oldSkoolContext, req.oldSkoolResolver, req.params.path)).renderFromFile();
     return res.status(200).contentType("text/plain").send(body);
 });
 

@@ -12,6 +12,6 @@ export abstract class BaseAsset {
         this.assetPath = assetPath;
     }
 
-    public abstract async render(): Promise<string>;
+    public abstract async renderFromFile(): Promise<string>;
 
 }
