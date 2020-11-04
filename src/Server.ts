@@ -1,4 +1,3 @@
-import cookieParser from 'cookie-parser';
 import morgan from 'morgan';
 import helmet from 'helmet';
 
@@ -37,66 +36,32 @@ export class OldSkoolServer {
 
 
     async createExpressServer() {
-
         const app = express();
         const {BAD_REQUEST} = StatusCodes;
 
-        app.use(express.json());
+        //app.use(express.json());
         app.use(express.urlencoded({extended: true}));
-        app.use(cookieParser());
 
-// Show routes called in console during development
-//if (process.env.NODE_ENV === 'development') {
+        //app.use(cookieParser());
+
+        // Show routes called in console during development
         app.use(morgan('dev'));
-//}
 
-// Security
-//if (process.env.NODE_ENV === 'production') {
+        // "Security headers"
         app.use(helmet());
-//}
 
-// Add APIs
-//app.use('/api', BaseRouter);
-
-// Print API errors
+        // Print API errors
         app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
             logger.err(err, true);
             return res.status(BAD_REQUEST).json({
                 error: err.message,
             });
         });
-        /*
-
-        app.use(async (req, res, next) => {
-            // try to extract user/repo/commit-ish from the url;
-            // at least user/repo and optional commit-ish;
-            // if found store in the request.
-            // if not found use the default from somewhere.
-            // main thing here is to cleanup the URL for the next middleware
-            await console.log("Yeah some middleware here");
-            await console.log("url: ", req.url);
-            next();
-        });
 
 
-        // the stuff
-        app.get('/bunda/:id', async (req: Request, res: Response) => {
-            await console.log("Here BUNDA got the URL...", req.url, req.my_custom_property, req.rootRepo);
-            return res.status(200).contentType("text/plain").json({bunda: "bunda", param: req.params.id});
-        });
-        app.get('/', async (req: Request, res: Response) => {
-            await console.log("Here ROOT got the URL...", req.url);
-            return res.status(200).contentType("text/plain").json({root: "root"});
-        });
-        app.get('*', async (req: Request, res: Response) => {
-            await console.log("Here ASTER got the URL...", req.url);
-            return res.status(200).contentType("text/plain").json({aster: "asterisk"});
-        });
-        */
-
-// common middleware for specified ORC; @TODO: really implement;
+        // common middleware for specified ORC
         app.use("/:owner/:repo/:commitish", async (req, res, next) => {
-            //console.warn("Common middleware START!", req.params);
+            console.warn("Common middleware START!", req.params);
             // Fake, should come from :owner/:repo/:commitish
             const resolver = new RepoResolver("/Users/pardini/Documents/Projects/github/oldskool", "oldskool-rpardini");
             await resolver.rootResolve();
@@ -144,12 +109,12 @@ export class OldSkoolServer {
             return res.status(200).contentType("text/plain").send(body);
         }
 
-// This "root" thing produces "#include" for yamls, auto-launchers, and init scripts.
+        // This "root" thing produces "#include" for yamls, auto-launchers, and init scripts.
         app.get("/:owner/:repo/:commitish/:recipes", async (req, res, next) => {
             return await mainUserData(req, res);
         });
 
-// This "root" thing produces "#include" for yamls, auto-launchers, and init scripts.
+        // This produces the YAML for #cloud-config, merged.
         app.get("/:owner/:repo/:commitish/:recipes/cloudinityaml", async (req, res) => {
             // read recipes from request path
             let initialRecipes: string[] = req.params.recipes.split(",");
@@ -166,7 +131,7 @@ export class OldSkoolServer {
             return res.status(200).contentType("text/plain").send(body);
         });
 
-// This produces a "initscript" that creates launchers
+        // This produces a "initscript" that creates launchers @TODO: refactor
         app.get("/:owner/:repo/:commitish/:recipes/launchers", async (req, res) => {
             // read recipes from request path
             let initialRecipes: string[] = req.params.recipes.split(",");
@@ -189,30 +154,38 @@ export class OldSkoolServer {
             return res.status(200).contentType("text/plain").send(body);
         });
 
+        // bash renderer
         app.get("/:owner/:repo/:commitish/bash/:path(*)", async (req, res) => {
             console.log("asset path", req.params.path);
             let body = await (new BashScriptAsset(req.oldSkoolContext, req.oldSkoolResolver, req.params.path)).renderFromFile();
             return res.status(200).contentType("text/plain").send(body);
         });
 
-
-// for use with dsnocloud, cloud-init appends "meta-data" and "user-data"
-// we serve metadata so it does not complain; instance-id is required.
+        // for use with dsnocloud, cloud-init appends "meta-data" and "user-data"
+        // we serve metadata so it does not complain; instance-id is required.
         app.get("/:owner/:repo/:commitish/:recipes/dsnocloud/meta-data", async (req, res) => {
-            let metaData: any = {};
-            metaData["instance-id"] = "i-87018aed";
-            let yamlMetaData = YAML.stringify(metaData);
-            console.log("Served meta-data YAML!");
-            return res.status(200).contentType("text/yaml").send(yamlMetaData);
+            return res.status(200).contentType("text/yaml").send(YAML.stringify(this.createMetaDataMinimal()));
         });
 
-// for use with dsnocloud, user-data is the same as the main entrypoint
+        // the same again as above, put with a placeholder for key=value pairs just like a querystring.
+        app.get("/:owner/:repo/:commitish/:recipes/params/:defaults/dsnocloud/meta-data", async (req, res) => {
+            console.warn(":defaults", req.params.defaults);
+            return res.status(200).contentType("text/yaml").send(YAML.stringify(this.createMetaDataMinimal()));
+        });
+
+        // for use with dsnocloud, user-data is the same as the main entrypoint
         app.get("/:owner/:repo/:commitish/:recipes/dsnocloud/user-data", async (req, res) => {
             return await mainUserData(req, res);
         });
 
+        // the same again as above, put with a placeholder for key=value pairs just like a querystring.
+        app.get("/:owner/:repo/:commitish/:recipes/params/:defaults/dsnocloud/user-data", async (req, res) => {
+            console.warn(":defaults", req.params.defaults);
+            return await mainUserData(req, res);
+        });
 
-// common middleware for specified ORC;
+
+        // common middleware for specified ORC;
         app.use("/:owner/:repo/:commitish", async (req, res, next) => {
             console.warn("Common middleware END!", req.params);
             await req.oldSkoolContext.deinit();
@@ -222,4 +195,9 @@ export class OldSkoolServer {
         return app;
     }
 
+    private createMetaDataMinimal() {
+        let metaData: any = {};
+        metaData["instance-id"] = "i-87018aed";
+        return metaData;
+    }
 }
