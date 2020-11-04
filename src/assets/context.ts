@@ -1,24 +1,22 @@
-import {Tedis} from "tedis";
+import {Tedis, TedisPool} from "tedis";
 
 export class RenderingContext {
 
     public readonly baseUrl: string;
-    public tedis!: Tedis;
     public moduleUrl!: string;
+    public readonly tedisPool: TedisPool;
 
-    constructor(baseUrl: string) {
+    constructor(baseUrl: string, tedisPool: TedisPool) {
         this.baseUrl = baseUrl;
+        this.tedisPool = tedisPool;
     }
 
     async init() {
-        // no auth
-        this.tedis = new Tedis({
-            port: 6379,
-            host: "127.0.0.1"
-        });
+
     }
 
     async deinit() {
-        await this.tedis.close();
     }
+
 }
+

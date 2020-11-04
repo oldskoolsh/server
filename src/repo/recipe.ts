@@ -32,7 +32,7 @@ export class Recipe {
     async getAutoScripts(scriptGlobs: string[]): Promise<string[]> {
         if ((!scriptGlobs) || (scriptGlobs.length < 1)) return [];
         let solvedGlobs = (await Promise.all(scriptGlobs.map(value => this.repo.globOwnScripts(value)))).flatMap(value => value);
-        console.log("scriptGlobs:", scriptGlobs, "result", solvedGlobs);
+        //console.log("scriptGlobs:", scriptGlobs, "result", solvedGlobs);
         return solvedGlobs;
     }
 }

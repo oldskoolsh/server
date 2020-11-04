@@ -12,6 +12,7 @@ import YAML from 'yaml';
 import {CloudInitYamlProcessorAptProxy} from "./processors/proxy";
 import {CloudInitYamlProcessorAptMirror} from "./processors/mirror";
 import {CloudInitYamlProcessorPackages} from "./processors/packages";
+import {TedisPool} from "tedis";
 
 
 async function faz() {
@@ -27,7 +28,7 @@ async function faz() {
         console.log("common", common);
     */
 
-    let context = new RenderingContext("https://cloud-init.pardini.net/");
+    let context = new RenderingContext("https://cloud-init.pardini.net/", new TedisPool());
     await context.init();
     try {
 
