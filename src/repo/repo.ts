@@ -88,7 +88,7 @@ export class Repository {
                 return childAsset;
             }
         }
-        console.warn(`Could not find asset ${assetPath} anywhere - at '${this.name}', children: ${this.uses.map(value => `${value.desc}'`).join(", ")}`);
+        //console.warn(`Could not find asset ${assetPath} anywhere - at '${this.name}', children: ${this.uses.map(value => `${value.desc}'`).join(", ")}`);
         return null;
     }
 
