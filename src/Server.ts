@@ -198,6 +198,7 @@ export class OldSkoolServer {
     private createMetaDataMinimal() {
         let metaData: any = {};
         metaData["instance-id"] = "i-87018aed";
+        metaData["hostname"] = "i-87018aed.fritz.box";
         return metaData;
     }
 }
