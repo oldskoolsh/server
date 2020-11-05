@@ -1,5 +1,4 @@
 import morgan from 'morgan';
-import helmet from 'helmet';
 
 import express, {NextFunction, Request, Response} from 'express';
 import StatusCodes from 'http-status-codes';
@@ -18,6 +17,7 @@ import {BashScriptAsset} from "./assets/bash";
 import "./shared/utils";
 import * as path from "path";
 import {TedisPool} from "tedis";
+import {MimeBundler, MimeTextFragment} from "./shared/mime";
 
 export class OldSkoolServer {
     private readonly tedisPool: TedisPool;
@@ -48,7 +48,8 @@ export class OldSkoolServer {
         app.use(morgan('dev'));
 
         // "Security headers"
-        app.use(helmet());
+        // import helmet from 'helmet';
+        //app.use(helmet());
 
         // Print API errors
         app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
@@ -77,44 +78,9 @@ export class OldSkoolServer {
         })
 
 
-        async function mainUserData(req: Request, res: Response) {
-            // read recipes from request path
-            let initialRecipes: string[] = req.params.recipes.split(",");
-            let allRecipes: Recipe[] = await (new CloudInitRecipeListExpander(req.oldSkoolContext, req.oldSkoolResolver, initialRecipes)).expand();
-            let finalRecipes = allRecipes.map(value => value.id);
-
-            let initScripts = await allRecipes.asyncFlatMap((recipe) => recipe.getAutoScripts(recipe.def.auto_initscripts));
-            let launcherScripts = await allRecipes.asyncFlatMap((recipe) => recipe.getAutoScripts(recipe.def.auto_launchers));
-
-            let body = "";
-
-            // body += "## template: jinja\n"; // mark this as a jinja template. it does not work directly with #include!
-            body += "#include\n";
-
-            // @TODO: explanations!
-
-            // @TODO: possibly use a launcher-script (that can gather info from the instance) and _then_ process that YAML.
-            // link to the yaml-merger
-            body += `${req.oldSkoolContext.moduleUrl}/${finalRecipes.join(',')}/cloudinityaml` + "\n";
-
-            // link to the launcher-creators...
-            // consider: boot-cmd processor; cloud-init-per; etc.
-            body += `# launchers : ${launcherScripts.join(", ")}\n`;
-            body += `${req.oldSkoolContext.moduleUrl}/${finalRecipes.join(',')}/launchers\n`;
-
-
-            // link to the init-scripts, directly.
-            initScripts.forEach(script => {
-                body += `# initscript: ${script}\n`;
-                body += `${req.oldSkoolContext.moduleUrl}/bash/${script}\n`;
-            });
-
-            return res.status(200).contentType("text/plain").send(body);
-        }
-
         // This "root" thing produces "#include" for yamls, auto-launchers, and init scripts.
         app.get("/:owner/:repo/:commitish/:recipes", async (req, res, next) => {
-            return await mainUserData(req, res);
+            return await (new MimeBundler([...await this.mainUserDataFragment(req)])).render(res);
         });
 
         // This produces the YAML for #cloud-config, merged.
@@ -178,13 +144,13 @@ export class OldSkoolServer {
 
         // for use with dsnocloud, user-data is the same as the main entrypoint
         app.get("/:owner/:repo/:commitish/:recipes/dsnocloud/user-data", async (req, res) => {
-            return await mainUserData(req, res);
+            return await (new MimeBundler([...await this.mainUserDataFragment(req)])).render(res);
         });
 
         // the same again as above, put with a placeholder for key=value pairs just like a querystring.
         app.get("/:owner/:repo/:commitish/:recipes/params/:defaults/dsnocloud/user-data", async (req, res) => {
             console.warn(":defaults", req.params.defaults);
-            return await mainUserData(req, res);
+            return await (new MimeBundler([...await this.mainUserDataFragment(req)])).render(res);
         });
 
 
@@ -198,10 +164,95 @@ export class OldSkoolServer {
         return app;
     }
 
+    async mainUserDataFragment(req: Request): Promise<MimeTextFragment[]> {
+        return [await this.includePartHandler(req), await this.mainCloudConfigIncludeFragment(req)];
+    }
+
+    private async mainCloudConfigIncludeFragment(req: Request): Promise<MimeTextFragment> {
+        // read recipes from request path
+        let initialRecipes: string[] = req.params.recipes.split(",");
+        let allRecipes: Recipe[] = await (new CloudInitRecipeListExpander(req.oldSkoolContext, req.oldSkoolResolver, initialRecipes)).expand();
+        let finalRecipes = allRecipes.map(value => value.id);
+
+        let initScripts = await allRecipes.asyncFlatMap((recipe) => recipe.getAutoScripts(recipe.def.auto_initscripts));
+        let launcherScripts = await allRecipes.asyncFlatMap((recipe) => recipe.getAutoScripts(recipe.def.auto_launchers));
+
+        let body = "";
+
+        // body += "## template: jinja\n"; // mark this as a jinja template. it does not work directly with #include!
+        body += "#include\n";
+
+        // @TODO: explanations!
+
+        // @TODO: possibly use a launcher-script (that can gather info from the instance) and _then_ process that YAML.
+        // link to the yaml-merger
+        body += `${req.oldSkoolContext.moduleUrl}/${finalRecipes.join(',')}/cloudinityaml` + "\n";
+
+        // link to the launcher-creators...
+        // consider: boot-cmd processor; cloud-init-per; etc.
+        body += `# launchers : ${launcherScripts.join(", ")}\n`;
+        body += `${req.oldSkoolContext.moduleUrl}/${finalRecipes.join(',')}/launchers\n`;
+
+
+        // link to the init-scripts, directly.
+        initScripts.forEach(script => {
+            body += `# initscript: ${script}\n`;
+            body += `${req.oldSkoolContext.moduleUrl}/bash/${script}\n`;
+        });
+
+        return new MimeTextFragment("text/x-include-url", "cloud-init-main-include.yaml", body);
+    }
+
     private createMetaDataMinimal() {
         let metaData: any = {};
         metaData["instance-id"] = "i-87018aed";
         metaData["hostname"] = "i-87018aed.fritz.box";
         return metaData;
+    }
+
+    private async includePartHandler(req: Request): Promise<MimeTextFragment> {
+        let body:string = ``;
+        body += `#part-handler
+# vi: syntax=python ts=4
+# this is an example of a version 2 part handler.
+# the differences between the initial part-handler version
+# and v2 is:
+#  * handle_part receives a 5th argument, 'frequency'
+#    frequency will be either 'always' or 'per-instance'
+#  * handler_version must be set
+#
+# A handler declaring version 2 will be called on all instance boots, with a
+# different 'frequency' argument.
+
+handler_version = 2
+
+def list_types():
+    # return a list of mime-types that are handled by this module
+    return(["text/plain", "text/go-cubs-go"])
+
+def handle_part(data,ctype,filename,payload,frequency):
+    # data: the cloudinit object
+    # ctype: '__begin__', '__end__', or the specific mime-type of the part
+    # filename: the filename for the part, or dynamically generated part if
+    #           no filename is given attribute is present
+    # payload: the content of the part (empty for begin or end)
+    # frequency: the frequency that this cloud-init run is running for
+    #            this is either 'per-instance' or 'always'.  'per-instance'
+    #            will be invoked only on the first boot.  'always' will
+    #            will be called on subsequent boots.
+    if ctype == "__begin__":
+       print "my handler is beginning, frequency=%s" % frequency
+       return
+    if ctype == "__end__":
+       print "my handler is ending, frequency=%s" % frequency
+       return
+
+    print "==== received ctype=%s filename=%s ====" % (ctype,filename)
+    print payload
+    print "==== end ctype=%s filename=%s" % (ctype, filename)
+    `;
+        //body += "---\n#cloud-config\nhostname: \"really.down.here\"\n";
+        return new MimeTextFragment("text/part-handler", "xincluded.py", body);
+        //return new MimeTextFragment("text/cloud-config", "another.yaml", body);
     }
 }

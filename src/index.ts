@@ -1,5 +1,6 @@
 import {OldSkoolServer} from './Server';
 import {TedisPool} from "tedis";
+import logger from './shared/Logger';
 
 // Start the server
 async function index() {
