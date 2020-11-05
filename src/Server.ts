@@ -86,7 +86,10 @@ export class OldSkoolServer {
             let initScripts = await allRecipes.asyncFlatMap((recipe) => recipe.getAutoScripts(recipe.def.auto_initscripts));
             let launcherScripts = await allRecipes.asyncFlatMap((recipe) => recipe.getAutoScripts(recipe.def.auto_launchers));
 
-            let body = "#include\n";
+            let body = "";
+
+            // body += "## template: jinja\n"; // mark this as a jinja template. it does not work directly with #include!
+            body += "#include\n";
 
             // @TODO: explanations!
 
@@ -185,7 +188,7 @@ export class OldSkoolServer {
         });
 
 
-        // common middleware for specified ORC;
+        // common middleware for specified ORC; @TODO: I don't see this running ever
         app.use("/:owner/:repo/:commitish", async (req, res, next) => {
             console.warn("Common middleware END!", req.params);
             await req.oldSkoolContext.deinit();
