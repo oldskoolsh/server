@@ -80,7 +80,9 @@ export class OldSkoolServer {
 
         // This "root" thing produces "#include" for yamls, auto-launchers, and init scripts.
         app.get("/:owner/:repo/:commitish/:recipes", async (req, res, next) => {
-            return await (new MimeBundler([...await this.mainUserDataFragment(req)])).render(res);
+            let main = await this.mainCloudConfigIncludeFragment(req);
+            return res.status(200).contentType("text/plain").send(main.body);
+            //return await (new MimeBundler([...await this.mainUserDataFragment(req)])).render(res);
         });
 
         // This produces the YAML for #cloud-config, merged.
@@ -111,12 +113,27 @@ export class OldSkoolServer {
                 let parsed: path.ParsedPath = path.parse(value);
                 let pathNoExt = `${parsed.dir ? `${parsed.dir}/` : ""}${parsed.name}`;
                 let launcherName = parsed.name;
-
                 return ({launcher: launcherName, script: pathNoExt});
             });
 
             let bashTemplate: string = `#!/bin/bash\n## **INCLUDE:common.sh\n` +
                 launcherDefs.map(value => `createLauncherScript "${value.launcher}" "${value.script}"`).join("\n") +
+                `\n`;
+
+            let body = await (new BashScriptAsset(req.oldSkoolContext, req.oldSkoolResolver, "launcher_template")).renderFromString(bashTemplate);
+            return res.status(200).contentType("text/plain").send(body);
+        });
+
+        // This produces a "initscript" that runs cloud-init on a preinstalled machine. dangerous?
+        app.get("/:owner/:repo/:commitish/:recipes/cmdline", async (req, res) => {
+            // read recipes from request path
+            let initialRecipes: string[] = req.params.recipes.split(",");
+            // re-expand, although the main already expanded.
+            let allRecipes: Recipe[] = await (new CloudInitRecipeListExpander(req.oldSkoolContext, req.oldSkoolResolver, initialRecipes)).expand();
+            let finalRecipes = allRecipes.map(value => value.id);
+
+            let bashTemplate: string = `#!/bin/bash\n## **INCLUDE:common.sh\n` +
+                `cmdLineCloudInit "${req.oldSkoolContext.moduleUrl}/${finalRecipes.join(',')}/"` +
                 `\n`;
 
             let body = await (new BashScriptAsset(req.oldSkoolContext, req.oldSkoolResolver, "launcher_template")).renderFromString(bashTemplate);
@@ -144,13 +161,23 @@ export class OldSkoolServer {
 
         // for use with dsnocloud, user-data is the same as the main entrypoint
         app.get("/:owner/:repo/:commitish/:recipes/dsnocloud/user-data", async (req, res) => {
-            return await (new MimeBundler([...await this.mainUserDataFragment(req)])).render(res);
+            if (false) {
+                let main = await this.mainCloudConfigIncludeFragment(req);
+                return res.status(200).contentType("text/plain").send(main.body);
+            } else {
+                return await (new MimeBundler([...await this.mainUserDataFragment(req)])).render(res);
+            }
         });
 
         // the same again as above, put with a placeholder for key=value pairs just like a querystring.
         app.get("/:owner/:repo/:commitish/:recipes/params/:defaults/dsnocloud/user-data", async (req, res) => {
             console.warn(":defaults", req.params.defaults);
-            return await (new MimeBundler([...await this.mainUserDataFragment(req)])).render(res);
+            if (false) {
+                let main = await this.mainCloudConfigIncludeFragment(req);
+                return res.status(200).contentType("text/plain").send(main.body);
+            } else {
+                return await (new MimeBundler([...await this.mainUserDataFragment(req)])).render(res);
+            }
         });
 
 
@@ -200,6 +227,10 @@ export class OldSkoolServer {
             body += `${req.oldSkoolContext.moduleUrl}/bash/${script}\n`;
         });
 
+        // comment to link to the cmdline version;
+        body += `# for cmdline usage: curl --silent "${req.oldSkoolContext.moduleUrl}/${finalRecipes.join(',')}/cmdline" | sudo bash\n`;
+
+
         return new MimeTextFragment("text/x-include-url", "cloud-init-main-include.yaml", body);
     }
 
@@ -211,7 +242,7 @@ export class OldSkoolServer {
     }
 
     private async includePartHandler(req: Request): Promise<MimeTextFragment> {
-        let body:string = ``;
+        let body: string = ``;
         body += `#part-handler
 # vi: syntax=python ts=4
 # this is an example of a version 2 part handler.
@@ -225,7 +256,6 @@ export class OldSkoolServer {
 # different 'frequency' argument.
 
 handler_version = 2
-
 def list_types():
     # return a list of mime-types that are handled by this module
     return(["text/plain", "text/go-cubs-go"])

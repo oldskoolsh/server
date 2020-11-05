@@ -7,29 +7,39 @@ export class MimeBundler {
 
     constructor(fragments: MimeTextFragment[]) {
         this.fragments = fragments;
-        let boundary = '--------------------------';
+        let boundary = '===============';
         for (let i = 0; i < 24; i++) {
             boundary += Math.floor(Math.random() * 10).toString(16);
         }
-        this.boundary = boundary;
+        this.boundary = boundary + "==";
     }
 
+    // embarrassing to have to write this code in 2020. really JS ecosystem...?
     async render(res: Response) {
-        let body = "";
+        let type = `multipart/mixed; boundary="${this.boundary}"`;
 
-        let counter = 1;
+        let body = "";
+        body += `Content-Type: ${type}\n`;
+        body += `MIME-Version: 1.0\n`;
+        body += `Number-Attachments: ${this.fragments.length}\n\n`;
+        body += `--${this.boundary}\n`;
+
         for (const fragment of this.fragments) {
             body += `Content-Type: ${fragment.type}; charset="utf-8"\n`;
             body += `MIME-Version: 1.0\n`;
             body += `Content-Transfer-Encoding: base64\n`;
             body += `Content-Disposition: attachment; filename="${fragment.filename}"\n`;
             body += `\n`;
-            body += new Buffer(fragment.body).toString("base64")+"\n\n";
-            body += this.boundary + "\n";
+            body += new Buffer(fragment.body).toString("base64") + "\n\n";
+            body += `--${this.boundary}\n`;
         }
 
-        let headeredRes = res.status(200).set('MIME-Version', '1.0').contentType(`multipart/mixed; boundary="===============${this.boundary}=="`);
-        headeredRes.send(body);
+        res
+            .set('MIME-Version', '1.0')
+            .set('Content-type', type)
+            .set('Number-Attachments', `${this.fragments.length}`)
+            .status(200)
+            .send(body);
     }
 
 }
