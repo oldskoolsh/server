@@ -1,6 +1,4 @@
-export {
-
-} // escape the module context...
+export {} // escape the module context...
 declare global {
     interface Array<T> {
         asyncFlatMap<U>(c: (i: T) => Promise<U | Array<U>>): Promise<Array<U>>

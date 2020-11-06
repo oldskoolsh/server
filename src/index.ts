@@ -12,7 +12,7 @@ async function index() {
     tedisPool.putTedis(oneTedis);
 
     await new OldSkoolServer(tedisPool).createAndListen();
-};
+}
 
 index().then(value => {
     logger.info("Server setup OK.")

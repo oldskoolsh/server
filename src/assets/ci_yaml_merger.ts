@@ -60,13 +60,13 @@ export class CloudInitYamlMerger {
 
             if (conditionValue instanceof Array) {
                 let allConds: (boolean)[] =
-                await Promise.all(
-                    conditionValue.map(async value => {
-                        let impl: ICondition = this.createConditionImplementation(conditionKey, value);
-                        if (!await impl.evaluate()) return false;
-                        return true;
-                    })
-                );
+                    await Promise.all(
+                        conditionValue.map(async value => {
+                            let impl: ICondition = this.createConditionImplementation(conditionKey, value);
+                            if (!await impl.evaluate()) return false;
+                            return true;
+                        })
+                    );
                 return allConds.some(value => value);
             } else {
                 let impl: ICondition = this.createConditionImplementation(conditionKey, conditionValue);

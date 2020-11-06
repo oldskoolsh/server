@@ -21,6 +21,10 @@ export class CloudInitYamlProcessorAptSources extends BaseYamlProcessor {
         return src;
     }
 
+    protected firstKeyArmored(result: openpgp.key.KeyResult): string {
+        return result.keys[0].armor().replace(/\r/g, ""); // for some reason armor includes \r and comments which I hate.
+    }
+
     private async handleAptSource(sourceDef: any): Promise<any> {
         if (sourceDef["http_key"]) {
             sourceDef["key"] = await this.resolveHttpKey(sourceDef["http_key"]);
@@ -50,7 +54,6 @@ export class CloudInitYamlProcessorAptSources extends BaseYamlProcessor {
         });
     }
 
-
     private async resolveKeyId(gpgKeyId: string, gpgServer: string): Promise<string> {
         return await this.cached(`${gpgKeyId}${gpgServer}`, 3600, async () => {
             const hkp = new openpgp.HKP(`https://${gpgServer}`);
@@ -59,10 +62,6 @@ export class CloudInitYamlProcessorAptSources extends BaseYamlProcessor {
             let result = await openpgp.key.readArmored(publicKeyArmored);
             return this.firstKeyArmored(result);
         });
-    }
-
-    protected firstKeyArmored(result: openpgp.key.KeyResult): string {
-        return result.keys[0].armor().replace(/\r/g, ""); // for some reason armor includes \r and comments which I hate.
     }
 
 }

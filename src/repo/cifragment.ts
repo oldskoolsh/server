@@ -2,10 +2,10 @@ import {Recipe} from "./recipe";
 
 export class CloudConfigFragment {
     public recipe: Recipe;
-    private readonly doc: any;
-    private sourceFile: string;
     public condition: any;
     public contents: any;
+    private readonly doc: any;
+    private sourceFile: string;
 
     constructor(doc: any, recipe: Recipe, sourceFile: string) {
         this.doc = doc;

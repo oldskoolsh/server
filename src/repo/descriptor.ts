@@ -16,6 +16,7 @@ export interface IRepoRecipe {
     auto_launchers: string[];
     auto_initscripts: string[];
 }
+
 /*
 
 export interface IRecipeLauncher {
