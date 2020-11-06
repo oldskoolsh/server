@@ -30,7 +30,7 @@ export class MimeBundler {
             body += `Content-Transfer-Encoding: base64\n`;
             body += `Content-Disposition: attachment; filename="${fragment.filename}"\n`;
             body += `\n`;
-            body += new Buffer(fragment.body).toString("base64") + "\n\n";
+            body += Buffer.from(fragment.body).toString("base64") + "\n\n";
             body += `--${this.boundary}\n`;
         }
 

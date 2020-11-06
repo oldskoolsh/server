@@ -40,12 +40,12 @@ export class OldSkoolServer {
         const {BAD_REQUEST} = StatusCodes;
 
         //app.use(express.json());
-        app.use(express.urlencoded({extended: true}));
+        //app.use(express.urlencoded({extended: true}));
 
         //app.use(cookieParser());
 
         // Show routes called in console during development
-        app.use(morgan('dev'));
+        app.use(morgan('combined'));
 
         // "Security headers"
         // import helmet from 'helmet';
@@ -62,7 +62,7 @@ export class OldSkoolServer {
 
         // common middleware for specified ORC
         app.use("/:owner/:repo/:commitish", async (req, res, next) => {
-            console.warn("Common middleware START!", req.params);
+            //console.warn("Common middleware START!", req.params);
             // Fake, should come from :owner/:repo/:commitish
             const resolver = new RepoResolver("/Users/pardini/Documents/Projects/github/oldskool", "oldskool-rpardini");
             await resolver.rootResolve();
@@ -164,7 +164,7 @@ export class OldSkoolServer {
 
         // bash renderer
         app.get("/:owner/:repo/:commitish/bash/:path(*)", async (req, res) => {
-            console.log("asset path", req.params.path);
+            //console.log("asset path", req.params.path);
             let body = await (new BashScriptAsset(req.oldSkoolContext, req.oldSkoolResolver, req.params.path)).renderFromFile();
             return res.status(200).contentType("text/plain").send(body);
         });
@@ -172,18 +172,17 @@ export class OldSkoolServer {
         // for use with dsnocloud, cloud-init appends "meta-data" and "user-data"
         // we serve metadata so it does not complain; instance-id is required.
         app.get("/:owner/:repo/:commitish/:recipes/dsnocloud/meta-data", async (req, res) => {
-            return res.status(200).contentType("text/yaml").send(YAML.stringify(this.createMetaDataMinimal()));
+            return res.status(200).contentType("text/yaml").send(YAML.stringify(this.createMetaDataMinimal(req)));
         });
 
         // the same again as above, put with a placeholder for key=value pairs just like a querystring.
         app.get("/:owner/:repo/:commitish/:recipes/params/:defaults/dsnocloud/meta-data", async (req, res) => {
-            console.warn(":defaults", req.params.defaults);
-            return res.status(200).contentType("text/yaml").send(YAML.stringify(this.createMetaDataMinimal()));
+            return res.status(200).contentType("text/yaml").send(YAML.stringify(this.createMetaDataMinimal(req)));
         });
 
         // for use with dsnocloud, user-data is the same as the main entrypoint
         app.get("/:owner/:repo/:commitish/:recipes/dsnocloud/user-data", async (req, res) => {
-            if (false) {
+            if (true) {
                 let main = await this.mainCloudConfigIncludeFragment(req);
                 return res.status(200).contentType("text/plain").send(main.body);
             } else {
@@ -193,8 +192,7 @@ export class OldSkoolServer {
 
         // the same again as above, put with a placeholder for key=value pairs just like a querystring.
         app.get("/:owner/:repo/:commitish/:recipes/params/:defaults/dsnocloud/user-data", async (req, res) => {
-            console.warn(":defaults", req.params.defaults);
-            if (false) {
+            if (true) {
                 let main = await this.mainCloudConfigIncludeFragment(req);
                 return res.status(200).contentType("text/plain").send(main.body);
             } else {
@@ -256,10 +254,37 @@ export class OldSkoolServer {
         return new MimeTextFragment("text/x-include-url", "cloud-init-main-include.txt", body);
     }
 
-    private createMetaDataMinimal() {
+    private createMetaDataMinimal(req: Request) {
+        // For oldskool-supported non-clouds (libvirt, hyperkit, hyperv, virtualbox)
+        // the correspondent VM-creator script uses the /params/ URL variation.
+        // that might include hints for the meta-data generator.
+
+        let paramStr: string = req.params.defaults || "";
+        let strKeyValuePairs: string[] = paramStr.split(",");
+        let keyValuesPairs: string[][] = strKeyValuePairs.map(value => value.split("=")).filter(value => value.length == 2);
+        let parsedKeyVal: { value: string; key: string }[] = keyValuesPairs.map(value => ({
+            key: value[0],
+            value: value[1]
+        }));
+        let keyValueMap: Map<string, string> = new Map<string, string>();
+        parsedKeyVal.forEach(value => keyValueMap.set(value.key, value.value));
+
+        // from create.sh
+        // iid=${INSTANCE_ID},cloud=libvirt,arch=${ARCH},hostname=${NEWVM},tz=${TIMEZONE},os=ubuntu,release=${UBUNTUVERSION}
+
+        let cloud = keyValueMap.get("cloud") || "noncloud";
+        let instanceId = keyValueMap.get("iid") || "i-87018aed";
+        let hostNameFull = keyValueMap.get("hostname") || (`${instanceId}.${cloud}`);
+        hostNameFull = hostNameFull.includes(".") ? hostNameFull : `${hostNameFull}.default.domain`;
+
         let metaData: any = {};
-        metaData["instance-id"] = "i-87018aed";
-        metaData["hostname"] = "i-87018aed.fritz.box";
+        metaData["cloud"] = `oldskool-${cloud}`; // I don't think this is read anywhere.
+        metaData["instance-id"] = instanceId;
+        metaData["hostname"] = hostNameFull;
+        metaData["local_hostname"] = hostNameFull;
+        metaData["availability_zone"] = `${cloud}0`;
+        metaData["region"] = `${cloud}`;
+        metaData["oldskool"] = keyValueMap;
         return metaData;
     }
 
