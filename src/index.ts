@@ -1,6 +1,9 @@
-import {OldSkoolServer} from './Server';
 import {TedisPool} from "tedis";
 import logger from './shared/Logger';
+import {OldSkoolServer} from "./express/paths";
+import {aff} from "./shared/utils";
+
+new aff();
 
 // Start the server
 async function index() {
@@ -12,7 +15,7 @@ async function index() {
 };
 
 index().then(value => {
-    console.log("Server setup OK.")
+    logger.info("Server setup OK.")
 }).catch(reason => {
     console.log(reason);
     process.exit(3);

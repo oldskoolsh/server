@@ -1,96 +1,35 @@
-import morgan from 'morgan';
-
-import express, {NextFunction, Request, Response} from 'express';
+import {Express, Request} from "express";
+import {Recipe} from "../repo/recipe";
+import {CloudInitRecipeListExpander} from "../assets/ci_expander";
+import {CloudInitYamlMerger} from "../assets/ci_yaml_merger";
+import {CloudInitProcessorStack} from "../processors/stack";
+import YAML from "yaml";
+import path from "path";
+import {BashScriptAsset} from "../assets/bash";
+import {MimeTextFragment} from "../shared/mime";
 import StatusCodes from 'http-status-codes';
-import 'express-async-errors';
+import {OldSkoolMiddleware} from "./middleware";
 
-import logger from './shared/Logger';
-import {Recipe} from "./repo/recipe";
-import {CloudInitRecipeListExpander} from "./assets/ci_expander";
-import {CloudInitYamlMerger} from "./assets/ci_yaml_merger";
-import {CloudInitProcessorStack} from "./processors/stack";
-import {RepoResolver} from "./repo/resolver";
-import {RenderingContext} from "./assets/context";
-import YAML from 'yaml';
-import {BashScriptAsset} from "./assets/bash";
+const {BAD_REQUEST, OK} = StatusCodes;
 
-import "./shared/utils";
-import * as path from "path";
-import {TedisPool} from "tedis";
-import {MimeBundler, MimeTextFragment} from "./shared/mime";
+export class OldSkoolServer extends OldSkoolMiddleware {
 
-export class OldSkoolServer {
-    private readonly tedisPool: TedisPool;
-
-    constructor(tedisPool: TedisPool) {
-        this.tedisPool = tedisPool;
-    }
-
-    async createAndListen() {
-        let app = await this.createExpressServer();
-        const port = Number(process.env.PORT || 3000);
-        let bla = await app.listen(port, () => {
-            logger.info(`Express server started on port: ${port}`);
-        });
-    }
-
-
-    async createExpressServer() {
-        const app = express();
-        const {BAD_REQUEST} = StatusCodes;
-
-        //app.use(express.json());
-        //app.use(express.urlencoded({extended: true}));
-
-        //app.use(cookieParser());
-
-        // Show routes called in console during development
-        app.use(morgan('combined'));
-
-        // "Security headers"
-        // import helmet from 'helmet';
-        //app.use(helmet());
-
-        // Print API errors
-        app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
-            logger.err(err, true);
-            return res.status(BAD_REQUEST).json({
-                error: err.message,
-            });
-        });
-
-
-        // common middleware for specified ORC
-        app.use("/:owner/:repo/:commitish", async (req, res, next) => {
-            //console.warn("Common middleware START!", req.params);
-            // Fake, should come from :owner/:repo/:commitish
-            const resolver = new RepoResolver("/Users/pardini/Documents/Projects/github/oldskool", "oldskool-rpardini");
-            await resolver.rootResolve();
-            req.oldSkoolResolver = resolver;
-
-            // also fake, should come from request datum
-            let context = new RenderingContext("https://cloud-init.pardini.net/", this.tedisPool);
-            context.moduleUrl = `${context.baseUrl}${req.params.owner}/${req.params.repo}/${req.params.commitish}`;
-            await context.init();
-            req.oldSkoolContext = context;
-
-            next();
-        })
-
-
+    addPathHandlers(app: Express) {
         // This "root" thing produces "#include" for yamls, auto-launchers, and init scripts.
-        app.get("/:owner/:repo/:commitish/:recipes", async (req, res, next) => {
+        app.get(`${this.uriOwnerRepoCommitish}/:recipes`, async (req, res, next) => {
             let main = await this.mainCloudConfigIncludeFragment(req);
-            return res.status(200).contentType("text/plain").send(main.body);
-            //return await (new MimeBundler([...await this.mainUserDataFragment(req)])).render(res);
+            res.status(200).contentType("text/plain").send(main.body);
+            next();
         });
 
         // This produces the YAML for #cloud-config, merged.
-        app.get("/:owner/:repo/:commitish/:recipes/real/cloud/init/yaml", async (req, res) => {
+        app.get(`${this.uriOwnerRepoCommitishRecipes}/real/cloud/init/yaml`, async (req, res, next) => {
             // read recipes from request path
             let initialRecipes: string[] = req.params.recipes.split(",");
             // re-expand, although the main already expanded.
             let newList: Recipe[] = await (new CloudInitRecipeListExpander(req.oldSkoolContext, req.oldSkoolResolver, initialRecipes)).expand();
+
+
             let merged = await (new CloudInitYamlMerger(req.oldSkoolContext, req.oldSkoolResolver, newList)).mergeYamls();
             // Processor stack processing
             let finalResult = await new CloudInitProcessorStack(req.oldSkoolContext, req.oldSkoolResolver, merged).addDefaultStack().process();
@@ -101,11 +40,12 @@ export class OldSkoolServer {
             body += `# final recipes: ${newList.map(value => value.id).join(", ")} \n`;
             body += finalResult;
 
-            return res.status(200).contentType("text/plain").send(body);
+            res.status(200).contentType("text/plain").send(body);
+            next();
         });
 
         // This produces a minimal cloud-config that uses bootcmd to gather data and update the cloud-config in place
-        app.get("/:owner/:repo/:commitish/:recipes/cloud/init/yaml/data/gather", async (req, res) => {
+        app.get(`${this.uriOwnerRepoCommitishRecipes}/cloud/init/yaml/data/gather`, async (req, res, next) => {
             // read recipes from request path
             let initialRecipes: string[] = req.params.recipes.split(",");
             let allRecipes: Recipe[] = await (new CloudInitRecipeListExpander(req.oldSkoolContext, req.oldSkoolResolver, initialRecipes)).expand();
@@ -121,11 +61,12 @@ export class OldSkoolServer {
             body += `## template: jinja\n`;
             body += `#cloud-config\n`;
             body += YAML.stringify(yaml);
-            return res.status(200).contentType("text/plain").send(body);
+            res.status(200).contentType("text/plain").send(body);
+            next();
         });
 
         // This produces a "initscript" that creates launchers @TODO: refactor
-        app.get("/:owner/:repo/:commitish/:recipes/launchers", async (req, res) => {
+        app.get(`${this.uriOwnerRepoCommitishRecipes}/launchers`, async (req, res, next) => {
             // read recipes from request path
             let initialRecipes: string[] = req.params.recipes.split(",");
             // re-expand, although the main already expanded.
@@ -143,11 +84,12 @@ export class OldSkoolServer {
                 `\n`;
 
             let body = await (new BashScriptAsset(req.oldSkoolContext, req.oldSkoolResolver, "launcher_template")).renderFromString(bashTemplate);
-            return res.status(200).contentType("text/plain").send(body);
+            res.status(200).contentType("text/plain").send(body);
+            next();
         });
 
         // This produces a "initscript" that runs cloud-init on a preinstalled machine. dangerous?
-        app.get("/:owner/:repo/:commitish/:recipes/cmdline", async (req, res) => {
+        app.get(`${this.uriOwnerRepoCommitishRecipes}/cmdline`, async (req, res, next) => {
             // read recipes from request path
             let initialRecipes: string[] = req.params.recipes.split(",");
             // re-expand, although the main already expanded.
@@ -159,60 +101,45 @@ export class OldSkoolServer {
                 `\n`;
 
             let body = await (new BashScriptAsset(req.oldSkoolContext, req.oldSkoolResolver, "launcher_template")).renderFromString(bashTemplate);
-            return res.status(200).contentType("text/plain").send(body);
+            res.status(200).contentType("text/plain").send(body);
+            next();
         });
 
         // bash renderer
-        app.get("/:owner/:repo/:commitish/bash/:path(*)", async (req, res) => {
+        app.get(`${this.uriOwnerRepoCommitish}/bash/:path(*)`, async (req, res, next) => {
             //console.log("asset path", req.params.path);
             let body = await (new BashScriptAsset(req.oldSkoolContext, req.oldSkoolResolver, req.params.path)).renderFromFile();
-            return res.status(200).contentType("text/plain").send(body);
+            res.status(200).contentType("text/plain").send(body);
+            next();
         });
+
 
         // for use with dsnocloud, cloud-init appends "meta-data" and "user-data"
         // we serve metadata so it does not complain; instance-id is required.
-        app.get("/:owner/:repo/:commitish/:recipes/dsnocloud/meta-data", async (req, res) => {
-            return res.status(200).contentType("text/yaml").send(YAML.stringify(this.createMetaDataMinimal(req)));
+        app.get(`${this.uriNoCloudWithoutParams}/meta-data`, async (req, res, next) => {
+            res.status(200).contentType("text/yaml").send(YAML.stringify(this.createMetaDataMinimal(req)));
+            next();
         });
 
         // the same again as above, put with a placeholder for key=value pairs just like a querystring.
-        app.get("/:owner/:repo/:commitish/:recipes/params/:defaults/dsnocloud/meta-data", async (req, res) => {
-            return res.status(200).contentType("text/yaml").send(YAML.stringify(this.createMetaDataMinimal(req)));
+        app.get(`${this.uriNoCloudWithParams}/meta-data`, async (req, res, next) => {
+            res.status(200).contentType("text/yaml").send(YAML.stringify(this.createMetaDataMinimal(req)));
+            next();
         });
 
         // for use with dsnocloud, user-data is the same as the main entrypoint
-        app.get("/:owner/:repo/:commitish/:recipes/dsnocloud/user-data", async (req, res) => {
-            if (true) {
-                let main = await this.mainCloudConfigIncludeFragment(req);
-                return res.status(200).contentType("text/plain").send(main.body);
-            } else {
-                return await (new MimeBundler([...await this.mainUserDataFragment(req)])).render(res);
-            }
-        });
-
-        // the same again as above, put with a placeholder for key=value pairs just like a querystring.
-        app.get("/:owner/:repo/:commitish/:recipes/params/:defaults/dsnocloud/user-data", async (req, res) => {
-            if (true) {
-                let main = await this.mainCloudConfigIncludeFragment(req);
-                return res.status(200).contentType("text/plain").send(main.body);
-            } else {
-                return await (new MimeBundler([...await this.mainUserDataFragment(req)])).render(res);
-            }
-        });
-
-
-        // common middleware for specified ORC; @TODO: I don't see this running ever
-        app.use("/:owner/:repo/:commitish", async (req, res, next) => {
-            console.warn("Common middleware END!", req.params);
-            await req.oldSkoolContext.deinit();
+        app.get(`${this.uriNoCloudWithoutParams}/user-data`, async (req, res, next) => {
+            let main = await this.mainCloudConfigIncludeFragment(req);
+            res.status(200).contentType("text/plain").send(main.body);
             next();
-        })
+        });
 
-        return app;
-    }
-
-    async mainUserDataFragment(req: Request): Promise<MimeTextFragment[]> {
-        return [await this.includePartHandler(req), await this.mainCloudConfigIncludeFragment(req)];
+        // the same again as above, but with a placeholder for key=value pairs just like a querystring.
+        app.get(`${this.uriNoCloudWithParams}/user-data`, async (req, res, next) => {
+            let main = await this.mainCloudConfigIncludeFragment(req);
+            res.status(200).contentType("text/plain").send(main.body);
+            next();
+        });
     }
 
     private async mainCloudConfigIncludeFragment(req: Request): Promise<MimeTextFragment> {
@@ -288,49 +215,4 @@ export class OldSkoolServer {
         return metaData;
     }
 
-    private async includePartHandler(req: Request): Promise<MimeTextFragment> {
-        let body: string = ``;
-        body += `#part-handler
-# vi: syntax=python ts=4
-# this is an example of a version 2 part handler.
-# the differences between the initial part-handler version
-# and v2 is:
-#  * handle_part receives a 5th argument, 'frequency'
-#    frequency will be either 'always' or 'per-instance'
-#  * handler_version must be set
-#
-# A handler declaring version 2 will be called on all instance boots, with a
-# different 'frequency' argument.
-
-handler_version = 2
-def list_types():
-    # return a list of mime-types that are handled by this module
-    return(["text/templated-x-include-url"])
-
-def handle_part(data,ctype,filename,payload,frequency):
-    # data: the cloudinit object
-    # ctype: '__begin__', '__end__', or the specific mime-type of the part
-    # filename: the filename for the part, or dynamically generated part if
-    #           no filename is given attribute is present
-    # payload: the content of the part (empty for begin or end)
-    # frequency: the frequency that this cloud-init run is running for
-    #            this is either 'per-instance' or 'always'.  'per-instance'
-    #            will be invoked only on the first boot.  'always' will
-    #            will be called on subsequent boots.
-    if ctype == "__begin__":
-       print("my handler is beginning, frequency=%s" % frequency)
-       return
-    if ctype == "__end__":
-       print("my handler is ending, frequency=%s" % frequency)
-       return
-
-    print("==== received ctype=%s filename=%s ====" % (ctype,filename))
-    print(data)
-    print(payload)
-    print("==== end ctype=%s filename=%s" % (ctype, filename))
-    `;
-        //body += "---\n#cloud-config\nhostname: \"really.down.here\"\n";
-        return new MimeTextFragment("text/part-handler", "xincluded.py", body);
-        //return new MimeTextFragment("text/cloud-config", "another.yaml", body);
-    }
 }
