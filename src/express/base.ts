@@ -16,16 +16,7 @@ export abstract class OldSkoolBase {
         this.app = express();
     }
 
-    handle(paths: string[], handler: (context: RenderingContext, res: Response) => Promise<void>) {
-        for (const path of paths) {
-            this.app.get(path, async (req, res, next) => {
-                await handler(req.oldSkoolContext, res);
-                next();
-            });
-        }
-    }
-
-    handleWithReq(paths: string[], handler: (context: RenderingContext, res: Response, req: Request) => Promise<void>) {
+    handle(paths: string[], handler: (context: RenderingContext, res: Response, req: Request) => Promise<void>) {
         for (const path of paths) {
             this.app.get(path, async (req, res, next) => {
                 await handler(req.oldSkoolContext, res, req);
@@ -33,7 +24,6 @@ export abstract class OldSkoolBase {
             });
         }
     }
-
 
     async createAndListen() {
         let app = await this.createExpressServer();

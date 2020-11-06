@@ -1,6 +1,4 @@
-import {Express, Request, Response} from "express";
-import {Recipe} from "../repo/recipe";
-import {CloudInitRecipeListExpander} from "../assets/ci_expander";
+import {Express, Response} from "express";
 import {CloudInitYamlMerger} from "../assets/ci_yaml_merger";
 import {CloudInitProcessorStack} from "../processors/stack";
 import YAML from "yaml";
@@ -62,42 +60,33 @@ export class OldSkoolServer extends OldSkoolMiddleware {
 
 
         // specific bash handler. this has no recipes!
-        this.handleWithReq([`${this.uriOwnerRepoCommitish}/bash/:path(*)`], async (context: RenderingContext, res: Response, req) => {
-            let body = await (new BashScriptAsset(context, req.oldSkoolResolver, req.params.path)).renderFromFile();
+        this.handle([`${this.uriOwnerRepoCommitish}/bash/:path(*)`], async (context: RenderingContext, res: Response, req) => {
+            let body = await (new BashScriptAsset(context, context.resolver, req.params.path)).renderFromFile();
             res.status(200).contentType("text/plain").send(body);
         });
 
 
         // This produces the YAML for #cloud-config, merged.
-        this.handleWithReq([`${this.uriOwnerRepoCommitishRecipes}/real/cloud/init/yaml`], async (context: RenderingContext, res: Response, req: Request) => {
-            // read recipes from request path
-            let initialRecipes: string[] = req.params.recipes.split(",");
-            // re-expand, although the main already expanded.
-            let newList: Recipe[] = await (new CloudInitRecipeListExpander(req.oldSkoolContext, req.oldSkoolResolver, initialRecipes)).expand();
-
-
-            let merged = await (new CloudInitYamlMerger(req.oldSkoolContext, req.oldSkoolResolver, newList)).mergeYamls();
-            // Processor stack processing
-            let finalResult = await new CloudInitProcessorStack(req.oldSkoolContext, req.oldSkoolResolver, merged).addDefaultStack().process();
+        this.handle([`${this.uriOwnerRepoCommitishRecipes}/real/cloud/init/yaml`], async (context: RenderingContext, res: Response) => {
+            // merge and process.
+            let merged = await (new CloudInitYamlMerger(context, context.resolver, context.recipes)).mergeYamls();
+            let finalResult = await new CloudInitProcessorStack(context, context.resolver, merged).addDefaultStack().process();
 
             let body: string = "";
             body += `## template: jinja\n`;
             body += `#cloud-config\n`;
-            body += `# final recipes: ${newList.map(value => value.id).join(", ")} \n`;
+            body += `# final recipes: ${context.recipes.map(value => value.id).join(", ")} \n`;
             body += finalResult;
             res.status(200).contentType("text/plain").send(body);
         });
 
         // This produces a minimal cloud-config that uses bootcmd to gather data and update the cloud-config in place
-        this.handleWithReq([`${this.uriOwnerRepoCommitishRecipes}/cloud/init/yaml/data/gather`], async (context: RenderingContext, res: Response, req) => {
-            // read recipes from request path
-            let initialRecipes: string[] = req.params.recipes.split(",");
-            let allRecipes: Recipe[] = await (new CloudInitRecipeListExpander(req.oldSkoolContext, req.oldSkoolResolver, initialRecipes)).expand();
-            let finalRecipes = allRecipes.map(value => value.id);
+        this.handle([`${this.uriOwnerRepoCommitishRecipes}/cloud/init/yaml/data/gather`], async (context: RenderingContext, res: Response) => {
+            let finalRecipes = context.recipes.map(value => value.id);
             let yaml = {
-                bootcmd: [`echo "OldSkool initting from ${req.oldSkoolContext.moduleUrl}/${finalRecipes.join(',')}/real/cloud/init/yaml?ciarch={{machine}}&cicloud={{cloud_name}}&cios={{distro}}&cirelease={{distro_release}}&ciaz={{availability_zone}}&ciplatform={{platform}}&ciregion={{region}}"`,
+                bootcmd: [`echo "OldSkool initting from ${context.moduleUrl}/${finalRecipes.join(',')}/real/cloud/init/yaml?ciarch={{machine}}&cicloud={{cloud_name}}&cios={{distro}}&cirelease={{distro_release}}&ciaz={{availability_zone}}&ciplatform={{platform}}&ciregion={{region}}"`,
                     "cp /var/lib/cloud/instance/cloud-config.txt /var/lib/cloud/instance/cloud-config.txt.orig",
-                    `curl "${req.oldSkoolContext.moduleUrl}/${finalRecipes.join(',')}/real/cloud/init/yaml?ciarch={{machine}}&cicloud={{cloud_name}}&cios={{distro}}&cirelease={{distro_release}}&ciaz={{availability_zone}}&ciplatform={{platform}}&ciregion={{region}}" > /var/lib/cloud/instance/cloud-config.txt`,
+                    `curl "${context.moduleUrl}/${finalRecipes.join(',')}/real/cloud/init/yaml?ciarch={{machine}}&cicloud={{cloud_name}}&cios={{distro}}&cirelease={{distro_release}}&ciaz={{availability_zone}}&ciplatform={{platform}}&ciregion={{region}}" > /var/lib/cloud/instance/cloud-config.txt`,
                     `echo @TODO: update the scripts as well, possibly.`,
                     "echo Done, continuing..."]
             };
@@ -110,12 +99,8 @@ export class OldSkoolServer extends OldSkoolMiddleware {
 
 
         // This produces a "initscript" that creates launchers @TODO: refactor
-        this.handleWithReq([`${this.uriOwnerRepoCommitishRecipes}/launchers`], async (context: RenderingContext, res: Response, req) => {
-            // read recipes from request path
-            let initialRecipes: string[] = req.params.recipes.split(",");
-            // re-expand, although the main already expanded.
-            let allRecipes: Recipe[] = await (new CloudInitRecipeListExpander(req.oldSkoolContext, req.oldSkoolResolver, initialRecipes)).expand();
-            let launcherScripts = await allRecipes.asyncFlatMap((recipe) => recipe.getAutoScripts(recipe.def.auto_launchers));
+        this.handle([`${this.uriOwnerRepoCommitishRecipes}/launchers`], async (context: RenderingContext, res: Response) => {
+            let launcherScripts = await context.recipes.asyncFlatMap((recipe) => recipe.getAutoScripts(recipe.def.auto_launchers));
             let launcherDefs = launcherScripts.map(value => {
                 let parsed: path.ParsedPath = path.parse(value);
                 let pathNoExt = `${parsed.dir ? `${parsed.dir}/` : ""}${parsed.name}`;
@@ -127,24 +112,20 @@ export class OldSkoolServer extends OldSkoolMiddleware {
                 launcherDefs.map(value => `createLauncherScript "${value.launcher}" "${value.script}"`).join("\n") +
                 `\n`;
 
-            let body = await (new BashScriptAsset(req.oldSkoolContext, req.oldSkoolResolver, "launcher_template")).renderFromString(bashTemplate);
+            let body = await (new BashScriptAsset(context, context.resolver, "launcher_template")).renderFromString(bashTemplate);
             res.status(200).contentType("text/plain").send(body);
 
         });
 
         // This produces a "initscript" that runs cloud-init on a preinstalled machine. dangerous?
-        this.handleWithReq([`${this.uriOwnerRepoCommitishRecipes}/cmdline`], async (context: RenderingContext, res: Response, req) => {
-            // read recipes from request path
-            let initialRecipes: string[] = req.params.recipes.split(",");
-            // re-expand, although the main already expanded.
-            let allRecipes: Recipe[] = await (new CloudInitRecipeListExpander(context, req.oldSkoolResolver, initialRecipes)).expand();
-            let finalRecipes = allRecipes.map(value => value.id);
+        this.handle([`${this.uriOwnerRepoCommitishRecipes}/cmdline`], async (context: RenderingContext, res: Response) => {
+            let finalRecipes = context.recipes.map(value => value.id);
 
             let bashTemplate: string = `#!/bin/bash\n## **INCLUDE:common.sh\n` +
                 `cmdLineCloudInit "${context.moduleUrl}/${finalRecipes.join(',')}/"` +
                 `\n`;
 
-            let body = await (new BashScriptAsset(context, req.oldSkoolResolver, "launcher_template")).renderFromString(bashTemplate);
+            let body = await (new BashScriptAsset(context, context.resolver, "launcher_template")).renderFromString(bashTemplate);
             res.status(200).contentType("text/plain").send(body);
         });
 

@@ -1,5 +1,6 @@
 import {TedisPool} from "tedis";
 import {Recipe} from "../repo/recipe";
+import {RepoResolver} from "../repo/resolver";
 
 export class RenderingContext {
 
@@ -8,6 +9,7 @@ export class RenderingContext {
     public readonly tedisPool: TedisPool;
     public recipes: Recipe[] = [];
     public paramKV: Map<string, string> = new Map<string, string>();
+    public resolver!: RepoResolver;
 
     constructor(baseUrl: string, tedisPool: TedisPool) {
         this.baseUrl = baseUrl;

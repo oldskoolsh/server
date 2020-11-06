@@ -25,6 +25,7 @@ export abstract class OldSkoolMiddleware extends OldSkoolBase {
             // also fake, should come from request datum
             let context = new RenderingContext("https://cloud-init.pardini.net/", this.tedisPool);
             context.moduleUrl = `${context.baseUrl}${req.params.owner}/${req.params.repo}/${req.params.commitish}`;
+            context.resolver = resolver; // shortcut only
             await context.init();
             req.oldSkoolContext = context;
 
