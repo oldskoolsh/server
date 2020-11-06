@@ -3,14 +3,37 @@ import logger from "../shared/Logger";
 import express, {Express, NextFunction, Request, Response} from "express";
 import morgan from "morgan";
 import StatusCodes from "http-status-codes";
+import {RenderingContext} from "../assets/context";
+
 const {BAD_REQUEST, OK} = StatusCodes;
 
 export abstract class OldSkoolBase {
     protected readonly tedisPool: TedisPool;
+    protected readonly app: Express;
 
     constructor(tedisPool: TedisPool) {
         this.tedisPool = tedisPool;
+        this.app = express();
     }
+
+    handle(paths: string[], handler: (context: RenderingContext, res: Response) => Promise<void>) {
+        for (const path of paths) {
+            this.app.get(path, async (req, res, next) => {
+                await handler(req.oldSkoolContext, res);
+                next();
+            });
+        }
+    }
+
+    handleWithReq(paths: string[], handler: (context: RenderingContext, res: Response, req: Request) => Promise<void>) {
+        for (const path of paths) {
+            this.app.get(path, async (req, res, next) => {
+                await handler(req.oldSkoolContext, res, req);
+                next();
+            });
+        }
+    }
+
 
     async createAndListen() {
         let app = await this.createExpressServer();
@@ -21,33 +44,33 @@ export abstract class OldSkoolBase {
     }
 
     async createExpressServer() {
-        const app: Express = express();
-
         // Show routes called in console during development
-        app.use(morgan('combined'));
+        this.app.use(morgan('combined'));
 
         // "Security headers"
         // import helmet from 'helmet';
         //app.use(helmet());
 
         // Print API errors
-        app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+        this.app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
             logger.err(err, true);
             return res.status(BAD_REQUEST).json({
                 error: err.message,
             });
         });
 
-        this.addEntranceMiddleware(app);
-        this.addPathHandlers(app);
-        this.addExitMiddleware(app);
+        this.addEntranceMiddleware(this.app);
+        this.addPathHandlers(this.app);
+        this.addExitMiddleware(this.app);
 
-        return app;
+        return this.app;
     }
 
-    abstract addExitMiddleware(app: Express):void;
-    abstract addPathHandlers(app: Express):void;
-    abstract addEntranceMiddleware(app: Express):void;
+    abstract addExitMiddleware(app: Express): void;
+
+    abstract addPathHandlers(app: Express): void;
+
+    abstract addEntranceMiddleware(app: Express): void;
 
 
 }

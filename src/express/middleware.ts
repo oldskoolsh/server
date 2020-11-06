@@ -3,6 +3,7 @@ import StatusCodes from "http-status-codes";
 import {Express} from "express";
 import {RepoResolver} from "../repo/resolver";
 import {RenderingContext} from "../assets/context";
+import {CloudInitRecipeListExpander} from "../assets/ci_expander";
 
 const {BAD_REQUEST, OK} = StatusCodes;
 
@@ -30,13 +31,40 @@ export abstract class OldSkoolMiddleware extends OldSkoolBase {
             next();
         })
 
+        app.use(`${this.uriOwnerRepoCommitish}/bash/:path(*)`, async (req, res, next) => {
+            console.warn("Common middleware + BASH!", req.params);
+            next();
+        });
+
         app.use(`${this.uriOwnerRepoCommitishRecipes}`, async (req, res, next) => {
             console.warn("Common middleware + RECIPES!", req.params);
+            if (!(req.params.recipes === "bash")) { // @TODO: this is horrible. could we NOT?
+                // read recipes from request path.
+                let initialRecipes: string[] = req.params.recipes.split(",");
+                req.oldSkoolContext.recipes = await (new CloudInitRecipeListExpander(req.oldSkoolContext, req.oldSkoolResolver, initialRecipes)).expand();
+            }
             next();
         })
 
         app.use(`${this.uriNoCloudWithParams}`, async (req, res, next) => {
             console.warn("Common middleware + NOCLOUD WITH PARAMS!", req.params);
+
+            // For oldskool-supported non-clouds (libvirt, hyperkit, hyperv, virtualbox)
+            // the correspondent VM-creator script uses the /params/ URL variation.
+            // that might include hints for the meta-data generator.
+
+            let paramStr: string = req.params.defaults || "";
+            let strKeyValuePairs: string[] = paramStr.split(",");
+            let keyValuesPairs: string[][] = strKeyValuePairs.map(value => value.split("=")).filter(value => value.length == 2);
+            let parsedKeyVal: { value: string; key: string }[] = keyValuesPairs.map(value => ({
+                key: value[0],
+                value: value[1]
+            }));
+            let keyValueMap: Map<string, string> = new Map<string, string>();
+            parsedKeyVal.forEach(value => keyValueMap.set(value.key, value.value));
+
+            req.oldSkoolContext.paramKV = keyValueMap;
+
             next();
         })
 
