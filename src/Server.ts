@@ -69,7 +69,7 @@ export class OldSkoolServer {
             req.oldSkoolResolver = resolver;
 
             // also fake, should come from request datum
-            let context = new RenderingContext("http://192.168.66.67:3000/", this.tedisPool);
+            let context = new RenderingContext("https://cloud-init.pardini.net/", this.tedisPool);
             context.moduleUrl = `${context.baseUrl}${req.params.owner}/${req.params.repo}/${req.params.commitish}`;
             await context.init();
             req.oldSkoolContext = context;
@@ -86,7 +86,7 @@ export class OldSkoolServer {
         });
 
         // This produces the YAML for #cloud-config, merged.
-        app.get("/:owner/:repo/:commitish/:recipes/cloudinityaml", async (req, res) => {
+        app.get("/:owner/:repo/:commitish/:recipes/real/cloud/init/yaml", async (req, res) => {
             // read recipes from request path
             let initialRecipes: string[] = req.params.recipes.split(",");
             // re-expand, although the main already expanded.
@@ -95,10 +95,32 @@ export class OldSkoolServer {
             // Processor stack processing
             let finalResult = await new CloudInitProcessorStack(req.oldSkoolContext, req.oldSkoolResolver, merged).addDefaultStack().process();
 
-            let body: string = `#cloud-config\n`;
+            let body: string = "";
+            body += `## template: jinja\n`;
+            body += `#cloud-config\n`;
             body += `# final recipes: ${newList.map(value => value.id).join(", ")} \n`;
             body += finalResult;
 
+            return res.status(200).contentType("text/plain").send(body);
+        });
+
+        // This produces a minimal cloud-config that uses bootcmd to gather data and update the cloud-config in place
+        app.get("/:owner/:repo/:commitish/:recipes/cloud/init/yaml/data/gather", async (req, res) => {
+            // read recipes from request path
+            let initialRecipes: string[] = req.params.recipes.split(",");
+            let allRecipes: Recipe[] = await (new CloudInitRecipeListExpander(req.oldSkoolContext, req.oldSkoolResolver, initialRecipes)).expand();
+            let finalRecipes = allRecipes.map(value => value.id);
+            let yaml = {
+                bootcmd: [`echo "OldSkool initting from ${req.oldSkoolContext.moduleUrl}/${finalRecipes.join(',')}/real/cloud/init/yaml?ciarch={{machine}}&cicloud={{cloud_name}}&cios={{distro}}&cirelease={{distro_release}}&ciaz={{availability_zone}}&ciplatform={{platform}}&ciregion={{region}}"`,
+                    "cp /var/lib/cloud/instance/cloud-config.txt /var/lib/cloud/instance/cloud-config.txt.orig",
+                    `curl "${req.oldSkoolContext.moduleUrl}/${finalRecipes.join(',')}/real/cloud/init/yaml?ciarch={{machine}}&cicloud={{cloud_name}}&cios={{distro}}&cirelease={{distro_release}}&ciaz={{availability_zone}}&ciplatform={{platform}}&ciregion={{region}}" > /var/lib/cloud/instance/cloud-config.txt`,
+                    `echo @TODO: update the scripts as well, possibly.`,
+                    "echo Done, continuing..."]
+            };
+            let body: string = "";
+            body += `## template: jinja\n`;
+            body += `#cloud-config\n`;
+            body += YAML.stringify(yaml);
             return res.status(200).contentType("text/plain").send(body);
         });
 
@@ -211,9 +233,9 @@ export class OldSkoolServer {
 
         // @TODO: explanations!
 
-        // @TODO: possibly use a launcher-script (that can gather info from the instance) and _then_ process that YAML.
-        // link to the yaml-merger
-        body += `${req.oldSkoolContext.moduleUrl}/${finalRecipes.join(',')}/cloudinityaml` + "\n";
+        // use a launcher-script (that can gather info from the instance) and _then_ process that YAML.
+        // that in turn brings in the to the yaml-merger in /real/cloud/init/yaml
+        body += `${req.oldSkoolContext.moduleUrl}/${finalRecipes.join(',')}/cloud/init/yaml/data/gather` + "\n";
 
         // link to the launcher-creators...
         // consider: boot-cmd processor; cloud-init-per; etc.
@@ -231,7 +253,7 @@ export class OldSkoolServer {
         body += `# for cmdline usage: curl --silent "${req.oldSkoolContext.moduleUrl}/${finalRecipes.join(',')}/cmdline" | sudo bash\n`;
 
 
-        return new MimeTextFragment("text/x-include-url", "cloud-init-main-include.yaml", body);
+        return new MimeTextFragment("text/x-include-url", "cloud-init-main-include.txt", body);
     }
 
     private createMetaDataMinimal() {
@@ -258,7 +280,7 @@ export class OldSkoolServer {
 handler_version = 2
 def list_types():
     # return a list of mime-types that are handled by this module
-    return(["text/plain", "text/go-cubs-go"])
+    return(["text/templated-x-include-url"])
 
 def handle_part(data,ctype,filename,payload,frequency):
     # data: the cloudinit object
@@ -271,15 +293,16 @@ def handle_part(data,ctype,filename,payload,frequency):
     #            will be invoked only on the first boot.  'always' will
     #            will be called on subsequent boots.
     if ctype == "__begin__":
-       print "my handler is beginning, frequency=%s" % frequency
+       print("my handler is beginning, frequency=%s" % frequency)
        return
     if ctype == "__end__":
-       print "my handler is ending, frequency=%s" % frequency
+       print("my handler is ending, frequency=%s" % frequency)
        return
 
-    print "==== received ctype=%s filename=%s ====" % (ctype,filename)
-    print payload
-    print "==== end ctype=%s filename=%s" % (ctype, filename)
+    print("==== received ctype=%s filename=%s ====" % (ctype,filename))
+    print(data)
+    print(payload)
+    print("==== end ctype=%s filename=%s" % (ctype, filename))
     `;
         //body += "---\n#cloud-config\nhostname: \"really.down.here\"\n";
         return new MimeTextFragment("text/part-handler", "xincluded.py", body);
