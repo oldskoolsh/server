@@ -4,6 +4,9 @@ import express, {Express, NextFunction, Request, Response} from "express";
 import morgan from "morgan";
 import StatusCodes from "http-status-codes";
 import {RenderingContext} from "../assets/context";
+// Hack into Express to be able to catch exceptions thrown from async handlers.
+// Yes, a "require" here is the only way to make this work.
+require('express-async-errors');
 
 const {BAD_REQUEST, OK} = StatusCodes;
 

@@ -25,7 +25,6 @@ export class OldSkoolServer extends OldSkoolMiddleware {
                 `${this.uriNoCloudWithoutParams}/user-data`,
                 `${this.uriNoCloudWithParams}/user-data`],
             async (context: RenderingContext, res: Response) => {
-                let finalRecipes = context.recipes.map(value => value.id);
 
                 let initScripts = await context.recipes.asyncFlatMap((recipe) => recipe.getAutoScripts(recipe.def.auto_initscripts));
                 let launcherScripts = await context.recipes.asyncFlatMap((recipe) => recipe.getAutoScripts(recipe.def.auto_launchers));
@@ -39,12 +38,12 @@ export class OldSkoolServer extends OldSkoolMiddleware {
 
                 // use a launcher-script (that can gather info from the instance) and _then_ process that YAML.
                 // that in turn brings in the to the yaml-merger in /real/cloud/init/yaml
-                body += `${context.moduleUrl}/${finalRecipes.join(',')}/cloud/init/yaml/data/gather` + "\n";
+                body += `${context.recipesUrl}/cloud/init/yaml/data/gather` + "\n";
 
                 // link to the launcher-creators...
                 // consider: boot-cmd processor; cloud-init-per; etc.
                 body += `# launchers : ${launcherScripts.join(", ")}\n`;
-                body += `${context.moduleUrl}/${finalRecipes.join(',')}/launchers\n`;
+                body += `${context.recipesUrl}/launchers\n`;
 
                 // link to the init-scripts, directly.
                 initScripts.forEach(script => {
@@ -53,15 +52,15 @@ export class OldSkoolServer extends OldSkoolMiddleware {
                 });
 
                 // comment to link to the cmdline version;
-                body += `# for cmdline usage: curl --silent "${context.moduleUrl}/${finalRecipes.join(',')}/cmdline" | sudo bash\n`;
+                body += `# for cmdline usage: curl --silent "${context.recipesUrl}/cmdline" | sudo bash\n`;
                 let fragment = new MimeTextFragment("text/x-include-url", "cloud-init-main-include.txt", body);
                 res.status(200).contentType("text/plain").send(fragment.body);
             });
 
 
         // specific bash handler. this has no recipes!
-        this.handle([`${this.uriOwnerRepoCommitish}/bash/:path(*)`], async (context: RenderingContext, res: Response, req) => {
-            let body = await (new BashScriptAsset(context, context.resolver, req.params.path)).renderFromFile();
+        this.handle([`${this.uriOwnerRepoCommitish}/bash/:path(*)`], async (context: RenderingContext, res: Response) => {
+            let body = await (new BashScriptAsset(context, context.resolver, context.assetRenderPath)).renderFromFile();
             res.status(200).contentType("text/plain").send(body);
         });
 

@@ -32,18 +32,28 @@ export abstract class OldSkoolMiddleware extends OldSkoolBase {
             next();
         })
 
+        // first the special case /bash; it does not have recipes; mark as such for the next mw
         app.use(`${this.uriOwnerRepoCommitish}/bash/:path(*)`, async (req, res, next) => {
-            console.warn("Common middleware + BASH!", req.params);
+            // Mark as asset render path, so the next handler does not try to resolve recipes.
+            console.warn("Common middleware (ASSET for BASH)!");
+            req.oldSkoolContext.assetRender = true;
+            req.oldSkoolContext.assetRenderPath = req.params.path;
             next();
-        });
+        })
 
+        // read and expand recipes from the path.
         app.use(`${this.uriOwnerRepoCommitishRecipes}`, async (req, res, next) => {
-            console.warn("Common middleware + RECIPES!", req.params);
-            if (!(req.params.recipes === "bash")) { // @TODO: this is horrible. could we NOT?
-                // read recipes from request path.
-                let initialRecipes: string[] = req.params.recipes.split(",");
-                req.oldSkoolContext.recipes = await (new CloudInitRecipeListExpander(req.oldSkoolContext, req.oldSkoolResolver, initialRecipes)).expand();
+            if (req.oldSkoolContext.assetRender) {
+                console.warn("Common middleware + RECIPES (SKIPPED)");
+                return next();
             }
+
+            console.warn("Common middleware + RECIPES!");
+            // read recipes from request path.
+            let initialRecipes: string[] = req.params.recipes.split(",");
+            req.oldSkoolContext.recipes = await (new CloudInitRecipeListExpander(req.oldSkoolContext, req.oldSkoolResolver, initialRecipes)).expand();
+            req.oldSkoolContext.recipeNames = req.oldSkoolContext.recipes.map(value => value.id);
+            req.oldSkoolContext.recipesUrl = req.oldSkoolContext.moduleUrl + "/" + req.oldSkoolContext.recipeNames.join(",");
             next();
         })
 
