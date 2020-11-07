@@ -28,11 +28,7 @@ export class CloudInitProcessorStack {
     }
 
     async process(): Promise<string> {
-        let obj = this.src;
-        for (const processor of this.stack) {
-            processor.prepare(this.context, this.repoResolver);
-            obj = await processor.process(obj);
-        }
+        let obj = await this.processObj();
         return YAML.stringify(obj);
     }
 
@@ -42,5 +38,14 @@ export class CloudInitProcessorStack {
             .add(new CloudInitYamlProcessorAptProxy())
             .add(new CloudInitYamlProcessorAptMirror())
             .add(new CloudInitYamlProcessorPackages())
+    }
+
+    async processObj(): Promise<any> {
+        let obj = this.src;
+        for (const processor of this.stack) {
+            processor.prepare(this.context, this.repoResolver);
+            obj = await processor.process(obj);
+        }
+        return obj;
     }
 }

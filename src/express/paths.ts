@@ -79,16 +79,23 @@ export class OldSkoolServer extends OldSkoolMiddleware {
             res.status(200).contentType("text/plain").send(body);
         });
 
-        // This produces a minimal cloud-config that uses bootcmd to gather data and update the cloud-config in place
+        // This produces the data-gatherer version of the cloud-config YAML;
+        // it is produced using only the params present in the URL (it did not resolve jinja yet)
         this.handle([`${this.uriOwnerRepoCommitishRecipes}/cloud/init/yaml/data/gather`], async (context: RenderingContext, res: Response) => {
-            let finalRecipes = context.recipes.map(value => value.id);
-            let yaml = {
-                bootcmd: [`echo "OldSkool initting from ${context.moduleUrl}/${finalRecipes.join(',')}/real/cloud/init/yaml?ciarch={{machine}}&cicloud={{cloud_name}}&cios={{distro}}&cirelease={{distro_release}}&ciaz={{availability_zone}}&ciplatform={{platform}}&ciregion={{region}}"`,
-                    "cp /var/lib/cloud/instance/cloud-config.txt /var/lib/cloud/instance/cloud-config.txt.orig",
-                    `curl "${context.moduleUrl}/${finalRecipes.join(',')}/real/cloud/init/yaml?ciarch={{machine}}&cicloud={{cloud_name}}&cios={{distro}}&cirelease={{distro_release}}&ciaz={{availability_zone}}&ciplatform={{platform}}&ciregion={{region}}" > /var/lib/cloud/instance/cloud-config.txt`,
-                    `echo @TODO: update the scripts as well, possibly.`,
-                    "echo Done, continuing..."]
-            };
+            let merged = await (new CloudInitYamlMerger(context, context.resolver, context.recipes)).mergeYamls();
+            let yaml = await new CloudInitProcessorStack(context, context.resolver, merged).addDefaultStack().processObj();
+
+            let origBootCmds = yaml.bootcmd || [];
+            origBootCmds.unshift(
+                `echo "OldSkool initting from ${context.recipesUrl}/real/cloud/init/yaml?ciarch={{machine}}&cicloud={{cloud_name}}&cios={{distro}}&cirelease={{distro_release}}&ciaz={{availability_zone}}&ciplatform={{platform}}&ciregion={{region}}"`,
+                "cp /var/lib/cloud/instance/cloud-config.txt /var/lib/cloud/instance/cloud-config.txt.orig",
+                `echo @TODO: what if curl fails? Not mess up the cloud-config.`,
+                `curl "${context.recipesUrl}/real/cloud/init/yaml?ciarch={{machine}}&cicloud={{cloud_name}}&cios={{distro}}&cirelease={{distro_release}}&ciaz={{availability_zone}}&ciplatform={{platform}}&ciregion={{region}}" > /var/lib/cloud/instance/cloud-config.txt`,
+                `echo @TODO: update the scripts as well, possibly.`,
+                "echo Done, continuing..."
+            );
+            yaml.bootcmd = origBootCmds;
+
             let body: string = "";
             body += `## template: jinja\n`;
             body += `#cloud-config\n`;
@@ -118,10 +125,8 @@ export class OldSkoolServer extends OldSkoolMiddleware {
 
         // This produces a "initscript" that runs cloud-init on a preinstalled machine. dangerous?
         this.handle([`${this.uriOwnerRepoCommitishRecipes}/cmdline`], async (context: RenderingContext, res: Response) => {
-            let finalRecipes = context.recipes.map(value => value.id);
-
             let bashTemplate: string = `#!/bin/bash\n## **INCLUDE:common.sh\n` +
-                `cmdLineCloudInit "${context.moduleUrl}/${finalRecipes.join(',')}/"` +
+                `cmdLineCloudInit "${context.recipesUrl}/"` +
                 `\n`;
 
             let body = await (new BashScriptAsset(context, context.resolver, "launcher_template")).renderFromString(bashTemplate);
