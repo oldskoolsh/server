@@ -28,6 +28,15 @@ export abstract class OldSkoolBase {
         }
     }
 
+    middleware(paths: string[], handler: (req: Request, res: Response) => Promise<void>) {
+        for (const path of paths) {
+            this.app.use(path, async (req, res, next) => {
+                await handler(req, res);
+                next();
+            });
+        }
+    }
+
     async createAndListen() {
         let app = await this.createExpressServer();
         const port = Number(process.env.PORT || 3000);
