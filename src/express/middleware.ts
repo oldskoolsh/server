@@ -25,10 +25,20 @@ export abstract class OldSkoolMiddleware extends OldSkoolBase {
             // also fake, should come from request datum
             let context = new RenderingContext("https://cloud-init.pardini.net/", this.tedisPool);
             context.moduleUrl = `${context.baseUrl}${req.params.owner}/${req.params.repo}/${req.params.commitish}`;
+            context.bashUrl = `${context.moduleUrl}/bash`;
             context.resolver = resolver; // shortcut only
             await context.init();
             req.oldSkoolContext = context;
 
+            next();
+        })
+
+        // first the special case /bash; it does not have recipes; mark as such for the next mw
+        app.use(`${this.uriNoCloudWithParams}/bash/:path(*)`, async (req, res, next) => {
+            // Mark as asset render path, so the next handler does not try to resolve recipes.
+            console.warn("Common middleware (ASSET for BASH, with PARAMS)!");
+            req.oldSkoolContext.assetRender = true;
+            req.oldSkoolContext.assetRenderPath = req.params.path;
             next();
         })
 
@@ -76,11 +86,17 @@ export abstract class OldSkoolMiddleware extends OldSkoolBase {
 
             req.oldSkoolContext.paramKV = keyValueMap;
 
+            // set the recipes URL so it keeps on passing the params.
+            req.oldSkoolContext.recipesUrl = `${req.oldSkoolContext.recipesUrl}/params/${paramStr}/dsnocloud`;
+            req.oldSkoolContext.bashUrl = `${req.oldSkoolContext.recipesUrl}/bash`;
+
             next();
         })
 
         app.use(`${this.uriNoCloudWithoutParams}`, async (req, res, next) => {
             console.warn("Common middleware + NOCLOUD WITHOUT PARAMS", req.params);
+            // set the recipes URL so it keeps on passing the params.
+            req.oldSkoolContext.recipesUrl = `${req.oldSkoolContext.recipesUrl}/dsnocloud`;
             next();
         })
 

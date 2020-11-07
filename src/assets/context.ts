@@ -14,6 +14,7 @@ export class RenderingContext {
     public recipeNames: string[] = [];
     public assetRender: boolean = false;
     public assetRenderPath: string = "";
+    public bashUrl: string = "";
 
     constructor(baseUrl: string, tedisPool: TedisPool) {
         this.baseUrl = baseUrl;
