@@ -7,10 +7,10 @@ export interface ICondition {
 
 export class BaseCondition {
     protected readonly value: string;
-    protected readonly rc: RenderingContext;
+    protected readonly context: RenderingContext;
 
     constructor(rc: RenderingContext, value: string) {
-        this.rc = rc;
+        this.context = rc;
         this.value = value;
     }
 }

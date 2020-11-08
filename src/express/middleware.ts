@@ -18,7 +18,7 @@ export abstract class OldSkoolMiddleware extends OldSkoolBase {
         this.middleware(
             [`${this.uriOwnerRepoCommitish}`],
             async (req, res) => {
-                console.warn("Common middleware START ORC!", req.params);
+                console.warn("Common middleware START ORC!");
                 // Fake, should come from :owner/:repo/:commitish
                 const resolver = new RepoResolver("/Users/pardini/Documents/Projects/github/oldskool", "oldskool-rpardini");
                 await resolver.rootResolve();
@@ -26,6 +26,8 @@ export abstract class OldSkoolMiddleware extends OldSkoolBase {
 
                 // also fake, should come from request datum
                 let context = new RenderingContext("https://cloud-init.pardini.net/", this.tedisPool);
+
+                // real stuff
                 context.moduleUrl = `${context.baseUrl}${req.params.owner}/${req.params.repo}/${req.params.commitish}`;
                 context.bashUrl = `${context.moduleUrl}/bash`;
                 context.resolver = resolver; // shortcut only

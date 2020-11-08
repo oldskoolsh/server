@@ -22,7 +22,6 @@ export class RenderingContext {
     }
 
     async init() {
-
     }
 
     async deinit() {

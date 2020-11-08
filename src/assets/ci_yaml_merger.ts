@@ -20,8 +20,6 @@ export class CloudInitYamlMerger {
     }
 
     async mergeYamls() {
-        // @TODO: https://eemeli.org/yaml/#parsing-documents
-
         let allFragments: CloudConfigFragment[] = [];
         // get a list of actual fragments; yamls are multi-doc
         for (const recipe of this.recipes) {

@@ -46,6 +46,10 @@ export abstract class OldSkoolBase {
     }
 
     async createExpressServer() {
+        // handle reverse proxy (X-Forwarded-For etc)
+        this.app.set('trust proxy', ['loopback', 'linklocal', 'uniquelocal']);
+
+
         // Show routes called in console during development
         this.app.use(morgan('combined'));
 
