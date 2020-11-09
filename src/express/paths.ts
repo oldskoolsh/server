@@ -16,6 +16,7 @@ export class OldSkoolServer extends OldSkoolMiddleware {
 
     addPathHandlers(app: Express) {
 
+        // @TODO: this is NOT the root thing anymore, that is only owner/repo!
         // This "root" thing produces "#include" for yamls, auto-launchers, and init scripts.
         // for use with dsnocloud, user-data is the same as the main entrypoint
         // the same again as above, but with a placeholder for key=value pairs just like a querystring.
@@ -141,10 +142,16 @@ export class OldSkoolServer extends OldSkoolMiddleware {
         this.handle(
             [`${this.uriOwnerRepoCommitishRecipes}/cmdline`],
             async (context: RenderingContext, res: Response) => {
-                let bashTemplate: string = `#!/bin/bash\n## **INCLUDE:common.sh\n` +
-                    `cmdLineCloudInit "${context.recipesUrl}/"` +
-                    `\n`;
+                let bashTemplate = `#!/bin/bash\n## **INCLUDE:common.sh\ncmdLineCloudInit "${context.recipesUrl}/"\n`;
+                let body = await (new BashScriptAsset(context, context.resolver, "launcher_template")).renderFromString(bashTemplate);
+                res.status(200).contentType("text/plain").send(body);
+            });
 
+        // This produces a "initscript" that runs cloud-init on a preinstalled machine. dangerous?
+        this.handle(
+            [`${this.uriOwnerRepoCommitishRecipes}/cmdline/docker`],
+            async (context: RenderingContext, res: Response) => {
+                let bashTemplate = `#!/bin/bash\n## **INCLUDE:common.sh\ncmdLineCloudInitDocker "${context.recipesUrl}/"\n`;
                 let body = await (new BashScriptAsset(context, context.resolver, "launcher_template")).renderFromString(bashTemplate);
                 res.status(200).contentType("text/plain").send(body);
             });
