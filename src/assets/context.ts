@@ -1,6 +1,7 @@
 import {TedisPool} from "tedis";
 import {Recipe} from "../repo/recipe";
 import {RepoResolver} from "../repo/resolver";
+import parser from "ua-parser-js";
 
 export class RenderingContext {
 
@@ -9,12 +10,14 @@ export class RenderingContext {
     public recipesUrl!: string;
     public readonly tedisPool: TedisPool;
     public recipes: Recipe[] = [];
-    public paramKV: Map<string, string> = new Map<string, string>();
+    public paramKV: ReadonlyMap<string, string> = new Map<string, string>();
     public resolver!: RepoResolver;
     public recipeNames: string[] = [];
     public assetRender: boolean = false;
     public assetRenderPath: string = "";
     public bashUrl: string = "";
+    public userAgent: IUAParser.IResult = new parser.UAParser("").getResult();
+    public paramsQS: ReadonlyMap<string, string> = new Map<string, string>();
 
     constructor(baseUrl: string, tedisPool: TedisPool) {
         this.baseUrl = baseUrl;

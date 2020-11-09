@@ -5,6 +5,12 @@ import {RepoResolver} from "../repo/resolver";
 import {RenderingContext} from "../assets/context";
 import {CloudInitRecipeListExpander} from "../assets/ci_expander";
 
+
+// Parse the User-Agent;...
+import parser from "ua-parser-js";
+
+import {Query} from "express-serve-static-core";
+
 const {BAD_REQUEST, OK} = StatusCodes;
 
 export abstract class OldSkoolMiddleware extends OldSkoolBase {
@@ -14,11 +20,14 @@ export abstract class OldSkoolMiddleware extends OldSkoolBase {
     protected uriNoCloudWithoutParams: string = "/:owner/:repo/:commitish/:recipes/dsnocloud";
 
     addEntranceMiddleware(app: Express) {
-        // common middleware for all URLs.
+
+        //this.middleware(['/'], async (req, res) => {});
+
+
+        // common middleware for all do-something URLs.
         this.middleware(
             [`${this.uriOwnerRepoCommitish}`],
             async (req, res) => {
-                console.warn("Common middleware START ORC!");
                 // Fake, should come from :owner/:repo/:commitish
                 const resolver = new RepoResolver("/Users/pardini/Documents/Projects/github/oldskool", "oldskool-rpardini");
                 await resolver.rootResolve();
@@ -26,6 +35,29 @@ export abstract class OldSkoolMiddleware extends OldSkoolBase {
 
                 // also fake, should come from request datum
                 let context = new RenderingContext("https://cloud-init.pardini.net/", this.tedisPool);
+
+                // parse the real user-agent. this lib is somewhat shit, does not detect wget/curl.
+                // so should only be used for detecting actual, human browsers.
+                context.userAgent = new parser.UAParser(req.headers['user-agent']).getResult();
+
+                // parse the queryString parameters, with some guarantees:
+                // - only one value (the last) if multiple values
+                // - undefined if empty or missing.
+                let paramsQS:Map<string,string> = new Map<string, string>();
+                let qsKey:string;
+                let expressQS: Query = req.query;
+                for (qsKey of Object.keys(expressQS)) {
+                    let qsValue: string | string[] | Query | Query[] | undefined = req.query[qsKey];
+                    if (qsValue === undefined) continue;
+                    if (qsValue instanceof Array) {
+                        let lastArrVal = qsValue[qsValue.length-1]
+                        paramsQS.set(qsKey.toLowerCase(), lastArrVal.toString().toLowerCase());
+                    } else {
+                        paramsQS.set(qsKey.toLowerCase(), qsValue.toString().toLowerCase());
+                    }
+                }
+                context.paramsQS = paramsQS;
+
 
                 // real stuff
                 context.moduleUrl = `${context.baseUrl}${req.params.owner}/${req.params.repo}/${req.params.commitish}`;
@@ -69,7 +101,7 @@ export abstract class OldSkoolMiddleware extends OldSkoolBase {
         this.middleware(
             [`${this.uriNoCloudWithParams}`],
             async (req, res) => {
-                console.warn("Common middleware + NOCLOUD WITH PARAMS!", req.params);
+                console.warn("Common middleware + NOCLOUD WITH PARAMS!");
 
                 // For oldskool-supported non-clouds (libvirt, hyperkit, hyperv, virtualbox)
                 // the correspondent VM-creator script uses the /params/ URL variation.
@@ -79,8 +111,8 @@ export abstract class OldSkoolMiddleware extends OldSkoolBase {
                 let strKeyValuePairs: string[] = paramStr.split(",");
                 let keyValuesPairs: string[][] = strKeyValuePairs.map(value => value.split("=")).filter(value => value.length == 2);
                 let parsedKeyVal: { value: string; key: string }[] = keyValuesPairs.map(value => ({
-                    key: value[0],
-                    value: value[1]
+                    key: value[0].toLowerCase(),
+                    value: value[1].toLowerCase()
                 }));
                 let keyValueMap: Map<string, string> = new Map<string, string>();
                 parsedKeyVal.forEach(value => keyValueMap.set(value.key, value.value));
@@ -95,7 +127,7 @@ export abstract class OldSkoolMiddleware extends OldSkoolBase {
 
         this.middleware(
             [`${this.uriNoCloudWithoutParams}`], async (req, res) => {
-                console.warn("Common middleware + NOCLOUD WITHOUT PARAMS", req.params);
+                console.warn("Common middleware + NOCLOUD WITHOUT PARAMS");
                 // set the recipes URL so it keeps on passing the params.
                 req.oldSkoolContext.recipesUrl = `${req.oldSkoolContext.recipesUrl}/dsnocloud`;
             })
@@ -106,7 +138,7 @@ export abstract class OldSkoolMiddleware extends OldSkoolBase {
     addExitMiddleware(app: Express) {
         this.middleware(
             [`${this.uriOwnerRepoCommitish}`], async (req, res) => {
-                console.warn("Common middleware ORC END!", req.params);
+                console.warn("Common middleware ORC END!");
                 // @TODO: we don't need to await this.
                 await req.oldSkoolContext.deinit();
             })
