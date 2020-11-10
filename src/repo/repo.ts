@@ -117,6 +117,10 @@ export class Repository {
         return await this.myRef.globScripts(value);
     }
 
+    public async globOwnJS(value: string): Promise<string[]> {
+        return await this.myRef.globJavaScripts(value);
+    }
+
     private async processRecipes() {
         // explicitly-defined recipes loaded from toml first.
         // we aggregate a list of ids for all "mentioned" yamls at this module level
@@ -144,6 +148,8 @@ export class Repository {
 
     private createDefaultRecipeForYaml(yamlId: string): IRepoRecipe {
         return {
+            auto_js_launchers: [],
+            node_version: "latest",
             always_include: false,
             auto_initscripts: [],
             auto_launchers: [],

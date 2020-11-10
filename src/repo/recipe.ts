@@ -35,4 +35,11 @@ export class Recipe {
         //console.log("scriptGlobs:", scriptGlobs, "result", solvedGlobs);
         return solvedGlobs;
     }
+
+    async getAutoJSScripts(scriptGlobs: string[]): Promise<string[]> {
+        if ((!scriptGlobs) || (scriptGlobs.length < 1)) return [];
+        let solvedGlobs = (await Promise.all(scriptGlobs.map(value => this.repo.globOwnJS(value)))).flatMap(value => value);
+        //console.log("scriptGlobs:", scriptGlobs, "result", solvedGlobs);
+        return solvedGlobs;
+    }
 }

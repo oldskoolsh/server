@@ -2,12 +2,13 @@ import {Express, Response} from "express";
 import {CloudInitYamlMerger} from "../assets/ci_yaml_merger";
 import {CloudInitProcessorStack} from "../processors/stack";
 import YAML from "yaml";
-import path from "path";
 import {BashScriptAsset} from "../assets/bash";
 import {MimeTextFragment} from "../shared/mime";
 import StatusCodes from 'http-status-codes';
 import {OldSkoolMiddleware} from "./middleware";
 import {RenderingContext} from "../assets/context";
+import {IExecutableScript, RecipeExecutablesProcessor} from "../repo/scripts";
+import {JSScriptAsset} from "../assets/js";
 
 const {BAD_REQUEST, OK} = StatusCodes;
 
@@ -26,9 +27,7 @@ export class OldSkoolServer extends OldSkoolMiddleware {
                 `${this.uriNoCloudWithoutParams}/user-data`,
                 `${this.uriNoCloudWithParams}/user-data`],
             async (context: RenderingContext, res: Response) => {
-
-                let initScripts = await context.recipes.asyncFlatMap((recipe) => recipe.getAutoScripts(recipe.def.auto_initscripts));
-                let launcherScripts = await context.recipes.asyncFlatMap((recipe) => recipe.getAutoScripts(recipe.def.auto_launchers));
+                let scriptsProcessor = await (new RecipeExecutablesProcessor(context)).process();
 
                 let body = "";
 
@@ -43,11 +42,11 @@ export class OldSkoolServer extends OldSkoolMiddleware {
 
                 // link to the launcher-creators...
                 // consider: boot-cmd processor; cloud-init-per; etc.
-                body += `# launchers : ${launcherScripts.join(", ")}\n`;
+                body += `# bash launchers : ${scriptsProcessor.launcherDefs.map((value: IExecutableScript) => value.launcherName).join(", ")}\n`;
                 body += `${context.recipesUrl}/launchers\n`;
 
                 // link to the init-scripts, directly.
-                initScripts.forEach(script => {
+                scriptsProcessor.initScripts.forEach(script => {
                     body += `# initscript: ${script}\n`;
                     body += `${context.bashUrl}/${script}\n`;
                 });
@@ -64,7 +63,15 @@ export class OldSkoolServer extends OldSkoolMiddleware {
             [`${this.uriOwnerRepoCommitish}/bash/:path(*)`, `${this.uriNoCloudWithParams}/bash/:path(*)`],
             async (context: RenderingContext, res: Response) => {
                 let body = await (new BashScriptAsset(context, context.resolver, context.assetRenderPath)).renderFromFile();
-                res.status(200).contentType("text/plain").send(body);
+                res.status(OK).contentType("text/plain").send(body);
+            });
+
+        // specific js handler. this has no recipes!
+        this.handle(
+            [`${this.uriOwnerRepoCommitish}/js/:path(*)`, `${this.uriNoCloudWithParams}/js/:path(*)`],
+            async (context: RenderingContext, res: Response) => {
+                let body = await (new JSScriptAsset(context, context.resolver, context.assetRenderPath)).renderFromFile();
+                res.status(OK).contentType("text/plain").send(body);
             });
 
 
@@ -83,7 +90,7 @@ export class OldSkoolServer extends OldSkoolMiddleware {
                 body += `#cloud-config\n`;
                 body += `# final recipes: ${context.recipes.map(value => value.id).join(", ")} \n`;
                 body += finalResult;
-                res.status(200).contentType("text/plain").send(body);
+                res.status(OK).contentType("text/plain").send(body);
             });
 
         // This produces the data-gatherer version of the cloud-config YAML;
@@ -111,7 +118,7 @@ export class OldSkoolServer extends OldSkoolMiddleware {
                 body += `## template: jinja\n`;
                 body += `#cloud-config\n`;
                 body += YAML.stringify(yaml);
-                res.status(200).contentType("text/plain").send(body);
+                res.status(OK).contentType("text/plain").send(body);
             });
 
 
@@ -121,20 +128,23 @@ export class OldSkoolServer extends OldSkoolMiddleware {
                 `${this.uriNoCloudWithoutParams}/launchers`,
                 `${this.uriNoCloudWithParams}/launchers`],
             async (context: RenderingContext, res: Response) => {
-                let launcherScripts = await context.recipes.asyncFlatMap((recipe) => recipe.getAutoScripts(recipe.def.auto_launchers));
-                let launcherDefs = launcherScripts.map(value => {
-                    let parsed: path.ParsedPath = path.parse(value);
-                    let pathNoExt = `${parsed.dir ? `${parsed.dir}/` : ""}${parsed.name}`;
-                    let launcherName = parsed.name;
-                    return ({launcher: launcherName, script: pathNoExt});
-                });
+                let scriptsProcessor = await (new RecipeExecutablesProcessor(context)).process();
 
-                let bashTemplate: string = `#!/bin/bash\n## **INCLUDE:common.sh\n` +
-                    launcherDefs.map(value => `createLauncherScript "${value.launcher}" "${value.script}"`).join("\n") +
+                // @TODO: bash_launcher.sh
+                let bashPrelude = `#!/bin/bash\n## **INCLUDE:common.sh\n`;
+
+                let bashTemplate: string =
+                    scriptsProcessor.launcherDefs.map((value: IExecutableScript) => `createLauncherScript "${value.launcherName}" "${value.assetPath}"`).join("\n") +
                     `\n`;
 
-                let body = await (new BashScriptAsset(context, context.resolver, "launcher_template")).renderFromString(bashTemplate);
-                res.status(200).contentType("text/plain").send(body);
+                // @TODO: js_launcher.sh
+                // add js-stuff, launcher
+                let jsTemplate: string = "" //`## **INCLUDE:common.sh`;
+
+
+                let allTemplates = bashPrelude + bashTemplate + `` + jsTemplate;
+                let body = await (new BashScriptAsset(context, context.resolver, "all_launchers")).renderFromString(allTemplates);
+                res.status(OK).contentType("text/plain").send(body);
 
             });
 
@@ -143,8 +153,8 @@ export class OldSkoolServer extends OldSkoolMiddleware {
             [`${this.uriOwnerRepoCommitishRecipes}/cmdline`],
             async (context: RenderingContext, res: Response) => {
                 let bashTemplate = `#!/bin/bash\n## **INCLUDE:common.sh\ncmdLineCloudInit "${context.recipesUrl}/"\n`;
-                let body = await (new BashScriptAsset(context, context.resolver, "launcher_template")).renderFromString(bashTemplate);
-                res.status(200).contentType("text/plain").send(body);
+                let body = await (new BashScriptAsset(context, context.resolver, "cmdline_starter")).renderFromString(bashTemplate);
+                res.status(OK).contentType("text/plain").send(body);
             });
 
         // This produces a "initscript" that runs cloud-init on a preinstalled machine. dangerous?
@@ -152,8 +162,8 @@ export class OldSkoolServer extends OldSkoolMiddleware {
             [`${this.uriOwnerRepoCommitishRecipes}/cmdline/docker`],
             async (context: RenderingContext, res: Response) => {
                 let bashTemplate = `#!/bin/bash\n## **INCLUDE:common.sh\ncmdLineCloudInitDocker "${context.recipesUrl}/"\n`;
-                let body = await (new BashScriptAsset(context, context.resolver, "launcher_template")).renderFromString(bashTemplate);
-                res.status(200).contentType("text/plain").send(body);
+                let body = await (new BashScriptAsset(context, context.resolver, "cmdline_docker_starter")).renderFromString(bashTemplate);
+                res.status(OK).contentType("text/plain").send(body);
             });
 
 
@@ -177,7 +187,7 @@ export class OldSkoolServer extends OldSkoolMiddleware {
                 metaData["region"] = `${cloud}`;
                 metaData["oldskool"] = context.paramKV;
 
-                res.status(200).contentType("text/yaml").send(YAML.stringify(metaData));
+                res.status(OK).contentType("text/yaml").send(YAML.stringify(metaData));
             });
 
 

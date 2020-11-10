@@ -43,14 +43,14 @@ export abstract class OldSkoolMiddleware extends OldSkoolBase {
                 // parse the queryString parameters, with some guarantees:
                 // - only one value (the last) if multiple values
                 // - undefined if empty or missing.
-                let paramsQS:Map<string,string> = new Map<string, string>();
-                let qsKey:string;
+                let paramsQS: Map<string, string> = new Map<string, string>();
+                let qsKey: string;
                 let expressQS: Query = req.query;
                 for (qsKey of Object.keys(expressQS)) {
                     let qsValue: string | string[] | Query | Query[] | undefined = req.query[qsKey];
                     if (qsValue === undefined) continue;
                     if (qsValue instanceof Array) {
-                        let lastArrVal = qsValue[qsValue.length-1]
+                        let lastArrVal = qsValue[qsValue.length - 1]
                         paramsQS.set(qsKey.toLowerCase(), lastArrVal.toString().toLowerCase());
                     } else {
                         paramsQS.set(qsKey.toLowerCase(), qsValue.toString().toLowerCase());
@@ -62,6 +62,7 @@ export abstract class OldSkoolMiddleware extends OldSkoolBase {
                 // real stuff
                 context.moduleUrl = `${context.baseUrl}${req.params.owner}/${req.params.repo}/${req.params.commitish}`;
                 context.bashUrl = `${context.moduleUrl}/bash`;
+                context.jsUrl = `${context.moduleUrl}/js`;
                 context.resolver = resolver; // shortcut only
                 await context.init();
                 req.oldSkoolContext = context;
@@ -71,11 +72,13 @@ export abstract class OldSkoolMiddleware extends OldSkoolBase {
         this.middleware(
             [
                 `${this.uriNoCloudWithParams}/bash/:path(*)`,
-                `${this.uriOwnerRepoCommitish}/bash/:path(*)`
+                `${this.uriOwnerRepoCommitish}/bash/:path(*)`,
+                `${this.uriNoCloudWithParams}/js/:path(*)`,
+                `${this.uriOwnerRepoCommitish}/js/:path(*)`
             ],
             async (req, res) => {
                 // Mark as asset render path, so the next handler does not try to resolve recipes.
-                console.warn("Common middleware (ASSET for BASH, with PARAMS)!");
+                console.warn("Common middleware (Script/JS, with PARAMS)!");
                 req.oldSkoolContext.assetRender = true;
                 req.oldSkoolContext.assetRenderPath = req.params.path;
             })
@@ -122,6 +125,7 @@ export abstract class OldSkoolMiddleware extends OldSkoolBase {
                 // set the recipes URL so it keeps on passing the params.
                 req.oldSkoolContext.recipesUrl = `${req.oldSkoolContext.recipesUrl}/params/${paramStr}/dsnocloud`;
                 req.oldSkoolContext.bashUrl = `${req.oldSkoolContext.recipesUrl}/bash`;
+                req.oldSkoolContext.jsUrl = `${req.oldSkoolContext.recipesUrl}/js`;
 
             })
 

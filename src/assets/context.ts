@@ -15,9 +15,10 @@ export class RenderingContext {
     public recipeNames: string[] = [];
     public assetRender: boolean = false;
     public assetRenderPath: string = "";
-    public bashUrl: string = "";
+    public bashUrl: string = "wrongbashpath";
     public userAgent: IUAParser.IResult = new parser.UAParser("").getResult();
     public paramsQS: ReadonlyMap<string, string> = new Map<string, string>();
+    public jsUrl: string = "wrongjspath";
 
     constructor(baseUrl: string, tedisPool: TedisPool) {
         this.baseUrl = baseUrl;

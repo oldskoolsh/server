@@ -15,6 +15,8 @@ export interface IRepoRecipe {
     expand: string[];
     auto_launchers: string[];
     auto_initscripts: string[];
+    auto_js_launchers: string[];
+    node_version: string;
 }
 
 /*
