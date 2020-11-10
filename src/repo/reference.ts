@@ -34,13 +34,19 @@ export class PathRepoReference {
         }
     }
 
+    async getFileFullPath(relativePath: string): Promise<string> {
+        let fullPath = path.resolve(this.baseDirectory, relativePath);
+        if (fs.existsSync(fullPath)) return fullPath;
+        throw new Error("Can't find file " + relativePath);
+    }
+
     async readFileContents(relativePath: string, encoding: String = 'utf8'): Promise<string> {
-        let tomlPath = path.resolve(this.baseDirectory, relativePath);
+        let fullPath = path.resolve(this.baseDirectory, relativePath);
         switch (encoding) {
             case 'utf8':
-                return await fs.promises.readFile(tomlPath, {encoding: 'utf8'});
+                return await fs.promises.readFile(fullPath, {encoding: 'utf8'});
             case 'base64':
-                return await fs.promises.readFile(tomlPath, {encoding: 'base64'});
+                return await fs.promises.readFile(fullPath, {encoding: 'base64'});
             default:
                 throw new Error("Unknown encoding " + encoding);
         }

@@ -1,9 +1,10 @@
 import TOML from "@iarna/toml";
 import {IRepoDescriptor, IRepoRecipe, IRepoUsesDescriptor} from "./descriptor";
-import {RepoResolver} from "./resolver";
+import {IAssetInfo, RepoResolver} from "./resolver";
 import {Recipe} from "./recipe";
 import {PathRepoReference} from "./reference";
 import YAML from 'yaml';
+import path from "path";
 
 export class Repository {
     public name: string | undefined;
@@ -92,9 +93,39 @@ export class Repository {
         return null;
     }
 
+    // @TODO: syntax, if (let ..) would help here
+    async recursivelyGetAssetInfo(assetPath: string): Promise<IAssetInfo | null> {
+        let myOwn = await this.ownGetAssetInfoOrNull(assetPath);
+        if (myOwn) return myOwn;
+
+        for (const usedRepo of this.uses) {
+            let childAsset = await usedRepo.recursivelyGetAssetInfo(assetPath);
+            if (childAsset) {
+                return childAsset;
+            }
+        }
+        //console.warn(`Could not find asset ${assetPath} anywhere - at '${this.name}', children: ${this.uses.map(value => `${value.desc}'`).join(", ")}`);
+        return null;
+    }
+
     async ownGetAssetOrNull(assetPath: string, encoding: string = 'utf8'): Promise<string | null> {
         try {
             return await this.myRef.readFileContents(assetPath, encoding);
+        } catch (err) {
+            return null;
+        }
+    }
+
+    async ownGetAssetInfoOrNull(assetPath: string): Promise<IAssetInfo | null> {
+        try {
+            let pathOnDisk = await this.myRef.getFileFullPath(assetPath);
+            let parsed = path.parse(pathOnDisk);
+            return {
+                name: assetPath,
+                containingDir: parsed.dir,
+                pathOnDisk: pathOnDisk,
+                base64contents: await this.myRef.readFileContents(assetPath, "base64")
+            }
         } catch (err) {
             return null;
         }

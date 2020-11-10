@@ -3,6 +3,13 @@ import path from "path";
 import {PathRepoReference} from "./reference";
 import {Recipe} from "./recipe";
 
+export interface IAssetInfo {
+    name: string,
+    base64contents: string,
+    pathOnDisk: string,
+    containingDir: string,
+}
+
 export class RepoResolver {
 
     private readonly rootRef: PathRepoReference;
@@ -29,6 +36,12 @@ export class RepoResolver {
         return asset;
     }
 
+    async getAssetInfo(assetPath: string): Promise<IAssetInfo> {
+        let asset = await this.rootRepo.recursivelyGetAssetInfo(assetPath);
+        if (asset === null) throw new Error(`Could not find asset ${assetPath} anywhere!`);
+        return asset;
+    }
+
     async getFullFlatRecipeList(): Promise<Map<string, Recipe>> {
         return await this.rootRepo.recursivelyGetFullFlatRecipeList();
     }
@@ -36,5 +49,6 @@ export class RepoResolver {
     getGithubRootRepoOwner() {
         return "rpardini"; // @TODO: implement
     }
+
 }
 
