@@ -18,7 +18,8 @@ export class JSScriptAsset extends BaseAsset {
         console.log("mainJS", mainJS);
 
         // get other JS resources relative to that path. what about resolver hierarchy?
-        let otherAssets: IAssetInfo[] = await this.getAllAssetInfoInDir(mainJS.containingDir, ['**/*.js', '**/*.mjs', '**/*.ts', 'package*.json']);
+        let otherAssets: IAssetInfo[] = await this.getAllAssetInfoInDir(mainJS.containingDir,
+            ['**/*.js', '**/*.mjs', '**/*.ts', '**/*.json']);
 
         let assetNames: Map<string, IAssetInfo> = new Map<string, IAssetInfo>();
         otherAssets.forEach(value => assetNames.set(value.name, value));
@@ -32,6 +33,7 @@ export class JSScriptAsset extends BaseAsset {
             // forge an asset
             allAssets.push(await this.forgePackageJson())
         }
+        // @TODO: if not forged, hack into it (create scripts etc)
         console.log("allAssets", allAssets);
 
         // prepare base dir
