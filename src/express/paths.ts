@@ -133,7 +133,7 @@ export class OldSkoolServer extends OldSkoolMiddleware {
 
                 let bashPrelude = `#!/bin/bash\n## **INCLUDE:bash_launchers.sh\n`;
 
-                let launchersReinstall = `createLauncherRelauncher "${context.recipesUrl}/launchers"\n`;
+                let launchersReinstall = `ABSOLUTE_URL=true createLauncherScript "oldskool_launchers_reinstall" "${context.recipesUrl}/launchers"\n`;
 
                 let bashTemplate: string =
                     scriptsProcessor.launcherDefs.map((value: IExecutableScript) => `createLauncherScript "${value.launcherName}" "${value.assetPath}"`).join("\n") +

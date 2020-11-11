@@ -46,9 +46,11 @@ export abstract class OldSkoolBase {
     }
 
     async createExpressServer() {
+        // use strong etags... beware NGINX, which will downgrade to weak during gzip.
+        this.app.set('etag', 'strong');
+
         // handle reverse proxy (X-Forwarded-For etc)
         this.app.set('trust proxy', ['loopback', 'linklocal', 'uniquelocal']);
-
 
         // Show routes called in console during development
         this.app.use(morgan('combined'));

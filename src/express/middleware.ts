@@ -33,8 +33,8 @@ export abstract class OldSkoolMiddleware extends OldSkoolBase {
                 await resolver.rootResolve();
                 req.oldSkoolResolver = resolver;
 
-                // also fake, should come from request datum
-                let context = new RenderingContext("https://cloud-init.pardini.net/", this.tedisPool);
+                let baseUrl = `${req.secure ? "https://" : "http://"}${req.headers['host']}/`
+                let context = new RenderingContext(baseUrl, this.tedisPool);
 
                 // parse the real user-agent. this lib is somewhat shit, does not detect wget/curl.
                 // so should only be used for detecting actual, human browsers.
