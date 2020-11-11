@@ -22,12 +22,19 @@ export class BashScriptAsset extends BaseAsset {
         // resolve the extracted includes in a loop, so includes' includes are included. lol
         let loopCounter = 0;
         let hasReplaced = true;
+        let includeOnceMap: Set<string> = new Set<string>();
         while (hasReplaced) {
             loopCounter++;
             hasReplaced = false;
             replaced = await replaceAsync(replaced, includeRegex, (async (substring, includedRef) => {
-                hasReplaced = true;
-                return await this.repoResolver.getRawAsset(`scripts/${includedRef}`);
+                if (!includeOnceMap.has(includedRef)) {
+                    hasReplaced = true;
+                    let included = await this.repoResolver.getRawAsset(`scripts/${includedRef}`);
+                    includeOnceMap.add(includedRef);
+                    return `\n## <OldSkoolInclude:${includedRef}>\n` + included + `\n## </OldSkoolInclude:${includedRef}>\n`;
+                } else {
+                    return `## </OldSkookIncludeSkippedBecauseAlreadyIncluded:${includedRef}\n`;
+                }
             }));
             replaced = await replaceAsync(replaced, escapedIncludeRegex, (async (substring, includedRef) => {
                 hasReplaced = true;

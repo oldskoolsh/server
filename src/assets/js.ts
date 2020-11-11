@@ -11,7 +11,7 @@ export class JSScriptAsset extends BaseAsset {
 
     async renderFromFile(): Promise<string> {
         let mainScript = `#!/bin/bash
-        ## **INCLUDE:common.sh\n`; // @TODO: js_runner.sh
+        ## **INCLUDE:js_launchers.sh\n`;
 
         // get the actual path
         let mainJS: IAssetInfo = await this.repoResolver.getAssetInfo(`js/${this.assetPath}`);
@@ -34,7 +34,6 @@ export class JSScriptAsset extends BaseAsset {
         }
         console.log("allAssets", allAssets);
 
-
         // prepare base dir
         mainScript += `jsLauncherPrepareDir "${allAssets.filter(value => value.pathOnDisk === mainJS.pathOnDisk)[0].name}"\n`;
         // write them all, via base64
@@ -51,9 +50,7 @@ export class JSScriptAsset extends BaseAsset {
         // run!
         mainScript += `jsLauncherDoLaunch "${allAssets.filter(value => value.pathOnDisk === mainJS.pathOnDisk)[0].name}" $@ \n`;
 
-
         let body = await (new BashScriptAsset(this.context, this.context.resolver, "js_runner_" + this.assetPath)).renderFromString(mainScript);
-
         return body;
     }
 

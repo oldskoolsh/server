@@ -122,7 +122,8 @@ export class OldSkoolServer extends OldSkoolMiddleware {
             });
 
 
-        // This produces a "initscript" that creates launchers @TODO: refactor
+        // This produces a "initscript" that creates launchers.
+        // Also a "oldskool_launchers" script that re-runs itself.
         this.handle(
             [`${this.uriOwnerRepoCommitishRecipes}/launchers`,
                 `${this.uriNoCloudWithoutParams}/launchers`,
@@ -130,19 +131,17 @@ export class OldSkoolServer extends OldSkoolMiddleware {
             async (context: RenderingContext, res: Response) => {
                 let scriptsProcessor = await (new RecipeExecutablesProcessor(context)).process();
 
-                // @TODO: bash_launcher.sh
-                let bashPrelude = `#!/bin/bash\n## **INCLUDE:common.sh\n`;
+                let bashPrelude = `#!/bin/bash\n## **INCLUDE:bash_launchers.sh\n`;
+
+                let launchersReinstall = `createLauncherRelauncher "${context.recipesUrl}/launchers"\n`;
 
                 let bashTemplate: string =
                     scriptsProcessor.launcherDefs.map((value: IExecutableScript) => `createLauncherScript "${value.launcherName}" "${value.assetPath}"`).join("\n") +
                     `\n`;
 
-                // @TODO: js_launcher.sh
-                // add js-stuff, launcher
-                let jsTemplate: string = "" //`## **INCLUDE:common.sh`;
+                let jsTemplate: string = ""; // `## **INCLUDE:js_launchers.sh\n`;
 
-
-                let allTemplates = bashPrelude + bashTemplate + `` + jsTemplate;
+                let allTemplates = bashPrelude + launchersReinstall + bashTemplate + `` + jsTemplate;
                 let body = await (new BashScriptAsset(context, context.resolver, "oldskool-bundle")).renderFromString(allTemplates);
                 res.status(OK).contentType("text/plain").send(body);
 
@@ -152,7 +151,7 @@ export class OldSkoolServer extends OldSkoolMiddleware {
         this.handle(
             [`${this.uriOwnerRepoCommitishRecipes}/cmdline`],
             async (context: RenderingContext, res: Response) => {
-                let bashTemplate = `#!/bin/bash\n## **INCLUDE:common.sh\ncmdLineCloudInit "${context.recipesUrl}/"\n`;
+                let bashTemplate = `#!/bin/bash\n## **INCLUDE:ci_launchers.sh\ncmdLineCloudInit "${context.recipesUrl}/"\n`;
                 let body = await (new BashScriptAsset(context, context.resolver, "cmdline_starter")).renderFromString(bashTemplate);
                 res.status(OK).contentType("text/plain").send(body);
             });
@@ -161,7 +160,7 @@ export class OldSkoolServer extends OldSkoolMiddleware {
         this.handle(
             [`${this.uriOwnerRepoCommitishRecipes}/cmdline/docker`],
             async (context: RenderingContext, res: Response) => {
-                let bashTemplate = `#!/bin/bash\n## **INCLUDE:common.sh\ncmdLineCloudInitDocker "${context.recipesUrl}/"\n`;
+                let bashTemplate = `#!/bin/bash\n## **INCLUDE:ci_launchers.sh\ncmdLineCloudInitDocker "${context.recipesUrl}/"\n`;
                 let body = await (new BashScriptAsset(context, context.resolver, "cmdline_docker_starter")).renderFromString(bashTemplate);
                 res.status(OK).contentType("text/plain").send(body);
             });
