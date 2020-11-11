@@ -28,6 +28,8 @@ export abstract class OldSkoolMiddleware extends OldSkoolBase {
         this.middleware(
             [`${this.uriOwnerRepoCommitish}`],
             async (req, res) => {
+                //console.warn("If-None-Match", req.headers['if-none-match'])
+
                 // Fake, should come from :owner/:repo/:commitish
                 const resolver = new RepoResolver("/Users/pardini/Documents/Projects/github/oldskool", "oldskool-rpardini");
                 await resolver.rootResolve();
