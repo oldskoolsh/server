@@ -122,6 +122,7 @@ export class Repository {
             let parsed = path.parse(pathOnDisk);
             return {
                 name: assetPath,
+                mkdirName: path.dirname(assetPath),
                 containingDir: parsed.dir,
                 pathOnDisk: pathOnDisk,
                 base64contents: await this.myRef.readFileContents(assetPath, "base64")

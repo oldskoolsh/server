@@ -143,7 +143,7 @@ export class OldSkoolServer extends OldSkoolMiddleware {
 
 
                 let allTemplates = bashPrelude + bashTemplate + `` + jsTemplate;
-                let body = await (new BashScriptAsset(context, context.resolver, "all_launchers")).renderFromString(allTemplates);
+                let body = await (new BashScriptAsset(context, context.resolver, "oldskool-bundle")).renderFromString(allTemplates);
                 res.status(OK).contentType("text/plain").send(body);
 
             });

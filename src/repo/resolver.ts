@@ -6,6 +6,7 @@ import {Recipe} from "./recipe";
 export interface IAssetInfo {
     name: string,
     base64contents: string,
+    mkdirName: string,
     pathOnDisk: string,
     containingDir: string,
 }
