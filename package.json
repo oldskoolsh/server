@@ -4,15 +4,15 @@
   "scripts": {
     "build": "tsc --build tsconfig.prod.json",
     "start": "node ./dist --env=production",
-    "start:dev": "nodemon"
+    "start:dev": "nodemon",
+    "start:fastdev": "node ./dist --env=development"
   },
   "nodemonConfig": {
     "watch": [
-      "src",
-      "@types"
+      "dist"
     ],
-    "ext": "ts",
-    "exec": "ts-node ./src"
+    "ext": "*",
+    "exec": "node ./dist --env=development"
   },
   "dependencies": {
     "@iarna/toml": "^2.2.5",

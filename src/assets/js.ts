@@ -8,6 +8,8 @@ import fs from "fs";
 export class JSScriptAsset extends BaseAsset {
 
     private realMainJS!: IAssetInfo;
+    private isJavaScript: boolean = false;
+    private isTypeScript: boolean = false;
 
     async renderFromFile(): Promise<string> {
         let mainScript = `#!/bin/bash
@@ -46,11 +48,11 @@ export class JSScriptAsset extends BaseAsset {
         })
 
         // install/use NVM (node version)
-        mainScript += `jsLauncherPrepareNVM "${allAssets.filter(value => value.pathOnDisk === mainJS.pathOnDisk)[0].name}" "v14.15.0" \n`;
+        mainScript += `jsLauncherPrepareNVM "${this.realMainJS.name}" "v14.15.0" \n`;
         // npm install
-        mainScript += `jsLauncherNPMInstall "${allAssets.filter(value => value.pathOnDisk === mainJS.pathOnDisk)[0].name}" \n`;
+        mainScript += `jsLauncherNPMInstall "${this.realMainJS.name}" \n`;
         // run!
-        mainScript += `jsLauncherDoLaunch "${allAssets.filter(value => value.pathOnDisk === mainJS.pathOnDisk)[0].name}" $@ \n`;
+        mainScript += `jsLauncherDoLaunch "${this.realMainJS.name}" "$@" \n`;
 
         let body = await (new BashScriptAsset(this.context, this.context.resolver, "js_runner_" + this.assetPath)).renderFromString(mainScript);
         return body;
@@ -78,19 +80,36 @@ export class JSScriptAsset extends BaseAsset {
     }
 
     private async forgePackageJson(): Promise<IAssetInfo> {
-        let scripts:any = {};
+        this.isJavaScript = this.realMainJS.name.endsWith(".js") || this.realMainJS.name.endsWith(".mjs");
+        this.isTypeScript = this.realMainJS.name.endsWith(".ts");
+
+        let scripts: any = {};
+        let dependencies: any = {};
+
         scripts[this.realMainJS.name] = `cd $OLDSKOOL_PWD && node $OLDSKOOL_ROOT/${this.realMainJS.name}`;
+        dependencies["shelljs"] = "~0.8";
+
+        if (this.isTypeScript) {
+            scripts[this.realMainJS.name] = `cd $OLDSKOOL_PWD && node -r $OLDSKOOL_ROOT/node_modules/ts-node/register $OLDSKOOL_ROOT/${this.realMainJS.name}`;
+            scripts[this.realMainJS.name] = `cd $OLDSKOOL_PWD && ts-node $OLDSKOOL_ROOT/${this.realMainJS.name}`;
+            dependencies = {...dependencies, ...{
+                    "@types/commander": "~2",
+                    "@types/shelljs": "~0.8",
+                    "commander": "~6",
+                    "ts-node": "~9",
+                    "typescript": "~4"
+                }};
+        }
+
 
         let obj = {
-            "name": "oldskool-server",
-            "description": "autogen",
-            "repository": "autogen oldskool",
+            "name": `oldskool_script_${this.realMainJS.name}`,
+            "description": `oldskool script: ${this.realMainJS.name}`,
+            "repository": `oldskool script: ${this.realMainJS.name}`,
             "license": "Apache-2.0",
             "version": "0.0.0",
             "scripts": scripts,
-            "dependencies": {
-                "shelljs": "~0.8"
-            },
+            "dependencies": dependencies,
             "devDependencies": {}
         };
 
