@@ -17,7 +17,7 @@ export class JSScriptAsset extends BaseAsset {
 
         // get the actual path
         let mainJS: IAssetInfo = await this.repoResolver.getAssetInfo(`js/${this.assetPath}`);
-        console.log("mainJS", mainJS);
+        //console.log("mainJS", mainJS);
 
         // get other JS resources relative to that path. what about resolver hierarchy?
         let otherAssets: IAssetInfo[] = await this.getAllAssetInfoInDir(mainJS.containingDir,
@@ -36,11 +36,14 @@ export class JSScriptAsset extends BaseAsset {
             allAssets.push(await this.forgePackageJson())
         }
         // @TODO: if not forged, hack into it (create scripts etc)
-        console.log("allAssets", allAssets);
+        //console.log("allAssets", allAssets);
 
         // prepare base dir
         mainScript += `jsLauncherPrepareDir "${allAssets.filter(value => value.pathOnDisk === mainJS.pathOnDisk)[0].name}"\n`;
         // write them all, via base64
+
+        // render from here. otherwise too heavy!
+        mainScript = await (new BashScriptAsset(this.context, this.context.resolver, "js_runner_" + this.assetPath)).renderFromString(mainScript);
 
         allAssets.forEach((asset: IAssetInfo) => {
             mainScript += `mkdir -p "$JS_LAUNCHER_DIR/${asset.mkdirName}"; \n`;
@@ -54,8 +57,9 @@ export class JSScriptAsset extends BaseAsset {
         // run!
         mainScript += `jsLauncherDoLaunch "${this.realMainJS.name}" "$@" \n`;
 
-        let body = await (new BashScriptAsset(this.context, this.context.resolver, "js_runner_" + this.assetPath)).renderFromString(mainScript);
-        return body;
+
+
+        return mainScript;
     }
 
     private async getAllAssetInfoInDir(containingDir: string, globs: string[]): Promise<IAssetInfo[]> {
@@ -64,8 +68,9 @@ export class JSScriptAsset extends BaseAsset {
     }
 
     private async oneGlobDir(containingDir: string, glob: string): Promise<string[]> {
-        const entries: string[] = await fg([`${containingDir}/${glob}`], {dot: false});
-        return entries.map(value => value /** full path **/);
+        const entries: string[] = await fg([`${glob}`], {cwd: containingDir, dot: false, ignore: ["node_modules/**"]});
+        console.log(entries);
+        return entries.map(value => `${containingDir}/${value}` /** full path **/);
     }
 
     private async assetInfoFromFullPath(pathOnDisk: string, containingDir: string): Promise<IAssetInfo> {
@@ -90,7 +95,7 @@ export class JSScriptAsset extends BaseAsset {
         dependencies["shelljs"] = "~0.8";
 
         if (this.isTypeScript) {
-            scripts[this.realMainJS.name] = `cd $OLDSKOOL_PWD && node -r $OLDSKOOL_ROOT/node_modules/ts-node/register $OLDSKOOL_ROOT/${this.realMainJS.name}`;
+            //scripts[this.realMainJS.name] = `cd $OLDSKOOL_PWD && node -r $OLDSKOOL_ROOT/node_modules/ts-node/register $OLDSKOOL_ROOT/${this.realMainJS.name}`;
             scripts[this.realMainJS.name] = `cd $OLDSKOOL_PWD && ts-node $OLDSKOOL_ROOT/${this.realMainJS.name}`;
             dependencies = {...dependencies, ...{
                     "@types/commander": "~2",

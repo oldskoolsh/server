@@ -49,6 +49,10 @@ export abstract class OldSkoolBase {
         // use strong etags... beware NGINX, which will downgrade to weak during gzip.
         this.app.set('etag', 'strong');
 
+        //this.app.set('etag', function (body: any, encoding: any) {
+        //    return null;
+        //})
+
         // handle reverse proxy (X-Forwarded-For etc)
         this.app.set('trust proxy', ['loopback', 'linklocal', 'uniquelocal']);
 
