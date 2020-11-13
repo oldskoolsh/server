@@ -14,11 +14,11 @@ export class JSScriptAsset extends BaseAsset {
 
     async renderFromFile(): Promise<string> {
         let mainScript = `#!/bin/bash
-        ## **INCLUDE:js_launchers.sh\n`;
+        ## **INCLUDE:js_launchers.sh
+        set -e\n`;
 
         // get the actual path
         let mainJS: IAssetInfo = await this.repoResolver.getAssetInfo(`js/${this.assetPath}`);
-        //console.log("mainJS", mainJS);
 
         // get other JS resources relative to that path. what about resolver hierarchy?
         let otherAssets: IAssetInfo[] = await this.getAllAssetInfoInDir(mainJS.containingDir,
@@ -61,9 +61,10 @@ export class JSScriptAsset extends BaseAsset {
             mainScript += `echo '${asset.base64contents}' | base64 --decode > "$JS_LAUNCHER_DIR/${asset.name}"; \n`;
         })
 
-        // install/use NVM (node version)
-        mainScript += `jsLauncherPrepareNVM "${this.realMainJS.name}" "v14.15.0" \n`;
-        // npm install
+        // install/use NVM
+        // @TODO: (node version, nvm version) configurable (recipe? or root repo?)
+        mainScript += `jsLauncherPrepareNVM "${this.realMainJS.name}" "v14.15.0" "v0.37.0" \n`;
+        // npm install, or npm ci
         mainScript += `jsLauncherNPMInstall "${this.realMainJS.name}" "${hasPackageLock?"ci":"install"}" \n`;
         // run!
         mainScript += `jsLauncherDoLaunch "${this.realMainJS.name}" "$@" \n`;
@@ -130,7 +131,6 @@ export class JSScriptAsset extends BaseAsset {
 
         let obj = Object.assign(src, overriden);
 
-        console.log("final package json", obj);
         let forged: string = JSON.stringify(obj);
         return {
             containingDir: "",
