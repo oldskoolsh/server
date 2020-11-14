@@ -33,7 +33,7 @@ export class CloudInitYamlMerger {
         for (const parsedFragment of allParsedFragments) {
             console.group("fragment recipe id: ", parsedFragment.recipe.id)
             if (await this.evaluateFragment(parsedFragment)) {
-                resolvedFragments.push(await this.expandVariables(parsedFragment));
+                resolvedFragments.push((await this.expandVariables(parsedFragment)));
             }
             console.groupEnd();
         }
@@ -50,8 +50,13 @@ export class CloudInitYamlMerger {
         return result;
     }
 
+    // @TODO: no-op
+    private async expandVariables(fragment: CloudConfigFragment): Promise<CloudConfigFragment> {
+        return fragment;
+    }
 
-    private async evaluateFragment(fragment: CloudConfigFragment):Promise<boolean> {
+
+    private async evaluateFragment(fragment: CloudConfigFragment): Promise<boolean> {
         if (!fragment.condition) return true;
 
         for (const conditionKey of Object.keys(fragment.condition)) {
@@ -92,8 +97,5 @@ export class CloudInitYamlMerger {
         return BaseCondition.getConditionImplementation(this.context, name, value);
     }
 
-    private async expandVariables(parsedFragment: CloudConfigFragment) {
 
-        return undefined;
-    }
 }

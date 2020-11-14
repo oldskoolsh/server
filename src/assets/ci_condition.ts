@@ -68,6 +68,7 @@ export class BaseCondition {
         switch (name) {
             case "os":
                 return new OSCondition(rc, value);
+
             case "release":
                 return new ReleaseCondition(rc, value);
 
