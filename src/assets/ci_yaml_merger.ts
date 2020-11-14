@@ -52,6 +52,12 @@ export class CloudInitYamlMerger {
 
     // @TODO: no-op
     private async expandVariables(fragment: CloudConfigFragment): Promise<CloudConfigFragment> {
+        // getting al the vars, maybe via simple value conditions? also, do it outside the loop.
+
+
+
+        // actually replacing vars, via object props interation + value-only replace or serialize/deserialize?
+
         return fragment;
     }
 
