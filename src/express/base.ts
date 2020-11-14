@@ -57,7 +57,7 @@ export abstract class OldSkoolBase {
         this.app.set('trust proxy', ['loopback', 'linklocal', 'uniquelocal']);
 
         // Show routes called in console during development
-        this.app.use(morgan('combined'));
+        this.app.use(morgan('dev'));
 
         // "Security headers"
         // import helmet from 'helmet';

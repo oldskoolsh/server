@@ -3,10 +3,9 @@ import {RepoResolver} from "../repo/resolver";
 import {Recipe} from "../repo/recipe";
 import {CloudConfigFragment} from "../repo/cifragment";
 
-
 // merge
 import deepmerge from "deepmerge";
-import {ICondition, OSCondition, ReleaseCondition} from "./ci_condition";
+import {BaseCondition, ICondition} from "./ci_condition";
 
 export class CloudInitYamlMerger {
     protected readonly context: RenderingContext;
@@ -32,9 +31,11 @@ export class CloudInitYamlMerger {
         // now resolve the conditions.
         let resolvedFragments: CloudConfigFragment[] = [];
         for (const parsedFragment of allParsedFragments) {
+            console.group("fragment recipe id: ", parsedFragment.recipe.id)
             if (await this.evaluateFragment(parsedFragment)) {
-                resolvedFragments.push(parsedFragment);
+                resolvedFragments.push(await this.expandVariables(parsedFragment));
             }
+            console.groupEnd();
         }
 
         //console.log(resolvedFragments);
@@ -50,7 +51,7 @@ export class CloudInitYamlMerger {
     }
 
 
-    private async evaluateFragment(fragment: CloudConfigFragment) {
+    private async evaluateFragment(fragment: CloudConfigFragment):Promise<boolean> {
         if (!fragment.condition) return true;
 
         for (const conditionKey of Object.keys(fragment.condition)) {
@@ -61,26 +62,38 @@ export class CloudInitYamlMerger {
                     await Promise.all(
                         conditionValue.map(async value => {
                             let impl: ICondition = this.createConditionImplementation(conditionKey, value);
-                            if (!await impl.evaluate()) return false;
+                            await impl.prepare();
+                            if (!await impl.evaluate()) {
+                                await console.log(`[array] Condition with key '${conditionKey}' and value '${value}' evaluated to`, false)
+                                return false;
+                            }
+                            await console.log(`[array] Condition with key '${conditionKey}' and value '${value}' evaluated to`, true)
                             return true;
                         })
                     );
-                return allConds.some(value => value);
+                let anyOfTheConditionsInArray = allConds.some(value => value);
+                await console.log(`[array] final conditions evaluated to`, anyOfTheConditionsInArray)
+                if (!anyOfTheConditionsInArray) return false;
             } else {
                 let impl: ICondition = this.createConditionImplementation(conditionKey, conditionValue);
-                if (!await impl.evaluate()) return false;
+                if (!await impl.evaluate()) {
+                    await console.log(`[array] Condition with key '${conditionKey}' and value '${conditionValue}' evaluated to `, false)
+                    return false;
+                } else {
+                    await console.log(`Condition with key '${conditionKey}' and value '${conditionValue}' evaluated to `, true)
+                }
             }
         }
+        await console.log("In the end evaluated to", true);
         return true;
     }
 
     private createConditionImplementation(name: string, value: any) {
-        switch (name) {
-            case "os":
-                return new OSCondition(this.context, value);
-            case "release":
-                return new ReleaseCondition(this.context, value);
-        }
-        throw new Error(`Unimplemented condition '${name}'`);
+        return BaseCondition.getConditionImplementation(this.context, name, value);
+    }
+
+    private async expandVariables(parsedFragment: CloudConfigFragment) {
+
+        return undefined;
     }
 }
