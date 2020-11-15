@@ -40,7 +40,7 @@ export abstract class OldSkoolMiddleware extends OldSkoolBase {
 
                 // parse the real user-agent. this lib is somewhat shit, does not detect wget/curl.
                 // so should only be used for detecting actual, human browsers.
-                context.userAgent = new parser.UAParser(req.headers['user-agent']).getResult();
+                context.userAgentStr = req.headers['user-agent'];
 
                 // parse the queryString parameters, with some guarantees:
                 // - only one value (the last) if multiple values

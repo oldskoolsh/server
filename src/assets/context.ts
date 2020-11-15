@@ -17,27 +17,40 @@ export class RenderingContext {
     public assetRender: boolean = false;
     public assetRenderPath: string = "";
     public bashUrl: string = "wrongbashpath";
-    public userAgent: IUAParser.IResult = new parser.UAParser("").getResult();
     public paramsQS: ReadonlyMap<string, string> = new Map<string, string>();
     public jsUrl: string = "wrongjspath";
+    public userAgentStr: string | undefined;
+    private _os!: IOS;
+    private _release!: IOSRelease;
+    private _ua!: IUAParser.IResult;
 
     constructor(baseUrl: string, tedisPool: TedisPool) {
         this.baseUrl = baseUrl;
         this.tedisPool = tedisPool;
     }
 
+    public async getUserAgent() {
+        if (this._ua) return this._ua;
+        this._ua = new parser.UAParser(this.userAgentStr).getResult();
+        return this._ua;
+    }
+
     public async getOS(): Promise<IOS> {
+        if (this._os) return this._os;
         let os: string | undefined = this.paramsQS.get("cios");
         if (!os) os = this.paramKV.get("os");
         if (!os) os = "ubuntu";
-        return BaseOS.createOS(os);
+        this._os = BaseOS.createOS(os);
+        return this._os;
     }
 
     public async getRelease(): Promise<IOSRelease> {
+        if (this._release) return this._release;
         let release: string | undefined = this.paramsQS.get("cirelease");
         if (!release) release = this.paramKV.get("release");
         if (!release) release = "focal"; // @TODO: latest released lts..
-        return (await this.getOS()).getRelease(release);
+        this._release = (await this.getOS()).getRelease(release);
+        return this._release;
     }
 
 
