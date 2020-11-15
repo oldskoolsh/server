@@ -7,6 +7,7 @@ import {CloudInitYamlProcessorAptProxy} from "./proxy";
 import {CloudInitYamlProcessorAptMirror} from "./mirror";
 import {CloudInitYamlProcessorPackages} from "./packages";
 import YAML from 'yaml';
+import {CloudInitYamlProcessorReplaceVariables} from "./variables";
 
 export class CloudInitProcessorStack {
     protected readonly src: any;
@@ -33,7 +34,9 @@ export class CloudInitProcessorStack {
     }
 
     addDefaultStack() {
-        return this.add(new CloudInitYamlProcessorAptSources())
+        return this
+            .add(new CloudInitYamlProcessorReplaceVariables())
+            .add(new CloudInitYamlProcessorAptSources())
             .add(new CloudInitYamlProcessorSSHKeys())
             .add(new CloudInitYamlProcessorAptProxy())
             .add(new CloudInitYamlProcessorAptMirror())

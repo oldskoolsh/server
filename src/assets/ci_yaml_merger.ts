@@ -33,7 +33,7 @@ export class CloudInitYamlMerger {
         for (const parsedFragment of allParsedFragments) {
             console.group("fragment recipe id: ", parsedFragment.recipe.id)
             if (await this.evaluateFragment(parsedFragment)) {
-                resolvedFragments.push((await this.expandVariables(parsedFragment)));
+                resolvedFragments.push(parsedFragment);
             }
             console.groupEnd();
         }
@@ -49,18 +49,6 @@ export class CloudInitYamlMerger {
 
         return result;
     }
-
-    // @TODO: no-op
-    private async expandVariables(fragment: CloudConfigFragment): Promise<CloudConfigFragment> {
-        // getting al the vars, maybe via simple value conditions? also, do it outside the loop.
-
-
-
-        // actually replacing vars, via object props interation + value-only replace or serialize/deserialize?
-
-        return fragment;
-    }
-
 
     private async evaluateFragment(fragment: CloudConfigFragment): Promise<boolean> {
         if (!fragment.condition) return true;
