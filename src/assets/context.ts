@@ -47,5 +47,15 @@ export class RenderingContext {
     async deinit() {
     }
 
+    async getAllVariables(): Promise<Map<string, string>> {
+        let map = new Map<string, string>();
+        map.set("closest_lower_lts", (await this.getOS()).getClosestLowerLTS(await this.getRelease()).id);
+        map.set("release_status", (await this.getRelease()).released ? "released" : "unreleased");
+        map.set("release_init", (await this.getRelease()).systemd ? "systemd" : "other");
+        map.set("release_lts", (await this.getRelease()).lts ? "lts" : "non-lts");
+        map.set("release", (await this.getRelease()).id);
+        map.set("os", (await this.getOS()).id);
+        return map;
+    }
 }
 
