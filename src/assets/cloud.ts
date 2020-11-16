@@ -23,6 +23,6 @@ export class UnknownCloud extends BaseCloud implements ICloud {
 }
 
 export class NonCloudCloud extends BaseCloud implements ICloud {
-    id = "noncloud";
+    id = "nocloud";
     other_names = ["libvirt", "nocloud"];
 }
