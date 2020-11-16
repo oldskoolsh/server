@@ -1,7 +1,13 @@
 import {RenderingContext} from "./context";
 
+import util from "util";
+import dns from "dns";
+
+const dnsLookup = util.promisify(dns.lookup);
+
 export interface ICondition {
     evaluate(): Promise<Boolean>;
+
     prepare(): Promise<void>;
 }
 
@@ -30,6 +36,9 @@ export class BaseCondition {
 
             case "release_status":
                 return new UbuntuReleaseStatusCondition(rc, value);
+
+            case "ip_resolve":
+                return new ClientResolvedIPCondition(rc, value);
         }
         throw new Error(`Unimplemented condition '${name}'`);
     }
@@ -67,12 +76,16 @@ export abstract class SimpleValueOperatorCondition extends BaseCondition impleme
 
     public async evaluate(): Promise<Boolean> {
         let operator = await this.getOperatorFromValue();
-        let value = await this.getValueWithoutOperator();
+        let value = await this.processValue(await this.getValueWithoutOperator());
         let actualValue = await this.getActualValue();
         return operator.resolve(value, actualValue);
     }
 
     protected abstract async getActualValue(): Promise<string>;
+
+    protected async processValue(value: string): Promise<string> {
+        return value;
+    }
 }
 
 
@@ -104,4 +117,16 @@ export class ReleaseInitSystemCondition extends SimpleValueOperatorCondition {
     protected async getActualValue(): Promise<string> {
         return (await this.context.getRelease()).systemd ? "systemd" : "other";
     }
+}
+
+export class ClientResolvedIPCondition extends SimpleValueOperatorCondition {
+    protected async getActualValue(): Promise<string> {
+        return (await this.context.getClientIP());
+    }
+
+    protected async processValue(value: string): Promise<string> {
+        let resolved = await dnsLookup(value, 4);
+        return resolved.address;
+    }
+
 }

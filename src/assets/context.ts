@@ -20,6 +20,7 @@ export class RenderingContext {
     public paramsQS: ReadonlyMap<string, string> = new Map<string, string>();
     public jsUrl: string = "wrongjspath";
     public userAgentStr: string | undefined;
+    public clientIP!: string;
     private _os!: IOS;
     private _release!: IOSRelease;
     private _ua!: IUAParser.IResult;
@@ -62,13 +63,29 @@ export class RenderingContext {
 
     async getAllVariables(): Promise<Map<string, string>> {
         let map = new Map<string, string>();
+
+        // stuff from os/release.
         map.set("closest_lower_lts", (await this.getOS()).getClosestLowerLTS(await this.getRelease()).id);
         map.set("release_status", (await this.getRelease()).released ? "released" : "unreleased");
         map.set("release_init", (await this.getRelease()).systemd ? "systemd" : "other");
         map.set("release_lts", (await this.getRelease()).lts ? "lts" : "non-lts");
         map.set("release", (await this.getRelease()).id);
         map.set("os", (await this.getOS()).id);
+
+        // the actual IP that hit this server.
+        map.set("outbound_ip", this.clientIP);
+
+        // stuff from the gather stage.
+        map.set("cpu_raw", this.paramsQS.get("cicpu") || "unknown");
+        map.set("default_route_intf", this.paramsQS.get("ciintf") || "unknown");
+        map.set("default_route_ip", this.paramsQS.get("ciintip") || "unknown");
+        map.set("instance_id", this.paramsQS.get("ciiid") || "unknown");
+
         return map;
+    }
+
+    async getClientIP(): Promise<string> {
+        return this.clientIP;
     }
 }
 

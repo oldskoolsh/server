@@ -103,13 +103,28 @@ export class OldSkoolServer extends OldSkoolMiddleware {
                 let merged = await (new CloudInitYamlMerger(context, context.resolver, context.recipes)).mergeYamls();
                 let yaml = await new CloudInitProcessorStack(context, context.resolver, merged).addDefaultStack().processObj();
 
+                let curlDatas = [
+                    `--data-urlencode "ciarch={{machine}}"`,
+                    `--data-urlencode "cios={{distro}}"`,
+                    `--data-urlencode "cicloud={{cloud_name}}"`,
+                    `--data-urlencode "cirelease={{distro_release}}"`,
+                    `--data-urlencode "ciaz={{availability_zone}}"`,
+                    `--data-urlencode "ciplatform={{platform}}"`,
+                    `--data-urlencode "ciregion={{region}}"`,
+                    `--data-urlencode "ciiid={{instance_id}}"`,
+                    `--data-urlencode "cicpu=$(cat /proc/cpuinfo | grep -i model | head -2 | cut -d ":" -f 2 | xargs || true) "`,
+                    `--data-urlencode "ciintf=$(ip route s | grep "^default" | cut -d " " -f 5 || true)"`,
+                    `--data-urlencode "ciintip=$(ip route s | grep "^default" | cut -d " " -f 9 || true)"`,
+                    //`--data-urlencode ""`,
+                ]
+
                 let origBootCmds = yaml.bootcmd || [];
                 origBootCmds.unshift(
-                    `echo "OldSkool initting from ${context.recipesUrl}/real/cloud/init/yaml?ciarch={{machine}}&cicloud={{cloud_name}}&cios={{distro}}&cirelease={{distro_release}}&ciaz={{availability_zone}}&ciplatform={{platform}}&ciregion={{region}}"`,
+                    `echo OldSkool initting from curl --http1.1 --silent --show-error --output "/var/lib/cloud/instance/cloud-config.txt" -G ${curlDatas.join(" ")} ${context.recipesUrl}/real/cloud/init/yaml`,
                     "cp /var/lib/cloud/instance/cloud-config.txt /var/lib/cloud/instance/cloud-config.txt.orig",
-                    `echo @TODO: what if curl fails? Not mess up the cloud-config.`,
-                    `curl "${context.recipesUrl}/real/cloud/init/yaml?ciarch={{machine}}&cicloud={{cloud_name}}&cios={{distro}}&cirelease={{distro_release}}&ciaz={{availability_zone}}&ciplatform={{platform}}&ciregion={{region}}" > /var/lib/cloud/instance/cloud-config.txt`,
-                    `echo @TODO: update the scripts as well, possibly.`,
+                    `sleep 2`,
+                    `curl --http1.1 --silent --show-error --output "/var/lib/cloud/instance/cloud-config.txt" -G ${curlDatas.join(" ")} "${context.recipesUrl}/real/cloud/init/yaml"`,
+                    `sleep 2`,
                     "echo Done, continuing..."
                 );
                 yaml.bootcmd = origBootCmds;

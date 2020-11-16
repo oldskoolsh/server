@@ -42,6 +42,9 @@ export abstract class OldSkoolMiddleware extends OldSkoolBase {
                 // so should only be used for detecting actual, human browsers.
                 context.userAgentStr = req.headers['user-agent'];
 
+                // client-ip
+                context.clientIP = req.ip;
+
                 // parse the queryString parameters, with some guarantees:
                 // - only one value (the last) if multiple values
                 // - undefined if empty or missing.
