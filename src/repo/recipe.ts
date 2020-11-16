@@ -22,9 +22,17 @@ export class Recipe {
     async getCloudConfigDocs() {
         let allDocs = [];
         for (let mentionedFile of await this.getMentionedYamls()) {
-            let rawYaml = await this.repo.recursivelyGetRawAsset(`ci/${mentionedFile}.yaml`) || "";
-            let docs: Document.Parsed[] = YAML.parseAllDocuments(rawYaml);
-            allDocs.push(...docs.map(value => value.toJS()).map(value => new CloudConfigFragment(value, this, mentionedFile)));
+            let rawYaml: string | null = await this.repo.recursivelyGetRawAsset(`ci/${mentionedFile}.yaml`);
+            if ( (rawYaml === null) || (rawYaml === "") ) {
+                console.warn("Got no YAML from " + mentionedFile);
+            } else {
+                let docs: Document.Parsed[] = YAML.parseAllDocuments(rawYaml);
+                try {
+                    allDocs.push(...docs.map(value => value.toJS()).map((value, index) => new CloudConfigFragment(value, this, mentionedFile, index)));
+                } catch (e) {
+                    throw new Error("Error parsing doc: " + mentionedFile + " :: " + e.message);
+                }
+            }
         }
         return allDocs;
     }

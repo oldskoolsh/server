@@ -25,6 +25,9 @@ export class BaseCondition {
             case "arch":
                 return new NormalizedArchitectureCondition(rc, value);
 
+            case "cloud":
+                return new NormalizedCloudCondition(rc, value);
+
             case "os":
                 return new OSCondition(rc, value);
 
@@ -144,6 +147,12 @@ export class ClientResolvedIPCondition extends SimpleValueOperatorCondition {
 export class NormalizedArchitectureCondition extends SimpleValueOperatorCondition implements ICondition {
     protected async getActualValue(): Promise<string> {
         return (await this.context.getArch()).id;
+    }
+}
+
+export class NormalizedCloudCondition extends SimpleValueOperatorCondition implements ICondition {
+    protected async getActualValue(): Promise<string> {
+        return (await this.context.getCloud()).id;
     }
 }
 

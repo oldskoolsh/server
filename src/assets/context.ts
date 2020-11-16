@@ -6,6 +6,7 @@ import {BaseOS, IOS, IOSRelease} from "./os";
 import {Asn, City} from '@maxmind/geoip2-node';
 import {GeoIpReaders} from "../shared/geoip";
 import {BaseArch, IArch} from "./arch";
+import {BaseCloud, ICloud} from "./cloud";
 
 export class RenderingContext {
 
@@ -31,6 +32,7 @@ export class RenderingContext {
     private _arch!: IArch;
     private _asn!: Asn;
     private _city!: City;
+    private _cloud!: ICloud;
 
     constructor(baseUrl: string, tedisPool: TedisPool, geoipReaders: GeoIpReaders) {
         this.baseUrl = baseUrl;
@@ -92,6 +94,7 @@ export class RenderingContext {
         map.set("release", (await this.getRelease()).id);
         map.set("os", (await this.getOS()).id);
         map.set("arch", (await this.getArch()).id);
+        map.set("cloud", (await this.getCloud()).id);
 
         // the actual IP that hit this server.
         map.set("outbound_ip", this.clientIP);
@@ -126,5 +129,13 @@ export class RenderingContext {
         return this._arch;
     }
 
+    async getCloud(): Promise<ICloud> {
+        if (this._cloud) return this._cloud;
+        let cloud: string | undefined = this.paramsQS.get("ciplatform");
+        if (!cloud) cloud = this.paramKV.get("cloud");
+        if (!cloud) cloud = "amd64";
+        this._cloud = BaseCloud.createCloud(cloud);
+        return this._arch;
+    }
 }
 
