@@ -29,6 +29,8 @@ export class RenderingContext {
     private _release!: IOSRelease;
     private _ua!: IUAParser.IResult;
     private _arch!: IArch;
+    private _asn!: Asn;
+    private _city!: City;
 
     constructor(baseUrl: string, tedisPool: TedisPool, geoipReaders: GeoIpReaders) {
         this.baseUrl = baseUrl;
@@ -68,18 +70,18 @@ export class RenderingContext {
     }
 
     public async resolveASNGeoIP(): Promise<Asn> {
-        const asnResp: Asn = this.geoipReaders.asn.asn(this.clientIP);
-        console.log(asnResp); // 'US'
-        return asnResp;
+        if (this._asn) return this._asn;
+        this._asn = this.geoipReaders.asn.asn(this.clientIP);
+        return this._asn;
     }
 
     public async resolveCityGeoIP(): Promise<City> {
-        const cityResp: City = this.geoipReaders.city.city(this.clientIP);
-        console.log(cityResp); // 'US'
-        return cityResp;
+        if (this._city) return this._city;
+        this._city = this.geoipReaders.city.city(this.clientIP);
+        return this._city;
     }
 
-    async getAllVariables(): Promise<Map<string, string>> {
+    public async getAllVariables(): Promise<Map<string, string>> {
         let map = new Map<string, string>();
 
         // stuff from os/release.
@@ -97,8 +99,8 @@ export class RenderingContext {
         // geoIP, super-expensive...
         map.set("geoip_as_org", (await this.resolveASNGeoIP()).autonomousSystemOrganization || "unknown")
         let city = await this.resolveCityGeoIP();
-        map.set("geoip_country", ( city.country ? city.country.isoCode || "unknown" : "unknown").toLowerCase())
-        map.set("geoip_continent", ( city.continent ? city.continent.code || "unknown" : "unknown").toLowerCase())
+        map.set("geoip_country", (city.country ? city.country.isoCode || "unknown" : "unknown").toLowerCase())
+        map.set("geoip_continent", (city.continent ? city.continent.code || "unknown" : "unknown").toLowerCase())
 
         // stuff from the gather stage.
         map.set("cpu_raw", this.paramsQS.get("cicpu") || "unknown");
@@ -122,7 +124,7 @@ export class RenderingContext {
         if (!arch) arch = "amd64";
         this._arch = BaseArch.createArch(arch);
         return this._arch;
-
     }
+
 }
 
