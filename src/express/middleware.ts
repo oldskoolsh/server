@@ -36,7 +36,7 @@ export abstract class OldSkoolMiddleware extends OldSkoolBase {
                 req.oldSkoolResolver = resolver;
 
                 let baseUrl = `${req.secure ? "https://" : "http://"}${req.headers['host']}/`
-                let context = new RenderingContext(baseUrl, this.tedisPool);
+                let context = new RenderingContext(baseUrl, this.tedisPool, this.geoipReaders);
 
                 // parse the real user-agent. this lib is somewhat shit, does not detect wget/curl.
                 // so should only be used for detecting actual, human browsers.

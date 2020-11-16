@@ -2,6 +2,7 @@ import {TedisPool} from "tedis";
 import logger from './shared/Logger';
 import {OldSkoolServer} from "./express/paths";
 import {aff} from "./shared/utils";
+import {DefaultGeoIPReaders} from "./shared/geoip";
 
 new aff();
 
@@ -11,7 +12,7 @@ async function index() {
     let oneTedis = await tedisPool.getTedis();
     tedisPool.putTedis(oneTedis);
 
-    await new OldSkoolServer(tedisPool).createAndListen();
+    await new OldSkoolServer(tedisPool, await (new DefaultGeoIPReaders()).prepareReaders()).createAndListen();
 }
 
 index().then(value => {

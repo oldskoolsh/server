@@ -22,6 +22,9 @@ export class BaseCondition {
 
     public static getConditionImplementation(rc: RenderingContext, name: string, value: any) {
         switch (name) {
+            case "arch":
+                return new NormalizedArchitectureCondition(rc, value);
+
             case "os":
                 return new OSCondition(rc, value);
 
@@ -39,6 +42,12 @@ export class BaseCondition {
 
             case "ip_resolve":
                 return new ClientResolvedIPCondition(rc, value);
+
+            case "geoip_country":
+                return new GeoIpCountryCondition(rc, value);
+
+            case "geoip_continent":
+                return new GeoIpContinentCondition(rc, value);
         }
         throw new Error(`Unimplemented condition '${name}'`);
     }
@@ -129,4 +138,26 @@ export class ClientResolvedIPCondition extends SimpleValueOperatorCondition {
         return resolved.address;
     }
 
+}
+
+
+export class NormalizedArchitectureCondition extends SimpleValueOperatorCondition implements ICondition {
+    protected async getActualValue(): Promise<string> {
+        return (await this.context.getArch()).id;
+    }
+}
+
+
+export class GeoIpCountryCondition extends SimpleValueOperatorCondition implements ICondition {
+    protected async getActualValue(): Promise<string> {
+        let city = await this.context.resolveCityGeoIP();
+        return (city.country != undefined ? city.country.isoCode || "unknown" : "unknown").toLowerCase();
+    }
+}
+
+export class GeoIpContinentCondition extends SimpleValueOperatorCondition implements ICondition {
+    protected async getActualValue(): Promise<string> {
+        let city = await this.context.resolveCityGeoIP();
+        return (city.continent != undefined ? city.continent.code || "unknown" : "unknown").toLowerCase();
+    }
 }

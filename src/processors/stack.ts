@@ -3,7 +3,6 @@ import {RenderingContext} from "../assets/context";
 import {RepoResolver} from "../repo/resolver";
 import {CloudInitYamlProcessorAptSources} from "./apt_sources";
 import {CloudInitYamlProcessorSSHKeys} from "./ssh_keys";
-import {CloudInitYamlProcessorAptProxy} from "./proxy";
 import {CloudInitYamlProcessorAptMirror} from "./mirror";
 import {CloudInitYamlProcessorPackages} from "./packages";
 import YAML from 'yaml';
@@ -38,7 +37,6 @@ export class CloudInitProcessorStack {
             .add(new CloudInitYamlProcessorReplaceVariables())
             .add(new CloudInitYamlProcessorAptSources())
             .add(new CloudInitYamlProcessorSSHKeys())
-            .add(new CloudInitYamlProcessorAptProxy())
             .add(new CloudInitYamlProcessorAptMirror())
             .add(new CloudInitYamlProcessorPackages())
     }

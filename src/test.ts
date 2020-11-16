@@ -9,10 +9,10 @@ import {CloudInitYamlProcessorSSHKeys} from "./processors/ssh_keys";
 import {CloudInitYamlProcessorAptSources} from "./processors/apt_sources";
 import {CloudInitProcessorStack} from "./processors/stack";
 import YAML from 'yaml';
-import {CloudInitYamlProcessorAptProxy} from "./processors/proxy";
 import {CloudInitYamlProcessorAptMirror} from "./processors/mirror";
 import {CloudInitYamlProcessorPackages} from "./processors/packages";
 import {TedisPool} from "tedis";
+import {DefaultGeoIPReaders} from "./shared/geoip";
 
 
 async function faz() {
@@ -28,7 +28,7 @@ async function faz() {
         console.log("common", common);
     */
 
-    let context = new RenderingContext("https://cloud-init.pardini.net/", new TedisPool());
+    let context = new RenderingContext("https://cloud-init.pardini.net/", new TedisPool(), await (new DefaultGeoIPReaders()).prepareReaders());
     await context.init();
     try {
 
@@ -81,7 +81,6 @@ async function faz() {
         let finalResult = await new CloudInitProcessorStack(context, resolver, smth)
             .add(new CloudInitYamlProcessorAptSources())
             .add(new CloudInitYamlProcessorSSHKeys())
-            .add(new CloudInitYamlProcessorAptProxy())
             .add(new CloudInitYamlProcessorAptMirror())
             .add(new CloudInitYamlProcessorPackages())
             .process();

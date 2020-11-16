@@ -4,6 +4,7 @@ import express, {Express, NextFunction, Request, Response} from "express";
 import morgan from "morgan";
 import StatusCodes from "http-status-codes";
 import {RenderingContext} from "../assets/context";
+import {GeoIpReaders} from "../shared/geoip";
 // Hack into Express to be able to catch exceptions thrown from async handlers.
 // Yes, a "require" here is the only way to make this work.
 require('express-async-errors');
@@ -12,11 +13,13 @@ const {BAD_REQUEST, OK} = StatusCodes;
 
 export abstract class OldSkoolBase {
     protected readonly tedisPool: TedisPool;
+    protected readonly geoipReaders: GeoIpReaders;
     protected readonly app: Express;
 
-    constructor(tedisPool: TedisPool) {
+    constructor(tedisPool: TedisPool, geoIpReaders: GeoIpReaders) {
         this.tedisPool = tedisPool;
         this.app = express();
+        this.geoipReaders = geoIpReaders;
     }
 
     handle(paths: string[], handler: (context: RenderingContext, res: Response, req: Request) => Promise<void>) {

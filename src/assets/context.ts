@@ -3,6 +3,9 @@ import {Recipe} from "../repo/recipe";
 import {RepoResolver} from "../repo/resolver";
 import parser from "ua-parser-js";
 import {BaseOS, IOS, IOSRelease} from "./os";
+import {Asn, City} from '@maxmind/geoip2-node';
+import {GeoIpReaders} from "../shared/geoip";
+import {BaseArch, IArch} from "./arch";
 
 export class RenderingContext {
 
@@ -21,13 +24,16 @@ export class RenderingContext {
     public jsUrl: string = "wrongjspath";
     public userAgentStr: string | undefined;
     public clientIP!: string;
+    private readonly geoipReaders: GeoIpReaders;
     private _os!: IOS;
     private _release!: IOSRelease;
     private _ua!: IUAParser.IResult;
+    private _arch!: IArch;
 
-    constructor(baseUrl: string, tedisPool: TedisPool) {
+    constructor(baseUrl: string, tedisPool: TedisPool, geoipReaders: GeoIpReaders) {
         this.baseUrl = baseUrl;
         this.tedisPool = tedisPool;
+        this.geoipReaders = geoipReaders;
     }
 
     public async getUserAgent() {
@@ -61,6 +67,18 @@ export class RenderingContext {
     async deinit() {
     }
 
+    public async resolveASNGeoIP(): Promise<Asn> {
+        const asnResp: Asn = this.geoipReaders.asn.asn(this.clientIP);
+        console.log(asnResp); // 'US'
+        return asnResp;
+    }
+
+    public async resolveCityGeoIP(): Promise<City> {
+        const cityResp: City = this.geoipReaders.city.city(this.clientIP);
+        console.log(cityResp); // 'US'
+        return cityResp;
+    }
+
     async getAllVariables(): Promise<Map<string, string>> {
         let map = new Map<string, string>();
 
@@ -71,9 +89,16 @@ export class RenderingContext {
         map.set("release_lts", (await this.getRelease()).lts ? "lts" : "non-lts");
         map.set("release", (await this.getRelease()).id);
         map.set("os", (await this.getOS()).id);
+        map.set("arch", (await this.getArch()).id);
 
         // the actual IP that hit this server.
         map.set("outbound_ip", this.clientIP);
+
+        // geoIP, super-expensive...
+        map.set("geoip_as_org", (await this.resolveASNGeoIP()).autonomousSystemOrganization || "unknown")
+        let city = await this.resolveCityGeoIP();
+        map.set("geoip_country", ( city.country ? city.country.isoCode || "unknown" : "unknown").toLowerCase())
+        map.set("geoip_continent", ( city.continent ? city.continent.code || "unknown" : "unknown").toLowerCase())
 
         // stuff from the gather stage.
         map.set("cpu_raw", this.paramsQS.get("cicpu") || "unknown");
@@ -81,11 +106,23 @@ export class RenderingContext {
         map.set("default_route_ip", this.paramsQS.get("ciintip") || "unknown");
         map.set("instance_id", this.paramsQS.get("ciiid") || "unknown");
 
+        // stuff from cloud / elquicko
+
         return map;
     }
 
     async getClientIP(): Promise<string> {
         return this.clientIP;
+    }
+
+    public async getArch() {
+        if (this._arch) return this._arch;
+        let arch: string | undefined = this.paramsQS.get("ciarch");
+        if (!arch) arch = this.paramKV.get("arch");
+        if (!arch) arch = "amd64";
+        this._arch = BaseArch.createArch(arch);
+        return this._arch;
+
     }
 }
 
