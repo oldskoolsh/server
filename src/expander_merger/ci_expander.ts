@@ -1,4 +1,4 @@
-import {RenderingContext} from "./context";
+import {RenderingContext} from "../repo/context";
 import {RepoResolver} from "../repo/resolver";
 import {Recipe} from "../repo/recipe";
 

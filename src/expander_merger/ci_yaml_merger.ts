@@ -1,11 +1,11 @@
-import {RenderingContext} from "./context";
+import {RenderingContext} from "../repo/context";
 import {RepoResolver} from "../repo/resolver";
 import {Recipe} from "../repo/recipe";
 import {CloudConfigFragment} from "../repo/cifragment";
 
 // merge
 import deepmerge from "deepmerge";
-import {BaseCondition, ICondition} from "./ci_condition";
+import {BaseCondition, ICondition} from "../conditions/ci_condition";
 
 export class CloudInitYamlMerger {
     protected readonly context: RenderingContext;

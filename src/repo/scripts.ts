@@ -1,4 +1,4 @@
-import {RenderingContext} from "../assets/context";
+import {RenderingContext} from "./context";
 import path from "path";
 
 export interface IExecutableScript {

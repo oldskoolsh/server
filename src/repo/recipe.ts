@@ -23,7 +23,7 @@ export class Recipe {
         let allDocs = [];
         for (let mentionedFile of await this.getMentionedYamls()) {
             let rawYaml: string | null = await this.repo.recursivelyGetRawAsset(`ci/${mentionedFile}.yaml`);
-            if ( (rawYaml === null) || (rawYaml === "") ) {
+            if ((rawYaml === null) || (rawYaml === "")) {
                 console.warn("Got no YAML from " + mentionedFile);
             } else {
                 let docs: Document.Parsed[] = YAML.parseAllDocuments(rawYaml);

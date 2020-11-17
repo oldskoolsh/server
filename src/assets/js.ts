@@ -65,7 +65,7 @@ export class JSScriptAsset extends BaseAsset {
         // @TODO: (node version, nvm version) configurable (recipe? or root repo?)
         mainScript += `jsLauncherPrepareNVM "${this.realMainJS.name}" "v14.15.0" "v0.37.0" \n`;
         // npm install, or npm ci
-        mainScript += `jsLauncherNPMInstall "${this.realMainJS.name}" "${hasPackageLock?"ci":"install"}" \n`;
+        mainScript += `jsLauncherNPMInstall "${this.realMainJS.name}" "${hasPackageLock ? "ci" : "install"}" \n`;
         // run!
         mainScript += `jsLauncherDoLaunch "${this.realMainJS.name}" "$@" \n`;
 

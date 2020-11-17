@@ -1,5 +1,5 @@
 import {BaseYamlProcessor} from "./base";
-import {RenderingContext} from "../assets/context";
+import {RenderingContext} from "../repo/context";
 import {RepoResolver} from "../repo/resolver";
 import {CloudInitYamlProcessorAptSources} from "./apt_sources";
 import {CloudInitYamlProcessorSSHKeys} from "./ssh_keys";

@@ -1,12 +1,12 @@
 import {Express, Response} from "express";
-import {CloudInitYamlMerger} from "../assets/ci_yaml_merger";
+import {CloudInitYamlMerger} from "../expander_merger/ci_yaml_merger";
 import {CloudInitProcessorStack} from "../processors/stack";
 import YAML from "yaml";
 import {BashScriptAsset} from "../assets/bash";
 import {MimeTextFragment} from "../shared/mime";
 import StatusCodes from 'http-status-codes';
 import {OldSkoolMiddleware} from "./middleware";
-import {RenderingContext} from "../assets/context";
+import {RenderingContext} from "../repo/context";
 import {IExecutableScript, RecipeExecutablesProcessor} from "../repo/scripts";
 import {JSScriptAsset} from "../assets/js";
 

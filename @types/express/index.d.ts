@@ -1,6 +1,6 @@
 import {Repository} from "../../src/repo/repo";
 import {RepoResolver} from "../../src/repo/resolver";
-import {RenderingContext} from "../../src/assets/context";
+import {RenderingContext} from "../../src/repo/context";
 
 declare global {
     namespace Express {

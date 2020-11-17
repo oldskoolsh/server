@@ -3,7 +3,7 @@ import logger from "../shared/Logger";
 import express, {Express, NextFunction, Request, Response} from "express";
 import morgan from "morgan";
 import StatusCodes from "http-status-codes";
-import {RenderingContext} from "../assets/context";
+import {RenderingContext} from "../repo/context";
 import {GeoIpReaders} from "../shared/geoip";
 // Hack into Express to be able to catch exceptions thrown from async handlers.
 // Yes, a "require" here is the only way to make this work.

@@ -1,12 +1,12 @@
 import {TedisPool} from "tedis";
-import {Recipe} from "../repo/recipe";
-import {RepoResolver} from "../repo/resolver";
+import {Recipe} from "./recipe";
+import {RepoResolver} from "./resolver";
 import parser from "ua-parser-js";
-import {BaseOS, IOS, IOSRelease} from "./os";
+import {BaseOS, IOS, IOSRelease} from "../conditions/os";
 import {Asn, City} from '@maxmind/geoip2-node';
 import {GeoIpReaders} from "../shared/geoip";
-import {BaseArch, IArch} from "./arch";
-import {BaseCloud, ICloud} from "./cloud";
+import {BaseArch, IArch} from "../conditions/arch";
+import {BaseCloud, ICloud} from "../conditions/cloud";
 
 export class RenderingContext {
 

@@ -1,5 +1,5 @@
 import {RepoResolver} from "../repo/resolver";
-import {RenderingContext} from "./context";
+import {RenderingContext} from "../repo/context";
 
 export abstract class BaseAsset {
     protected readonly context: RenderingContext;

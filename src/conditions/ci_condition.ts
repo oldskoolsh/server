@@ -1,4 +1,4 @@
-import {RenderingContext} from "./context";
+import {RenderingContext} from "../repo/context";
 
 import util from "util";
 import dns from "dns";

@@ -1,9 +1,9 @@
 import {RepoResolver} from "./repo/resolver";
 import {Repository} from "./repo/repo";
-import {RenderingContext} from "./assets/context";
-import {CloudInitRecipeListExpander} from "./assets/ci_expander";
+import {RenderingContext} from "./repo/context";
+import {CloudInitRecipeListExpander} from "./expander_merger/ci_expander";
 import {Recipe} from "./repo/recipe";
-import {CloudInitYamlMerger} from "./assets/ci_yaml_merger";
+import {CloudInitYamlMerger} from "./expander_merger/ci_yaml_merger";
 import {CloudInitProcessorStack} from "./processors/stack";
 import YAML from 'yaml';
 import {TedisPool} from "tedis";
@@ -29,7 +29,6 @@ async function faz() {
 
         // super-new merger.
         let smth = await (new CloudInitYamlMerger(context, resolver, newList)).mergeYamls();
-
 
 
         // processors run when everything else is already included.

@@ -1,4 +1,4 @@
-import {RenderingContext} from "../assets/context";
+import {RenderingContext} from "../repo/context";
 import {RepoResolver} from "../repo/resolver";
 
 import fetch from "node-fetch";

@@ -10,7 +10,9 @@ export interface IOSRelease {
 export interface IOS {
     id: string;
     releases: IOSRelease[]
+
     getRelease(slug: string): IOSRelease;
+
     getClosestLowerLTS(release: IOSRelease): IOSRelease;
 }
 
