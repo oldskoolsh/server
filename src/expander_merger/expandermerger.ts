@@ -47,7 +47,7 @@ class CloudInitSuperMerger {
 
     }
 
-    private includeRecipeAndThrowIfNotAlreadyIncluded(recipes: string[]) {
+    private includeRecipeAndThrowIfNotAlreadyIncluded(recipes: string[], sourceRecipe: Recipe) {
         if (recipes.length == 0) return;
 
         // filter out the recipes we already have...
@@ -56,9 +56,15 @@ class CloudInitSuperMerger {
 
         // @TODO: wrong. the new recipes should come right after "the current one"
         //        so they don't override other, manually specified, recipes
+
+        let currentRecipeIndex = this.wantedRecipesStr.indexOf(sourceRecipe.id)+1;
+        console.log("splice before", this.wantedRecipesStr, "index", currentRecipeIndex, "source", sourceRecipe.id);
+
         for (const recipe of newRecipes) {
-            this.wantedRecipesStr.push(recipe)
+            this.wantedRecipesStr.splice(currentRecipeIndex, 0, recipe);
+            currentRecipeIndex++;
         }
+        console.log("after", this.wantedRecipesStr)
 
         throw new RestartProcessingException("Included new recipes " + newRecipes.join(","));
     }
@@ -83,7 +89,7 @@ class CloudInitSuperMerger {
             }
 
             if (resultFrag.message) {
-                this.cloudConfig = deepmerge(this.cloudConfig, {messages:[`[${superFragment.sourceFragment.sourceRef()}] ${resultFrag.message}`]});
+                this.cloudConfig = deepmerge(this.cloudConfig, {messages: [`[${superFragment.sourceFragment.sourceRef()}] ${resultFrag.message}`]});
             }
 
             // Handle the inclusions. Each inclusion can cause exception...
@@ -91,9 +97,9 @@ class CloudInitSuperMerger {
                 if (resultFrag.include.recipes) {
                     console.log("Including recipes...", resultFrag.include.recipes);
                     if (resultFrag.include.recipes instanceof Array)
-                        this.includeRecipeAndThrowIfNotAlreadyIncluded(resultFrag.include.recipes);
+                        this.includeRecipeAndThrowIfNotAlreadyIncluded(resultFrag.include.recipes, superFragment.sourceFragment.recipe);
                     else
-                        this.includeRecipeAndThrowIfNotAlreadyIncluded([resultFrag.include.recipes]);
+                        this.includeRecipeAndThrowIfNotAlreadyIncluded([resultFrag.include.recipes], superFragment.sourceFragment.recipe);
                 }
             }
 
