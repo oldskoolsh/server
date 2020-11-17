@@ -2,6 +2,7 @@
   "name": "oldskool-server",
   "version": "0.0.0",
   "scripts": {
+    "schema": "typescript-json-schema --required tsconfig.json IRecipeDef > recipe.schema.json",
     "build": "tsc --build tsconfig.prod.json",
     "start": "node ./dist --env=production",
     "start:dev": "nodemon",
@@ -32,6 +33,7 @@
     "openpgp": "^4.10.8",
     "string-replace-async": "^2.0.0",
     "tedis": "^0.1.12",
+    "typescript-json-schema": "^0.43.0",
     "ua-parser-js": "^0.7.22",
     "yaml": "^2.0.0-1"
   },
