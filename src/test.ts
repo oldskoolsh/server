@@ -3,11 +3,12 @@ import {Repository} from "./repo/repo";
 import {RenderingContext} from "./repo/context";
 import {CloudInitRecipeListExpander} from "./expander_merger/ci_expander";
 import {Recipe} from "./repo/recipe";
-import {CloudInitYamlMerger} from "./expander_merger/ci_yaml_merger";
 import {CloudInitProcessorStack} from "./processors/stack";
 import YAML from 'yaml';
 import {TedisPool} from "tedis";
 import {DefaultGeoIPReaders} from "./shared/geoip";
+import {CloudInitExpanderMerger} from "./expander_merger/expandermerger";
+import exp from "constants";
 
 
 async function faz() {
@@ -23,12 +24,14 @@ async function faz() {
 
 
         // initial expansion.
-        let newList: Recipe[] = await (new CloudInitRecipeListExpander(context, resolver, ['base'])).expand();
-        await console.log("Expanded list", newList.map(value => value.id));
+        let initialRecipes = ['base'];
 
 
-        // super-new merger.
-        let smth = await (new CloudInitYamlMerger(context, resolver, newList)).mergeYamls();
+        let expanderMerger: CloudInitExpanderMerger = new CloudInitExpanderMerger(context, resolver, initialRecipes);
+        let smth = await expanderMerger.process();
+
+
+
 
 
         // processors run when everything else is already included.

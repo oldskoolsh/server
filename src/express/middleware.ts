@@ -100,6 +100,8 @@ export abstract class OldSkoolMiddleware extends OldSkoolBase {
                 console.warn("Common middleware + RECIPES!");
                 // read recipes from request path.
                 let initialRecipes: string[] = req.params.recipes.split(",");
+
+                // @TODO: either use expander/merger, or don't do it here...
                 req.oldSkoolContext.recipes = await (new CloudInitRecipeListExpander(req.oldSkoolContext, req.oldSkoolResolver, initialRecipes)).expand();
                 req.oldSkoolContext.recipeNames = req.oldSkoolContext.recipes.map(value => value.id);
                 req.oldSkoolContext.recipesUrl = req.oldSkoolContext.moduleUrl + "/" + req.oldSkoolContext.recipeNames.join(",");

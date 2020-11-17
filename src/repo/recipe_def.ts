@@ -1,4 +1,4 @@
-export enum IRecipeIfConditionsConditionEnum {
+export enum IRecipeFragmentIfConditionsConditionEnum {
     os = "os",
     cloud = "cloud",
     release_lts = "release_lts",
@@ -10,28 +10,28 @@ export enum IRecipeIfConditionsConditionEnum {
     arch = "arch"
 }
 
-export type IRecipeIfConditionsMap = {
+export type IRecipeFragmentIfConditionsMap = {
     /**
      * One possible condition.
      */
-    [name in IRecipeIfConditionsConditionEnum]?: string | string[];
+    [name in IRecipeFragmentIfConditionsConditionEnum]?: string | string[];
 };
 
-export interface IRecipeIfDef {
+export interface IRecipeFragmentIfDef {
     /**
      * A map specifying the conditions for this predicate. If none, always evaluates to true.
      */
-    conditions?: IRecipeIfConditionsMap;
+    conditions?: IRecipeFragmentIfConditionsMap;
 
     /**
      * If the conditions all evaluate to true, do this.
      */
-    then?: IRecipeResultDef;
+    then?: IRecipeFragmentResultDef;
 
     /**
      * If any of the conditions evaluate to false, do this.
      */
-    else?: IRecipeResultDef;
+    else?: IRecipeFragmentResultDef;
 }
 
 export interface IRecipeResultIncludeDef {
@@ -50,7 +50,7 @@ export interface IRecipeResultIncludeDef {
     initScript?: string | string[];
 }
 
-export interface IRecipeResultDef {
+export interface IRecipeFragmentResultDef {
     /**
      * Merge the following object into cloud-config.
      */
@@ -64,18 +64,18 @@ export interface IRecipeResultDef {
     /**
      * Continue evaluating (requires a list of recipes)
      */
-    and?: IRecipeDef[];
+    and?: IRecipeFragmentDef[];
 
     /**
      * Continue evaluating (shortcut for a single)
      */
-    andIf?: IRecipeIfDef;
+    andIf?: IRecipeFragmentIfDef;
 
 }
 
-export interface IRecipeDef {
+export interface IRecipeFragmentDef {
     /**
      * Entrypoint definition for a recipe.
      */
-    if: IRecipeIfDef;
+    if: IRecipeFragmentIfDef;
 }

@@ -1,5 +1,4 @@
 import {Express, Response} from "express";
-import {CloudInitYamlMerger} from "../expander_merger/ci_yaml_merger";
 import {CloudInitProcessorStack} from "../processors/stack";
 import YAML from "yaml";
 import {BashScriptAsset} from "../assets/bash";
@@ -9,6 +8,7 @@ import {OldSkoolMiddleware} from "./middleware";
 import {RenderingContext} from "../repo/context";
 import {IExecutableScript, RecipeExecutablesProcessor} from "../repo/scripts";
 import {JSScriptAsset} from "../assets/js";
+import {CloudInitExpanderMerger} from "../expander_merger/expandermerger";
 
 const {BAD_REQUEST, OK} = StatusCodes;
 
@@ -82,7 +82,8 @@ export class OldSkoolServer extends OldSkoolMiddleware {
                 `${this.uriNoCloudWithParams}/real/cloud/init/yaml`],
             async (context: RenderingContext, res: Response) => {
                 // merge and process.
-                let merged = await (new CloudInitYamlMerger(context, context.resolver, context.recipes)).mergeYamls();
+
+                let merged = await (new CloudInitExpanderMerger(context, context.resolver, context.recipeNames)).process();
                 let finalResult = await new CloudInitProcessorStack(context, context.resolver, merged).addDefaultStack().process();
 
                 let body: string = "";
@@ -100,7 +101,7 @@ export class OldSkoolServer extends OldSkoolMiddleware {
                 `${this.uriNoCloudWithoutParams}/cloud/init/yaml/data/gather`,
                 `${this.uriNoCloudWithParams}/cloud/init/yaml/data/gather`],
             async (context: RenderingContext, res: Response) => {
-                let merged = await (new CloudInitYamlMerger(context, context.resolver, context.recipes)).mergeYamls();
+                let merged = await (new CloudInitExpanderMerger(context, context.resolver, context.recipeNames)).process();
                 let yaml = await new CloudInitProcessorStack(context, context.resolver, merged).addDefaultStack().processObj();
 
                 let curlDatas = [

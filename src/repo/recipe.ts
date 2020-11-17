@@ -1,7 +1,7 @@
 import {IRepoRecipe} from "./descriptor";
 import {Repository} from "./repo";
 import YAML, {Document} from 'yaml';
-import {CloudConfigFragment} from "./cifragment";
+import {CloudConfigSuperFragment} from "../expander_merger/superfragment";
 
 export class Recipe {
 
@@ -19,8 +19,8 @@ export class Recipe {
         return [this.def.yaml ? this.def.yaml : this.def.id/*, "maybe_a_variant"*/]; // will add to variants later
     }
 
-    async getCloudConfigDocs() {
-        let allDocs = [];
+    async getCloudConfigDocs(): Promise<CloudConfigSuperFragment[]> {
+        let allDocs: CloudConfigSuperFragment[] = [];
         for (let mentionedFile of await this.getMentionedYamls()) {
             let rawYaml: string | null = await this.repo.recursivelyGetRawAsset(`ci/${mentionedFile}.yaml`);
             if ((rawYaml === null) || (rawYaml === "")) {
@@ -28,7 +28,7 @@ export class Recipe {
             } else {
                 let docs: Document.Parsed[] = YAML.parseAllDocuments(rawYaml);
                 try {
-                    allDocs.push(...docs.map(value => value.toJS()).map((value, index) => new CloudConfigFragment(value, this, mentionedFile, index)));
+                    allDocs.push(...docs.map(value => value.toJS()).map((value, index) => new CloudConfigSuperFragment(value, this, mentionedFile, index+1)));
                 } catch (e) {
                     throw new Error("Error parsing doc: " + mentionedFile + " :: " + e.message);
                 }

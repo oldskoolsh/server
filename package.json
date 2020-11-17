@@ -2,7 +2,7 @@
   "name": "oldskool-server",
   "version": "0.0.0",
   "scripts": {
-    "schema": "typescript-json-schema --required --noExtraProps --out recipe.schema.json tsconfig.json IRecipeDef",
+    "schema": "typescript-json-schema --required --noExtraProps --out recipe.schema.json tsconfig.json IRecipeFragmentDef",
     "build": "tsc --build tsconfig.prod.json",
     "start": "node ./dist --env=production",
     "start:dev": "nodemon",
