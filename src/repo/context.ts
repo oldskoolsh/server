@@ -135,7 +135,7 @@ export class RenderingContext {
         if (!cloud) cloud = this.paramKV.get("cloud");
         if (!cloud) cloud = "nocloud";
         this._cloud = BaseCloud.createCloud(cloud);
-        return this._arch;
+        return this._cloud;
     }
 }
 

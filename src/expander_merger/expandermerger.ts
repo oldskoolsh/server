@@ -110,7 +110,7 @@ class CloudInitSuperMerger {
                 }
             }
         }
-        await console.log("In the end evaluated to", true);
+        //await console.log("In the end evaluated to", true);
         return true;
     }
 
