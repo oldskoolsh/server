@@ -54,9 +54,6 @@ class CloudInitSuperMerger {
         let newRecipes = recipes.filter(possiblyNewRecipeName => !this.wantedRecipesSet.has(possiblyNewRecipeName));
         if (newRecipes.length == 0) return;
 
-        // @TODO: wrong. the new recipes should come right after "the current one"
-        //        so they don't override other, manually specified, recipes
-
         let currentRecipeIndex = this.wantedRecipesStr.indexOf(sourceRecipe.id)+1;
         console.log("splice before", this.wantedRecipesStr, "index", currentRecipeIndex, "source", sourceRecipe.id);
 
