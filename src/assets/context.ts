@@ -133,7 +133,7 @@ export class RenderingContext {
         if (this._cloud) return this._cloud;
         let cloud: string | undefined = this.paramsQS.get("ciplatform");
         if (!cloud) cloud = this.paramKV.get("cloud");
-        if (!cloud) cloud = "amd64";
+        if (!cloud) cloud = "nocloud";
         this._cloud = BaseCloud.createCloud(cloud);
         return this._arch;
     }

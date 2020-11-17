@@ -27,8 +27,8 @@ export class CloudConfigFragment {
         }
 
         if (this.doc["if"]) {
-            this.condition = this.doc["if"]["condition"];
-            this.contents = this.doc["if"]["then"]["merge"];
+            this.condition = this.doc["if"]["conditions"];
+            this.contents = this.doc["if"]["then"]["cloudConfig"];
         } else {
             this.condition = {};
             this.contents = this.doc;

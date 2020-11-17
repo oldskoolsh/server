@@ -2,7 +2,12 @@ export enum IRecipeIfConditionsConditionEnum {
     os = "os",
     cloud = "cloud",
     release_lts = "release_lts",
-    release = "release"
+    release_init = "release_init",
+    ip_resolve = "ip_resolve",
+    release = "release",
+    geoip_country = "geoip_country",
+    geoip_continent = "geoip_continent",
+    arch = "arch"
 }
 
 export type IRecipeIfConditionsMap = {

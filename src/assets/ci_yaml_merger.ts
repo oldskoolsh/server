@@ -25,7 +25,7 @@ export class CloudInitYamlMerger {
             let docs = await recipe.getCloudConfigDocs();
             allFragments.push(...docs);
         }
-        // now parse them into a promise array, full async
+        // now parse them, fully async.
         let allParsedFragments: CloudConfigFragment[] = await Promise.all(allFragments.map(async value => value.parse()));
 
         // now resolve the conditions.
