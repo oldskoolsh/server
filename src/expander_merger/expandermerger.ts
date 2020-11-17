@@ -8,18 +8,24 @@ import {IRecipeFragmentIfConditionsConditionEnum, IRecipeFragmentResultDef} from
 import deepmerge from "deepmerge";
 
 
+class RestartProcessingException extends Error {
+}
+
 class CloudInitSuperMerger {
+    public wantedRecipesSet: Set<string> = new Set<string>();
+    public wantedRecipesStr: string[];
+    // the stack... and results.
+    public cloudConfig: any = {};
     protected readonly context: RenderingContext;
     protected readonly repoResolver: RepoResolver;
     protected readonly initialRecipes: Recipe[];
-
-    // the stack...
-    protected cloudConfig: any = {};
 
     constructor(context: RenderingContext, resolver: RepoResolver, initialRecipes: Recipe[]) {
         this.context = context;
         this.repoResolver = resolver;
         this.initialRecipes = initialRecipes;
+        this.wantedRecipesStr = initialRecipes.map(value => value.id);
+        this.wantedRecipesSet = new Set<string>(this.wantedRecipesStr);
     }
 
     async evaluateAndMergeAll() {
@@ -44,9 +50,21 @@ class CloudInitSuperMerger {
             await this.recursivelyEvaluate(new CIRecipeFragmentIf(parsedFragment.if, parsedFragment.sourceFragment));
         }
 
-        return this.cloudConfig;
     }
 
+    private includeRecipeAndThrowIfNotAlreadyIncluded(recipes: string[]) {
+        if (recipes.length == 0) return;
+
+        // filter out the recipes we already have...
+        let newRecipes = recipes.filter(possiblyNewRecipeName => !this.wantedRecipesSet.has(possiblyNewRecipeName));
+        if (newRecipes.length == 0) return;
+
+        for (const recipe of newRecipes) {
+            this.wantedRecipesStr.push(recipe)
+        }
+
+        throw new RestartProcessingException("Included new recipes " + newRecipes.join(","));
+    }
 
     private async recursivelyEvaluate(superFragment: CIRecipeFragmentIf) {
         console.group("fragment recipe", superFragment.sourceFragment.sourceRef()) // @TODO: propagate source info to CIRecipeFragment
@@ -60,8 +78,23 @@ class CloudInitSuperMerger {
                 resultFrag = superFragment.else || {};
             }
 
-            if (resultFrag.cloudConfig)
+            if (resultFrag.cloudConfig) {
+                console.log("merging", resultFrag.cloudConfig);
                 this.cloudConfig = deepmerge(this.cloudConfig, resultFrag.cloudConfig);
+            } else {
+                console.log("NOT merging, empty");
+            }
+
+            // Handle the inclusions. Each inclusion can cause exception...
+            if (resultFrag.include) {
+                if (resultFrag.include.recipes) {
+                    console.log("Including recipes...", resultFrag.include.recipes);
+                    if (resultFrag.include.recipes instanceof Array)
+                        this.includeRecipeAndThrowIfNotAlreadyIncluded(resultFrag.include.recipes);
+                    else
+                        this.includeRecipeAndThrowIfNotAlreadyIncluded([resultFrag.include.recipes]);
+                }
+            }
 
             if (resultFrag.andIf) {
                 await this.recursivelyEvaluate(new CIRecipeFragmentIf(resultFrag.andIf, superFragment.sourceFragment))
@@ -125,21 +158,42 @@ export class CloudInitExpanderMerger {
     protected readonly context: RenderingContext;
     protected readonly repoResolver: RepoResolver;
     protected readonly initialRecipes: string[];
-    protected currentRecipes: string[];
+
+    protected currentRecipes!: string[];
+    protected currentMerger!: CloudInitSuperMerger;
 
     constructor(context: RenderingContext, resolver: RepoResolver, initialRecipes: string[]) {
         this.context = context;
         this.repoResolver = resolver;
         this.initialRecipes = initialRecipes;
-        this.currentRecipes = initialRecipes;
+        this.currentRecipes = this.initialRecipes;
     }
 
-    async process() {
-        let newList: Recipe[] = await (new CloudInitRecipeListExpander(this.context, this.repoResolver, this.currentRecipes)).expand();
-        await console.log("Expanded list", newList.map(value => value.id));
-
-        let merger = new CloudInitSuperMerger(this.context, this.repoResolver, newList);
-        return await merger.evaluateAndMergeAll();
-
+    async process(): Promise<any> {
+        try {
+            return await this.processOneRun();
+        } catch (e) {
+            console.log("Thrown!")
+            if (e instanceof RestartProcessingException) {
+                console.log(`Thrown RestartProcessingException! :: ${e.message}`)
+                this.currentRecipes = this.currentMerger.wantedRecipesStr;
+                return await this.process();
+            }
+        }
     }
+
+    async processOneRun() {
+        console.group("Processing one run");
+        try {
+            let newList: Recipe[] = await (new CloudInitRecipeListExpander(this.context, this.repoResolver, this.currentRecipes)).expand();
+            await console.log("Expanded list", newList.map(value => value.id));
+            this.currentMerger = new CloudInitSuperMerger(this.context, this.repoResolver, newList);
+            await this.currentMerger.evaluateAndMergeAll();
+            return this.currentMerger.cloudConfig;
+        } finally {
+            console.groupEnd();
+        }
+    }
+
+
 }
