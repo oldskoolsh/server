@@ -59,6 +59,8 @@ class CloudInitSuperMerger {
         let newRecipes = recipes.filter(possiblyNewRecipeName => !this.wantedRecipesSet.has(possiblyNewRecipeName));
         if (newRecipes.length == 0) return;
 
+        // @TODO: wrong. the new recipes should come right after "the current one"
+        //        so they don't override other, manually specified, recipes
         for (const recipe of newRecipes) {
             this.wantedRecipesStr.push(recipe)
         }
@@ -67,7 +69,7 @@ class CloudInitSuperMerger {
     }
 
     private async recursivelyEvaluate(superFragment: CIRecipeFragmentIf) {
-        console.group("fragment recipe", superFragment.sourceFragment.sourceRef()) // @TODO: propagate source info to CIRecipeFragment
+        console.group("fragment => ", superFragment.sourceFragment.sourceRef()) // @TODO: propagate source info to CIRecipeFragment
         try {
             let resultFrag: IRecipeFragmentResultDef;
             if (await this.doesIfConditionEvaluateToTrue(superFragment)) {
@@ -158,6 +160,7 @@ export class CloudInitExpanderMerger {
     protected readonly context: RenderingContext;
     protected readonly repoResolver: RepoResolver;
     protected readonly initialRecipes: string[];
+    protected runNumber: number = 0;
 
     protected currentRecipes!: string[];
     protected currentMerger!: CloudInitSuperMerger;
@@ -183,7 +186,8 @@ export class CloudInitExpanderMerger {
     }
 
     async processOneRun() {
-        console.group("Processing one run");
+        this.runNumber++;
+        console.group("Single run number " + this.runNumber);
         try {
             let newList: Recipe[] = await (new CloudInitRecipeListExpander(this.context, this.repoResolver, this.currentRecipes)).expand();
             await console.log("Expanded list", newList.map(value => value.id));
