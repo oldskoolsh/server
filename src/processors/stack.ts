@@ -6,6 +6,7 @@ import {CloudInitYamlProcessorSSHKeys} from "./ssh_keys";
 import {CloudInitYamlProcessorPackages} from "./packages";
 import YAML from 'yaml';
 import {CloudInitYamlProcessorReplaceVariables} from "./variables";
+import {CloudInitYamlProcessorMessages} from "./messages";
 
 export class CloudInitProcessorStack {
     protected readonly src: any;
@@ -37,6 +38,7 @@ export class CloudInitProcessorStack {
             .add(new CloudInitYamlProcessorAptSources())
             .add(new CloudInitYamlProcessorSSHKeys())
             .add(new CloudInitYamlProcessorPackages())
+            .add(new CloudInitYamlProcessorMessages())
     }
 
     async processObj(): Promise<any> {
