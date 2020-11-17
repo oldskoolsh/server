@@ -36,16 +36,11 @@ class CloudInitSuperMerger {
         for (const recipe of this.initialRecipes) {
             allFragments.push(...await recipe.getCloudConfigDocs());
         }
-        //console.log("allFragments", allFragments);
 
         // now parse them, fully async.
         let allParsedFragments: CIRecipeFragment[] = await Promise.all(allFragments.map(async value => value.parse()));
 
-        // recursively evaluate. this will fill the stacks...
-        //console.log("allParsedFragments", allParsedFragments);
-
-
-        this.cloudConfig = {"fake": "here"};
+        this.cloudConfig = {}; // every run starts clean.
         for (const parsedFragment of allParsedFragments) {
             await this.recursivelyEvaluate(new CIRecipeFragmentIf(parsedFragment.if, parsedFragment.sourceFragment));
         }
@@ -186,6 +181,7 @@ export class CloudInitExpanderMerger {
                 this.currentRecipes = this.currentMerger.wantedRecipesStr;
                 return await this.process();
             }
+            throw e;
         }
     }
 

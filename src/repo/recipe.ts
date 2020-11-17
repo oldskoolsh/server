@@ -28,7 +28,12 @@ export class Recipe {
             } else {
                 let docs: Document.Parsed[] = YAML.parseAllDocuments(rawYaml);
                 try {
-                    allDocs.push(...docs.map(value => value.toJS()).map((value, index) => new CloudConfigSuperFragment(value, this, mentionedFile, index+1)));
+                    allDocs.push(...
+                        docs
+                            .map(value => value.toJS())
+                            .filter(value => value != null)
+                            .map((value, index) => new CloudConfigSuperFragment(value, this, mentionedFile, index + 1))
+                    );
                 } catch (e) {
                     throw new Error("Error parsing doc: " + mentionedFile + " :: " + e.message);
                 }
