@@ -52,6 +52,11 @@ export interface IRecipeResultIncludeDef {
 
 export interface IRecipeFragmentResultDef {
     /**
+     * Adds a message/explanation of the result. Outputs at the end of the run, at the client side.
+     */
+    message?: string;
+
+    /**
      * Merge the following object into cloud-config.
      */
     cloudConfig?: object;

@@ -87,6 +87,10 @@ class CloudInitSuperMerger {
                 console.log("NOT merging, empty");
             }
 
+            if (resultFrag.message) {
+                this.cloudConfig = deepmerge(this.cloudConfig, {messages:[`[${superFragment.sourceFragment.sourceRef()}] ${resultFrag.message}`]});
+            }
+
             // Handle the inclusions. Each inclusion can cause exception...
             if (resultFrag.include) {
                 if (resultFrag.include.recipes) {

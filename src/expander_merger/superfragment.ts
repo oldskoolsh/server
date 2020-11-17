@@ -12,12 +12,14 @@ export class CIRecipeFragmentResult implements IRecipeFragmentResultDef {
     andIf: IRecipeFragmentIfDef;
     cloudConfig: object;
     include: IRecipeResultIncludeDef;
+    message?: string;
     public sourceFragment: CloudConfigSuperFragment;
 
     constructor(obj: IRecipeFragmentResultDef, srcObj: CloudConfigSuperFragment) {
         this.sourceFragment = srcObj;
         this.include = obj.include || {};
         this.cloudConfig = obj.cloudConfig || {};
+        this.message = obj.message;
         this.andIf = new CIRecipeFragmentIf(obj.andIf || {}, this.sourceFragment);
         this.and = obj.and?.map((value: IRecipeFragmentDef) => new CIRecipeFragment(new CIRecipeFragmentIf(value.if, this.sourceFragment), this.sourceFragment)) || [];
     }
