@@ -24,14 +24,11 @@ async function faz() {
 
 
         // initial expansion.
-        let initialRecipes = ['base'];
+        let initialRecipes:string[] = ['k8s'];
 
 
         let expanderMerger: CloudInitExpanderMerger = new CloudInitExpanderMerger(context, resolver, initialRecipes);
         let smth = await expanderMerger.process();
-
-
-
 
 
         // processors run when everything else is already included.

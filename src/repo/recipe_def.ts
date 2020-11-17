@@ -3,6 +3,7 @@ export enum IRecipeFragmentIfConditionsConditionEnum {
     cloud = "cloud",
     release_lts = "release_lts",
     release_init = "release_init",
+    release_status = "release_status",
     ip_resolve = "ip_resolve",
     release = "release",
     geoip_country = "geoip_country",
