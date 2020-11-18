@@ -1,0 +1,24 @@
+{
+  "clientIP": "18.185.172.18",
+  "userAgentStr": "curl 7.68.0 (aarch64-unknown-linux-gnu) libcurl/7.68.0 OpenSSL/1.1.1f zlib/1.2.11 brotli/1.0.7 libidn2/2.2.0 libpsl/0.21.0 (+libidn2/2.2.0) libssh/0.9.3/openssl/zlib nghttp2/1.40.0 librtmp/2.3; OldSkool-Gather/0.66.6",
+  "paramsQS": {
+    "osg_ci_arch": "aarch64",
+    "osg_ci_os": "ubuntu",
+    "osg_ci_release": "focal",
+    "osg_ci_cloud": "aws",
+    "osg_ci_platform": "ec2",
+    "osg_ci_az": "eu-central-1c",
+    "osg_ci_region": "eu-central-1",
+    "osg_ci_iid": "i-0816456dac7e987bd",
+    "osg_ci_sys_plat": "linux-5.4.0-1029-aws-aarch64-with-glibc2.29",
+    "osg_ci_kernel": "5.4.0-1029-aws",
+    "osg_os_arch": "aarch64 ",
+    "osg_os_ci_version": "/usr/bin/cloud-init 20.3-2-g371b392c-0ubuntu1~20.04.1 ",
+    "osg_os_release_pairs": "name=ubuntu;version=20.04.1 lts (focal fossa);pretty_name=ubuntu 20.04.1 lts;version_id=20.04;version_codename=focal;ubuntu_codename=focal; ",
+    "osg_cpu_info": " ",
+    "osg_cpu_serial": " ",
+    "osg_ip2_intf": "ens5",
+    "osg_ip2_addr": "172.31.6.134/20"
+  },
+  "paramsKV": {}
+}

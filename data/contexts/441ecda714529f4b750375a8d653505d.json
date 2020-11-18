@@ -1,0 +1,23 @@
+{
+  "clientIP": "62.251.42.9",
+  "userAgentStr": "curl 7.68.0 (aarch64-unknown-linux-gnu) libcurl/7.68.0 OpenSSL/1.1.1f zlib/1.2.11 brotli/1.0.9 libidn2/2.3.0 libpsl/0.21.0 (+libidn2/2.3.0) libssh/0.9.3/openssl/zlib nghttp2/1.41.0 librtmp/2.3; OldSkool-Gather/0.66.6",
+  "paramsQS": {
+    "osg_ci_arch": "aarch64",
+    "osg_ci_os": "ubuntu",
+    "osg_ci_release": "groovy",
+    "osg_ci_cloud": "unknown",
+    "osg_ci_platform": "nocloud",
+    "osg_ci_az": "none",
+    "osg_ci_region": "none",
+    "osg_ci_iid": "nocloud",
+    "osg_ci_sys_plat": "linux-5.8.0-1006-raspi-aarch64-with-glibc2.32",
+    "osg_ci_kernel": "5.8.0-1006-raspi",
+    "osg_os_ci_version": "/usr/bin/cloud-init 20.3-15-g6d332e5c-0ubuntu1 ",
+    "osg_os_release_pairs": "name=ubuntu;version=20.10 (groovy gorilla);pretty_name=ubuntu 20.10;version_id=20.10;version_codename=groovy;ubuntu_codename=groovy; ",
+    "osg_cpu_info": "raspberry pi 4 model b rev 1.2 c03112 ",
+    "osg_cpu_serial": "100000006393668d ",
+    "osg_ip2_intf": "eth0",
+    "osg_ip2_addr": "192.168.66.20/24 2001:985:502d:1:dea6:32ff:fe73:d695/64"
+  },
+  "paramsKV": {}
+}

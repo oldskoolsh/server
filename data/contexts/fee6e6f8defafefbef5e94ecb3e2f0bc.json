@@ -1,0 +1,24 @@
+{
+  "clientIP": "18.192.20.212",
+  "userAgentStr": "curl 7.61.1 (aarch64-koji-linux-gnu) libcurl/7.61.1 OpenSSL/1.0.2k zlib/1.2.7 libidn2/2.3.0 libssh2/1.4.3 nghttp2/1.41.0; OldSkool-Gather/0.66.6",
+  "paramsQS": {
+    "osg_ci_arch": "ci_missing_jinja_var/machine",
+    "osg_ci_os": "ci_missing_jinja_var/distro",
+    "osg_ci_release": "ci_missing_jinja_var/distro_release",
+    "osg_ci_cloud": "aws",
+    "osg_ci_platform": "ec2",
+    "osg_ci_az": "eu-central-1c",
+    "osg_ci_region": "eu-central-1",
+    "osg_ci_iid": "i-034069ee0230c9220",
+    "osg_ci_sys_plat": "ci_missing_jinja_var/system_platform",
+    "osg_ci_kernel": "ci_missing_jinja_var/kernel_release",
+    "osg_os_arch": "aarch64 ",
+    "osg_os_ci_version": " ",
+    "osg_os_release_pairs": "name=amazon linux;version=2;version_id=2;pretty_name=amazon linux 2;cpe_name=cpe:2.3:o:amazon:amazon_linux:2; ",
+    "osg_cpu_info": " ",
+    "osg_cpu_serial": " ",
+    "osg_ip2_intf": "eth0",
+    "osg_ip2_addr": "172.31.8.103/20"
+  },
+  "paramsKV": {}
+}
