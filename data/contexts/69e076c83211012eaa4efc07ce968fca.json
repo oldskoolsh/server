@@ -1,0 +1,27 @@
+{
+  "clientIP": "62.251.42.9",
+  "userAgentStr": "curl/7.68.0",
+  "paramsQS": {
+    "osg_ci_arch": "aarch64",
+    "osg_ci_os": "ubuntu",
+    "osg_ci_release": "focal",
+    "osg_ci_cloud": "unknown",
+    "osg_ci_platform": "nocloud",
+    "osg_ci_az": "libvirt0",
+    "osg_ci_region": "libvirt",
+    "osg_ci_iid": "635219669740",
+    "osg_cpu_info": " ",
+    "osg_ip2_intf": "eth0",
+    "osg_ip2_intip": "192.168.66.82"
+  },
+  "paramsKV": {
+    "iid": "635219669740",
+    "cloud": "libvirt",
+    "arch": "arm64",
+    "hostname": "smthlonger.some.example.com",
+    "tz": "europe.amsterdam",
+    "os": "ubuntu",
+    "release": "focal",
+    "output": "logfile"
+  }
+}

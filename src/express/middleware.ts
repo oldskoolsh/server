@@ -7,7 +7,6 @@ import {CloudInitRecipeListExpander} from "../expander_merger/ci_expander";
 
 
 // Parse the User-Agent;...
-
 import {Query} from "express-serve-static-core";
 
 const {BAD_REQUEST, OK} = StatusCodes;
@@ -150,7 +149,11 @@ export abstract class OldSkoolMiddleware extends OldSkoolBase {
             [`${this.uriOwnerRepoCommitish}`], async (req, res) => {
                 console.warn("Common middleware ORC END!");
                 // @TODO: we don't need to await this.
-                await req.oldSkoolContext.deinit();
+                req.oldSkoolContext.deinit().then(value => {
+                    if (value) console.warn(`De-initted: ${value}`);
+                }).catch(reason => {
+                    console.error("Error during deinit", reason);
+                })
             })
     }
 

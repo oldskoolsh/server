@@ -105,17 +105,18 @@ export class OldSkoolServer extends OldSkoolMiddleware {
                 let yaml = await new CloudInitProcessorStack(context, context.resolver, merged).addDefaultStack().processObj();
 
                 let curlDatas = [
-                    `--data-urlencode "ciarch={{machine}}"`,
-                    `--data-urlencode "cios={{distro}}"`,
-                    `--data-urlencode "cicloud={{cloud_name}}"`,
-                    `--data-urlencode "cirelease={{distro_release}}"`,
-                    `--data-urlencode "ciaz={{availability_zone}}"`,
-                    `--data-urlencode "ciplatform={{platform}}"`,
-                    `--data-urlencode "ciregion={{region}}"`,
-                    `--data-urlencode "ciiid={{instance_id}}"`,
-                    `--data-urlencode "cicpu=$(cat /proc/cpuinfo | grep -i model | head -2 | cut -d ":" -f 2 | xargs || true) "`,
-                    `--data-urlencode "ciintf=$(ip route s | grep "^default" | cut -d " " -f 5 || true)"`,
-                    `--data-urlencode "ciintip=$(ip route s | grep "^default" | cut -d " " -f 9 || true)"`,
+                    `--data-urlencode "osg_ci_arch={{machine}}"`,
+                    `--data-urlencode "osg_ci_os={{distro}}"`,
+                    `--data-urlencode "osg_ci_release={{distro_release}}"`,
+                    `--data-urlencode "osg_ci_cloud={{cloud_name}}"`,
+                    `--data-urlencode "osg_ci_platform={{platform}}"`,
+                    `--data-urlencode "osg_ci_az={{availability_zone}}"`,
+                    `--data-urlencode "osg_ci_region={{region}}"`,
+                    `--data-urlencode "osg_ci_iid={{instance_id}}"`,
+                    `--data-urlencode "osg_cpu_info=$(cat /proc/cpuinfo | grep -i -e model -e "^revision" | sort | uniq | head -3 | cut -d ":" -f 2 | xargs || true) "`,
+                    `--data-urlencode "osg_cpu_serial=$(cat /proc/cpuinfo  | grep -e "^Serial" | cut -d ":" -f 2 | xargs || true) "`,
+                    `--data-urlencode "osg_ip2_intf=$(ip route s | grep "^default" | cut -d " " -f 5 || true)"`,
+                    `--data-urlencode "osg_ip2_intip=$(ip route s | grep "^default" | cut -d " " -f 9 || true)"`,
                     //`--data-urlencode ""`,
                 ]
 

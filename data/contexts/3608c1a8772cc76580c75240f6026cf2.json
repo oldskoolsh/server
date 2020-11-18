@@ -1,0 +1,15 @@
+{
+  "clientIP": "62.251.42.9",
+  "userAgentStr": "Cloud-Init/20.3-2-g371b392c-0ubuntu1~20.04.1",
+  "paramsQS": {},
+  "paramsKV": {
+    "iid": "635219669740",
+    "cloud": "libvirt",
+    "arch": "arm64",
+    "hostname": "smthlonger.some.example.com",
+    "tz": "europe.amsterdam",
+    "os": "ubuntu",
+    "release": "focal",
+    "output": "logfile"
+  }
+}
