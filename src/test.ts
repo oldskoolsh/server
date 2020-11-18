@@ -35,7 +35,7 @@ async function faz() {
 
 
     } finally {
-        await context.deinit();
+        await context.logClientData();
     }
 }
 

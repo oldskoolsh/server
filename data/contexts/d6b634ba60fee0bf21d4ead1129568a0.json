@@ -1,0 +1,19 @@
+{
+  "clientIP": "134.122.54.15",
+  "userAgentStr": "curl/7.68.0",
+  "paramsQS": {
+    "osg_ci_arch": "x86_64",
+    "osg_ci_os": "ubuntu",
+    "osg_ci_release": "focal",
+    "osg_ci_cloud": "digitalocean",
+    "osg_ci_platform": "digitalocean",
+    "osg_ci_az": "ams3",
+    "osg_ci_region": "none",
+    "osg_ci_iid": "217408729",
+    "osg_cpu_info": "85 intel(r) xeon(r) gold 6140 cpu @ 2.30ghz ",
+    "osg_cpu_serial": " ",
+    "osg_ip2_intf": "eth0",
+    "osg_ip2_intip": ""
+  },
+  "paramsKV": {}
+}

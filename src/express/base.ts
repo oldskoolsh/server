@@ -69,9 +69,12 @@ export abstract class OldSkoolBase {
         // Print API errors
         this.app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
             logger.err(err, true);
-            return res.status(BAD_REQUEST).json({
+
+            res.status(BAD_REQUEST).json({
                 error: err.message,
             });
+
+            next();
         });
 
         this.addEntranceMiddleware(this.app);

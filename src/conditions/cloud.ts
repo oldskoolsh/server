@@ -9,11 +9,13 @@ export class BaseCloud {
         let idMatch = allArches.filter(value => value.id === cloud);
         if (idMatch.length != 1) {
             idMatch = allArches.filter(value => value.other_names.includes(cloud));
-            if (idMatch.length != 1) {
-                console.warn(`*** Unknown Cloud:`, cloud);
-            }
         }
-        return idMatch[0];
+        if (idMatch.length != 1) {
+            console.warn(`*** Unknown Cloud: '${cloud}'`);
+            return new UnknownCloud();
+        } else {
+            return idMatch[0];
+        }
     }
 }
 

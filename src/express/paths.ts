@@ -113,19 +113,24 @@ export class OldSkoolServer extends OldSkoolMiddleware {
                     `--data-urlencode "osg_ci_az={{availability_zone}}"`,
                     `--data-urlencode "osg_ci_region={{region}}"`,
                     `--data-urlencode "osg_ci_iid={{instance_id}}"`,
+                    `--data-urlencode "osg_ci_sys_plat={{system_platform}}"`,
+                    `--data-urlencode "osg_ci_kernel={{kernel_release}}"`,
+                    `--data-urlencode "osg_ci_iid={{instance_id}}"`,
+                    `--data-urlencode "osg_os_ci_version=$(cloud-init --version || true) "`,
+                    `--data-urlencode "osg_os_release_pairs=$(cat /etc/os-release | grep -e "_ID" -e "VERSION" -e "NAME" | grep -v -i -e "http" | sed -e 's/\\"//g' | tr "\\n" ";" || true) "`,
                     `--data-urlencode "osg_cpu_info=$(cat /proc/cpuinfo | grep -i -e model -e "^revision" | sort | uniq | head -3 | cut -d ":" -f 2 | xargs || true) "`,
                     `--data-urlencode "osg_cpu_serial=$(cat /proc/cpuinfo  | grep -e "^Serial" | cut -d ":" -f 2 | xargs || true) "`,
                     `--data-urlencode "osg_ip2_intf=$(ip route s | grep "^default" | cut -d " " -f 5 || true)"`,
-                    `--data-urlencode "osg_ip2_intip=$(ip route s | grep "^default" | cut -d " " -f 9 || true)"`,
+                    `--data-urlencode "osg_ip2_addr=$(ip addr show dev $(ip route s | grep "^default" | cut -d " " -f 5 || true) scope global up | grep inet | tr -s " " | cut -d " " -f 3 | xargs || true)"`,
                     //`--data-urlencode ""`,
                 ]
 
                 let origBootCmds = yaml.bootcmd || [];
                 origBootCmds.unshift(
-                    `echo OldSkool initting from curl --http1.1 --silent --show-error --output "/var/lib/cloud/instance/cloud-config.txt" -G ${curlDatas.join(" ")} ${context.recipesUrl}/real/cloud/init/yaml`,
+                    `echo OldSkool initting from curl --http1.1 --silent --show-error --user-agent "$(curl --version | head -1 || true); OldSkool-Gather/0.66.6" --output "/var/lib/cloud/instance/cloud-config.txt" -G ${curlDatas.join(" ")} ${context.recipesUrl}/real/cloud/init/yaml`,
                     "cp /var/lib/cloud/instance/cloud-config.txt /var/lib/cloud/instance/cloud-config.txt.orig",
                     `sleep 2`,
-                    `curl --http1.1 --silent --show-error --output "/var/lib/cloud/instance/cloud-config.txt" -G ${curlDatas.join(" ")} "${context.recipesUrl}/real/cloud/init/yaml"`,
+                    `curl --http1.1 --silent --show-error --user-agent "$(curl --version | head -1 || true); OldSkool-Gather/0.66.6" --output "/var/lib/cloud/instance/cloud-config.txt" -G ${curlDatas.join(" ")} "${context.recipesUrl}/real/cloud/init/yaml"`,
                     `sleep 2`,
                     "echo Done, continuing..."
                 );

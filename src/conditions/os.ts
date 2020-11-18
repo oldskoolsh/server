@@ -16,35 +16,44 @@ export interface IOS {
     getClosestLowerLTS(release: IOSRelease): IOSRelease;
 }
 
-export abstract class BaseOS {
+export abstract class BaseOS implements IOS {
     releases!: IOSRelease[];
+    id: string = "unknown";
 
     public static createOS(id: string): IOS {
         let allOs: IOS[] = [new Ubuntu(), new Debian()];
         let idMatch = allOs.filter(value => value.id === id);
-        if (idMatch.length != 1) throw new Error(`Unknown OS: ${id}`)
+        if (idMatch.length != 1) {
+            console.warn(`Unknown OS: ${id}`);
+            return new UnknownOS();
+        }
         return idMatch[0];
     }
 
     getRelease(slug: string): IOSRelease {
-        let slugMatch = this.releases.filter(value => value.id === slug);
-        if (slugMatch.length != 1) throw new Error(`Unknown release: ${slug}`);
+        let slugMatch = this.releases ? this.releases.filter(value => value.id === slug) : [];
+        if (slugMatch.length != 1) {
+            console.warn(`Unknown release: ${slug} for os ${this.id}`);
+            return {id: "unknown", lts: false, numVersion: 0, os: this, released: false, systemd: true};
+        }
         return slugMatch[0];
     }
 
     public getClosestLowerLTS(release: IOSRelease): IOSRelease {
-        let lowerOrEqualLtsReleases = this.releases
+        let lowerOrEqualLtsReleases = this.releases ? this.releases
             // lower
             .filter(value => value.numVersion <= release.numVersion)
             // lts
-            .filter(value => value.lts);
+            .filter(value => value.lts) : [];
         if (lowerOrEqualLtsReleases.length < 1) {
-            throw new Error("No getClosestLowerLTS than " + release.id);
+            console.warn(`No getClosestLowerLTS than ${release.id}`);
+            return {id: "unknown", lts: false, numVersion: 0, os: this, released: false, systemd: true};
         }
         return lowerOrEqualLtsReleases[0];
     }
 
 }
+
 
 class Ubuntu extends BaseOS implements IOS {
     id: string = "ubuntu";
@@ -62,4 +71,9 @@ class Debian extends BaseOS implements IOS {
         {id: "buster", numVersion: 10, lts: true, released: true, systemd: true, os: this},
         {id: "squeeze", numVersion: 9, lts: true, released: true, systemd: true, os: this},
     ];
+}
+
+
+class UnknownOS extends BaseOS implements IOS {
+    id: string = "unknown";
 }

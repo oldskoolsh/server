@@ -11,11 +11,18 @@ export class BaseArch {
         if (idMatch.length != 1) {
             idMatch = allArches.filter(value => value.other_names.includes(arch));
             if (idMatch.length != 1) {
-                throw new Error(`Unknown Arch: ${arch}`)
+                console.warn(`Unknown Arch: ${arch}`);
+                return new archUnknown();
             }
         }
         return idMatch[0];
     }
+}
+
+export class archUnknown extends BaseArch implements IArch {
+    id: string = "unknown";
+    other_names = ["other"]
+    is_default = false;
 }
 
 export class archAmd64 extends BaseArch implements IArch {

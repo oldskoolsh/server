@@ -69,6 +69,7 @@ export abstract class OldSkoolMiddleware extends OldSkoolBase {
                 context.resolver = resolver; // shortcut only
                 await context.init();
                 req.oldSkoolContext = context;
+                req.oldSkoolContext.logClientData();
             });
 
         // first the special case /bash; it does not have recipes; mark as such for the next mw
@@ -132,6 +133,8 @@ export abstract class OldSkoolMiddleware extends OldSkoolBase {
                 req.oldSkoolContext.bashUrl = `${req.oldSkoolContext.recipesUrl}/bash`;
                 req.oldSkoolContext.jsUrl = `${req.oldSkoolContext.recipesUrl}/js`;
 
+                req.oldSkoolContext.logClientData();
+
             })
 
         this.middleware(
@@ -149,7 +152,7 @@ export abstract class OldSkoolMiddleware extends OldSkoolBase {
             [`${this.uriOwnerRepoCommitish}`], async (req, res) => {
                 console.warn("Common middleware ORC END!");
                 // @TODO: we don't need to await this.
-                req.oldSkoolContext.deinit().then(value => {
+                req.oldSkoolContext.logClientData().then(value => {
                     if (value) console.warn(`De-initted: ${value}`);
                 }).catch(reason => {
                     console.error("Error during deinit", reason);

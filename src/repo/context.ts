@@ -76,7 +76,7 @@ export class RenderingContext {
     // Redis is still accessible, but I treat it as semi-persistent
     // So for now it writes to disk. The contents are a JSON blob of parts
     // of this Context; the clientIP/userAgent, the paramKV and paramQS.
-    async deinit(): Promise<any> {
+    async logClientData(): Promise<any> {
         let jsonSer: string = await this.serializeToJSON();
         let hash = createHash('md5').update(jsonSer).digest('hex');
         console.log(`Got hash ${hash} for ${jsonSer}`);
@@ -127,7 +127,7 @@ export class RenderingContext {
         // stuff from the gather stage.
         map.set("cpu_raw", this.paramsQS.get("osg_cpu_info") || "unknown");
         map.set("default_route_intf", this.paramsQS.get("osg_ip2_intf") || "unknown");
-        map.set("default_route_ip", this.paramsQS.get("osg_ip2_intip") || "unknown");
+        map.set("default_route_ip", this.paramsQS.get("osg_ip2_addr") || "unknown");
         map.set("instance_id", this.paramsQS.get("osg_ci_iid") || "unknown");
 
         // stuff from cloud / elquicko
