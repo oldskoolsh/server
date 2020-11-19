@@ -1,5 +1,3 @@
-import {all} from "deepmerge";
-
 export interface IOSRelease {
     os: IOS;
     id: string;

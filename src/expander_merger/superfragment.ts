@@ -71,10 +71,6 @@ export class CloudConfigSuperFragment {
     private readonly sourceFile: string;
     private readonly fragment: number;
 
-    public sourceRef(): string {
-        return `${this.sourceFile}::${this.fragment}`;
-    }
-
     constructor(doc: any, recipe: Recipe, sourceFile: string, fragment: number) {
         this.doc = doc;
         this.recipe = recipe;
@@ -85,6 +81,9 @@ export class CloudConfigSuperFragment {
         }
     }
 
+    public sourceRef(): string {
+        return `${this.sourceFile}::${this.fragment}`;
+    }
 
     async parse(): Promise<CIRecipeFragment> {
         // very naive for now

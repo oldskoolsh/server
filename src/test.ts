@@ -10,7 +10,7 @@ import {JSScriptAsset} from "./assets/js";
 import {aff} from "./shared/utils";
 import {expect, test} from '@jest/globals';
 
-new aff();
+new aff(); // crazy util.
 
 
 let tedisPool: TedisPool;
@@ -48,6 +48,7 @@ test('default no-param bash', async () => {
 
     // bash render.
     let rendered = await (new BashScriptAsset(context, resolver, "base.sh")).renderFromFile();
+    console.log(rendered);
 
     expect(rendered).toContain("#!/bin/bash");
     expect(rendered).not.toContain("**INCLUDE");
@@ -68,6 +69,8 @@ test('default no-param js asset', async () => {
     expect(rendered).toContain("jsLauncherPrepareNVM");
     expect(rendered).toContain("jsLauncherNPMInstall");
     expect(rendered).toContain("jsLauncherDoLaunch");
+
+    console.log(rendered);
 });
 
 test('default no-param expand and merge', async () => {
@@ -90,5 +93,6 @@ test('default no-param expand and merge', async () => {
     let yaml: string = YAML.stringify(finalResult, {});
 
     expect(yaml).toContain("- ");
+    console.log(yaml);
 });
 

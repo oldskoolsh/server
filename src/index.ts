@@ -3,6 +3,7 @@ import logger from './shared/Logger';
 import {OldSkoolServer} from "./express/paths";
 import {DefaultGeoIPReaders} from "./shared/geoip";
 import {aff} from "./shared/utils";
+
 new aff();
 
 // Start the server

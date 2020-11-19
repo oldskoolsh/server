@@ -52,7 +52,6 @@ test(`test against datas`, async () => {
     let basePath = path.join(__dirname, "..", "data", "contexts");
     let files: string[] = await fg(`*.json`, {cwd: basePath});
 
-
     const allSkipUARegexes: RegExp[] = [/mozilla/i, /cloud/i];
 
     let allVars: object[] = [];
