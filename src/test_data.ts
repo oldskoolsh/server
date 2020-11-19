@@ -52,6 +52,9 @@ test(`test against datas`, async () => {
     let basePath = path.join(__dirname, "..", "data", "contexts");
     let files: string[] = await fg(`*.json`, {cwd: basePath});
 
+
+    const allSkipUARegexes: RegExp[] = [/mozilla/i, /cloud/i];
+
     let allVars: object[] = [];
     for (const file of files) {
         let shortFileName = path.basename(file, ".json");
@@ -67,6 +70,12 @@ test(`test against datas`, async () => {
             }
             throw e;
         }
+        // skip browser tests
+        if (json.userAgentStr && (allSkipUARegexes.some(value => json.userAgentStr.match(value)))) {
+            //console.warn("Skip regex matched, bye");
+            continue;
+        }
+
 
         let ctx: RenderingContext = await prepareFakeContextFromData(json);
 
@@ -75,7 +84,7 @@ test(`test against datas`, async () => {
 
         let extraInfo: { [p: string]: string } = {"file": shortFileName/*, "agent": json.userAgentStr*/};
 
-        let result: { [p: string]: string } =  Object.assign(extraInfo, vars);
+        let result: { [p: string]: string } = Object.assign(extraInfo, vars);
 
         allVars.push(result);
     }

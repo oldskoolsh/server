@@ -5,14 +5,17 @@ export interface ICloud {
 
 export class BaseCloud {
     static createCloud(cloud: string): ICloud {
-        let allArches: ICloud[] = [new UnknownCloud(), new NonCloudCloud()];
-        let idMatch = allArches.filter(value => value.id === cloud);
+        let allClouds: ICloud[] = [new UnknownCloud(), new NonCloudCloud(), new DigitalOceanCloud(), new AzureCloud(), new AmazonCloud()];
+
+        if (!cloud) return allClouds[0];
+
+        let idMatch = allClouds.filter(value => value.id === cloud);
         if (idMatch.length != 1) {
-            idMatch = allArches.filter(value => value.other_names.includes(cloud));
+            idMatch = allClouds.filter(value => value.other_names.includes(cloud));
         }
         if (idMatch.length != 1) {
             console.warn(`*** Unknown Cloud: '${cloud}'`);
-            return allArches[0]; // unknown
+            return allClouds[0]; // unknown
         } else {
             return idMatch[0];
         }
@@ -28,3 +31,20 @@ export class NonCloudCloud extends BaseCloud implements ICloud {
     id = "nocloud";
     other_names = ["libvirt", "nocloud"];
 }
+
+
+export class DigitalOceanCloud extends BaseCloud implements ICloud {
+    id = "digitalocean";
+    other_names = ["configdrive"]; // @TODO: not true. use ASN to determine.
+}
+
+export class AzureCloud extends BaseCloud implements ICloud {
+    id = "azure";
+    other_names = [];
+}
+
+export class AmazonCloud extends BaseCloud implements ICloud {
+    id = "aws";
+    other_names = ["ec2"];
+}
+

@@ -1,3 +1,5 @@
+import {all} from "deepmerge";
+
 export interface IOSRelease {
     os: IOS;
     id: string;
@@ -6,6 +8,7 @@ export interface IOSRelease {
     released: boolean;
     numVersion: number;
 }
+
 
 export interface IOS {
     id: string;
@@ -16,38 +19,50 @@ export interface IOS {
     getClosestLowerLTS(release: IOSRelease): IOSRelease;
 }
 
+
 export abstract class BaseOS implements IOS {
     releases!: IOSRelease[];
     id: string = "unknown";
 
     public static createOS(id: string): IOS {
         let allOs: IOS[] = [new UnknownOS(), new Ubuntu(), new Debian()];
+        if (!id) return allOs[0];
         let idMatch = allOs.filter(value => value.id === id);
         if (idMatch.length != 1) {
-            console.warn(`Unknown OS: ${id}`);
+            console.warn(`Unknown OS: '${id}'`);
             return allOs[0];
         }
         return idMatch[0];
     }
 
     getRelease(slug: string): IOSRelease {
+        const unknownRelease = {id: "unknown", lts: false, numVersion: 0, os: this, released: false, systemd: true};
+        // unknown OS has no known releases.
+        if (this.id === "unknown") return unknownRelease;
+
+        if (!slug) return unknownRelease;
+
         let slugMatch = this.releases ? this.releases.filter(value => value.id === slug) : [];
         if (slugMatch.length != 1) {
-            console.warn(`Unknown release: ${slug} for os ${this.id}`);
-            return {id: "unknown", lts: false, numVersion: 0, os: this, released: false, systemd: true};
+            console.warn(`Unknown release: '${slug}' for os '${this.id}'`);
+            return unknownRelease;
         }
         return slugMatch[0];
     }
 
     public getClosestLowerLTS(release: IOSRelease): IOSRelease {
+        const unknownRelease = {id: "unknown", lts: false, numVersion: 0, os: this, released: false, systemd: true};
+        // unknown OS has no known releases.
+        if (this.id === "unknown") return unknownRelease;
+
         let lowerOrEqualLtsReleases = this.releases ? this.releases
             // lower
             .filter(value => value.numVersion <= release.numVersion)
             // lts
             .filter(value => value.lts) : [];
         if (lowerOrEqualLtsReleases.length < 1) {
-            console.warn(`No getClosestLowerLTS than ${release.id}`);
-            return {id: "unknown", lts: false, numVersion: 0, os: this, released: false, systemd: true};
+            console.warn(`No getClosestLowerLTS than ${release.id} for OS: ${this.id}`);
+            return unknownRelease;
         }
         return lowerOrEqualLtsReleases[0];
     }

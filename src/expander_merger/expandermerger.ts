@@ -7,6 +7,7 @@ import {BaseCondition, ICondition} from "../conditions/ci_condition";
 import {IRecipeFragmentIfConditionsConditionEnum, IRecipeFragmentResultDef} from "../repo/recipe_def";
 import deepmerge from "deepmerge";
 
+const debug = false;
 
 class RestartProcessingException extends Error {
 }
@@ -54,35 +55,35 @@ class CloudInitSuperMerger {
         let newRecipes = recipes.filter(possiblyNewRecipeName => !this.wantedRecipesSet.has(possiblyNewRecipeName));
         if (newRecipes.length == 0) return;
 
-        let currentRecipeIndex = this.wantedRecipesStr.indexOf(sourceRecipe.id)+1;
-        console.log("splice before", this.wantedRecipesStr, "index", currentRecipeIndex, "source", sourceRecipe.id);
+        let currentRecipeIndex = this.wantedRecipesStr.indexOf(sourceRecipe.id) + 1;
+        if (debug) console.log("splice before", this.wantedRecipesStr, "index", currentRecipeIndex, "source", sourceRecipe.id);
 
         for (const recipe of newRecipes) {
             this.wantedRecipesStr.splice(currentRecipeIndex, 0, recipe);
             currentRecipeIndex++;
         }
-        console.log("after", this.wantedRecipesStr)
+        if (debug) console.log("after", this.wantedRecipesStr)
 
         throw new RestartProcessingException("Included new recipes " + newRecipes.join(","));
     }
 
     private async recursivelyEvaluate(superFragment: CIRecipeFragmentIf) {
-        console.group("fragment => ", superFragment.sourceFragment.sourceRef()) // @TODO: propagate source info to CIRecipeFragment
+        if (debug) console.group("fragment => ", superFragment.sourceFragment.sourceRef()) // @TODO: propagate source info to CIRecipeFragment
         try {
             let resultFrag: IRecipeFragmentResultDef;
             if (await this.doesIfConditionEvaluateToTrue(superFragment)) {
-                console.log("conditions evaluated to", true, superFragment.conditions)
+                if (debug) console.log("conditions evaluated to", true, superFragment.conditions)
                 resultFrag = superFragment.then || {};
             } else {
-                console.log("conditions evaluated to", false, superFragment.conditions)
+                if (debug) console.log("conditions evaluated to", false, superFragment.conditions)
                 resultFrag = superFragment.else || {};
             }
 
             if (resultFrag.cloudConfig) {
-                console.log("merging", resultFrag.cloudConfig);
+                if (debug) console.log("merging", resultFrag.cloudConfig);
                 this.cloudConfig = deepmerge(this.cloudConfig, resultFrag.cloudConfig);
             } else {
-                console.log("NOT merging, empty");
+                if (debug) console.log("NOT merging, empty");
             }
 
             if (resultFrag.message) {
@@ -92,7 +93,7 @@ class CloudInitSuperMerger {
             // Handle the inclusions. Each inclusion can cause exception...
             if (resultFrag.include) {
                 if (resultFrag.include.recipes) {
-                    console.log("Including recipes...", resultFrag.include.recipes);
+                    if (debug) console.log("Including recipes...", resultFrag.include.recipes);
                     if (resultFrag.include.recipes instanceof Array)
                         this.includeRecipeAndThrowIfNotAlreadyIncluded(resultFrag.include.recipes, superFragment.sourceFragment.recipe);
                     else
@@ -110,7 +111,7 @@ class CloudInitSuperMerger {
                 }
             }
         } finally {
-            console.groupEnd();
+            if (debug) console.groupEnd();
         }
     }
 
@@ -127,23 +128,23 @@ class CloudInitSuperMerger {
                             let impl: ICondition = this.createConditionImplementation(conditionKey, value);
                             await impl.prepare();
                             if (!await impl.evaluate()) {
-                                await console.log(`[array] Condition with key '${conditionKey}' and value '${value}' evaluated to`, false)
+                                if (debug) await console.log(`[array] Condition with key '${conditionKey}' and value '${value}' evaluated to`, false)
                                 return false;
                             }
-                            await console.log(`[array] Condition with key '${conditionKey}' and value '${value}' evaluated to`, true)
+                            if (debug) await console.log(`[array] Condition with key '${conditionKey}' and value '${value}' evaluated to`, true)
                             return true;
                         })
                     );
                 let anyOfTheConditionsInArray = allConds.some(value => value);
-                await console.log(`[array] final conditions evaluated to`, anyOfTheConditionsInArray)
+                if (debug) await console.log(`[array] final conditions evaluated to`, anyOfTheConditionsInArray)
                 if (!anyOfTheConditionsInArray) return false;
             } else {
                 let impl: ICondition = this.createConditionImplementation(conditionKey, conditionValue);
                 if (!await impl.evaluate()) {
-                    await console.log(`[array] Condition with key '${conditionKey}' and value '${conditionValue}' evaluated to `, false)
+                    if (debug) await console.log(`[array] Condition with key '${conditionKey}' and value '${conditionValue}' evaluated to `, false)
                     return false;
                 } else {
-                    await console.log(`Condition with key '${conditionKey}' and value '${conditionValue}' evaluated to `, true)
+                    if (debug) await console.log(`Condition with key '${conditionKey}' and value '${conditionValue}' evaluated to `, true)
                 }
             }
         }
@@ -178,9 +179,9 @@ export class CloudInitExpanderMerger {
         try {
             return await this.processOneRun();
         } catch (e) {
-            console.log("Thrown!")
+            if (debug) console.log("Thrown!")
             if (e instanceof RestartProcessingException) {
-                console.log(`Thrown RestartProcessingException! :: ${e.message}`)
+                if (debug) console.log(`Thrown RestartProcessingException! :: ${e.message}`)
                 this.currentRecipes = this.currentMerger.wantedRecipesStr;
                 return await this.process();
             }
@@ -190,17 +191,15 @@ export class CloudInitExpanderMerger {
 
     async processOneRun() {
         this.runNumber++;
-        console.group("Single run number " + this.runNumber);
+        if (debug) console.group("Single run number " + this.runNumber);
         try {
             let newList: Recipe[] = await (new CloudInitRecipeListExpander(this.context, this.repoResolver, this.currentRecipes)).expand();
-            await console.log("Expanded list", newList.map(value => value.id));
+            if (debug) await console.log("Expanded list", newList.map(value => value.id));
             this.currentMerger = new CloudInitSuperMerger(this.context, this.repoResolver, newList);
             await this.currentMerger.evaluateAndMergeAll();
             return this.currentMerger.cloudConfig;
         } finally {
-            console.groupEnd();
+            if (debug) console.groupEnd();
         }
     }
-
-
 }

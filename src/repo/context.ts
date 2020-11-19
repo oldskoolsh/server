@@ -51,18 +51,14 @@ export class RenderingContext {
 
     public async getOS(): Promise<IOS> {
         if (this._os) return this._os;
-        let os: string | undefined = this.paramsQS.get("osg_ci_os");
-        if (!os) os = this.paramKV.get("os");
-        if (!os) os = "ubuntu";
+        let os: string = this.getSomeParam(["os", "osg_ci_os"]);
         this._os = BaseOS.createOS(os);
         return this._os;
     }
 
     public async getRelease(): Promise<IOSRelease> {
         if (this._release) return this._release;
-        let release: string | undefined = this.paramsQS.get("osg_ci_release");
-        if (!release) release = this.paramKV.get("release");
-        if (!release) release = "focal"; // @TODO: latest released lts..
+        let release: string = this.getSomeParam(["release", "osg_ci_release"]);
         this._release = (await this.getOS()).getRelease(release);
         return this._release;
     }
@@ -79,14 +75,14 @@ export class RenderingContext {
     async logClientData(): Promise<any> {
         let jsonSer: string = await this.serializeToJSON();
         let hash = createHash('md5').update(jsonSer).digest('hex');
-        console.log(`Got hash ${hash} for ${jsonSer}`);
+        //console.log(`Got hash ${hash} for ${jsonSer}`);
         let fileName = `${__dirname}/../../data/contexts/${hash}.json`;
         // check if file exists.
         if (fs.existsSync(fileName)) {
 
         } else {
             await fs.promises.writeFile(fileName, jsonSer, "utf8");
-            console.debug("Wrote new JSON context file ")
+            console.debug(`Wrote new JSON context file '${hash}'`)
         }
     }
 
@@ -125,10 +121,10 @@ export class RenderingContext {
         map.set("geoip_continent", (city.continent ? city.continent.code || "unknown" : "unknown").toLowerCase())
 
         // stuff from the gather stage.
-        map.set("cpu_raw", this.paramsQS.get("osg_cpu_info") || "unknown");
-        map.set("default_route_intf", this.paramsQS.get("osg_ip2_intf") || "unknown");
-        map.set("default_route_ip", this.paramsQS.get("osg_ip2_addr") || "unknown");
-        map.set("instance_id", this.paramsQS.get("osg_ci_iid") || "unknown");
+        map.set("cpu_raw", this.getSomeParam(["cpu", "osg_cpu_info"]) || "unknown");
+        map.set("default_route_intf", this.getSomeParam(["osg_ip2_intf"]) || "unknown");
+        map.set("default_route_ip", this.getSomeParam(["osg_ip2_addr"]) || "unknown");
+        map.set("instance_id", this.getSomeParam(["iid", "osg_ci_iid"]) || "unknown");
 
         // stuff from cloud / elquicko
 
@@ -139,22 +135,62 @@ export class RenderingContext {
         return this.clientIP;
     }
 
+    /**
+     * Tries: paramsQS, use that unless bogus.
+     * Tries paramKV first if found use those unless their bogus.
+     * next:
+     * subdictionary inside paramsQS, for the /etc/os-release stuff...
+     * @param name
+     */
+    public getOneParam(name: string): string {
+        if (this.paramsQS) {
+            let value = this.paramsQS.get(name);
+            if (!this.isSomeValueBogus(value)) {
+                // @ts-ignore
+                return <string>value.trim();
+            }
+        }
+        if (this.paramKV) {
+            let value = this.paramKV.get(name);
+            if (!this.isSomeValueBogus(value)) {
+                // @ts-ignore
+                return <string>value.trim();
+            }
+        }
+        return "";
+    }
+
+    public getSomeParam(paramNamesInOrder: string[]): string {
+        for (const name of paramNamesInOrder) {
+            let val = this.getOneParam(name);
+            if (val) return val;
+        }
+        //console.warn("did not get any param", paramNamesInOrder, Object.fromEntries(this.paramsQS), Object.fromEntries(this.paramKV));
+        return "";
+    }
+
     public async getArch() {
         if (this._arch) return this._arch;
-        let arch: string | undefined = this.paramsQS.get("osg_ci_arch");
-        if (!arch) arch = this.paramKV.get("arch");
-        if (!arch) arch = "amd64";
+        let arch: string = this.getSomeParam(["arch", "osg_os_arch", "osg_ci_arch"]);
+        // there is still chance from the user-agent...
         this._arch = BaseArch.createArch(arch);
         return this._arch;
     }
 
     async getCloud(): Promise<ICloud> {
         if (this._cloud) return this._cloud;
-        let cloud: string | undefined = this.paramsQS.get("osg_ci_platform"); // why not osg_ci_cloud? does not work...
-        if (!cloud) cloud = this.paramKV.get("cloud");
-        if (!cloud) cloud = "nocloud";
+        let cloud: string = this.getSomeParam(["cloud", "osg_ci_cloud", "osg_ci_platform"]);
         this._cloud = BaseCloud.createCloud(cloud);
         return this._cloud;
+    }
+
+    private isSomeValueBogus(value: string | undefined): boolean {
+        if (!value) return true;
+        if (!value.trim()) return true;
+        if (value.startsWith("ci_missing_jinja_var/")) return true;
+        if (value.startsWith("unknown")) return true;
+        if (value.length < 2) return true; // short stuff is bogus?
+        return false;
     }
 
     private async serializeToJSON(): Promise<string> {
