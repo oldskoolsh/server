@@ -8,7 +8,7 @@ import {CloudInitExpanderMerger} from "./expander_merger/expandermerger";
 import {BashScriptAsset} from "./assets/bash";
 import {JSScriptAsset} from "./assets/js";
 import {aff} from "./shared/utils";
-import {describe, expect, test, jest} from '@jest/globals';
+import {expect, test} from '@jest/globals';
 
 new aff();
 
@@ -70,7 +70,6 @@ test('default no-param js asset', async () => {
     expect(rendered).toContain("jsLauncherDoLaunch");
 });
 
-
 test('default no-param expand and merge', async () => {
     let context = new RenderingContext(defaultBaseUrl, tedisPool, geoipReaders);
     context.clientIP = defaultClientIP;
@@ -78,15 +77,18 @@ test('default no-param expand and merge', async () => {
 
     // initial expansion.
     let initialRecipes: string[] = ['k8s'];
-
     let expanderMerger: CloudInitExpanderMerger = new CloudInitExpanderMerger(context, resolver, initialRecipes);
     let smth = await expanderMerger.process();
 
+    expect(smth).toBeTruthy();
+    expect(smth.messages.length).toBeGreaterThan(3);
 
     // processors run when everything else is already included.
-    let finalResult = await new CloudInitProcessorStack(context, resolver, smth).addDefaultStack().process();
-    let yaml = YAML.stringify(finalResult, {});
+    let finalResult: any = await new CloudInitProcessorStack(context, resolver, smth).addDefaultStack().process();
+    expect(finalResult.messages).toBeUndefined();
 
-    expect(3).toBe(3); // @TODO of course
+    let yaml: string = YAML.stringify(finalResult, {});
+
+    expect(yaml).toContain("- ");
 });
 

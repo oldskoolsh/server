@@ -2,9 +2,5 @@
   "clientIP": "134.209.86.27",
   "userAgentStr": "Cloud-Init/19.4",
   "paramsQS": {},
-  "paramsKV": {},
-  "msgs": [
-    "2020-11-18 18:39:40,784 - jinja_template.py[WARNING]: Could not render jinja template variables in file 'part-001': 'machine\"', 'distro\"', 'distro_release\"', 'system_platform\"', 'kernel_release\"', 'machine\"', 'distro\"', 'distro_release\"', 'system_platform\"', 'kernel_release\"'",
-
-  ]
+  "paramsKV": {}
 }
