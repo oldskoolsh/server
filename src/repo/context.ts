@@ -51,7 +51,7 @@ export class RenderingContext {
 
     public async getOS(): Promise<IOS> {
         if (this._os) return this._os;
-        let os: string = this.getSomeParam(["os", "osg_ci_os"]);
+        let os: string = this.getSomeParam(["os", "osg_ci_os", "osg_os_release_name", "osg_os_release_cpe_name"]);
         this._os = BaseOS.createOS(os);
         return this._os;
     }
@@ -155,6 +155,30 @@ export class RenderingContext {
             if (!this.isSomeValueBogus(value)) {
                 // @ts-ignore
                 return <string>value.trim();
+            }
+        }
+        // @TODO: refactor + cache.
+        if (name.startsWith("osg_os_release_")) {
+            // try osg_os_release_pairs in paramsQS;
+            let osgOsReleasePairs = this.paramsQS.get("osg_os_release_pairs");
+            if (osgOsReleasePairs) {
+                const map: Map<string, string> = osgOsReleasePairs
+                    .split(";")
+                    .map(value => value.trim())
+                    .filter(value => value.length > 0)
+                    .map(value => value.split("="))
+                    .filter(value => value.length == 2)
+                    .map(split => ({key: split[0].trim(), value: split[1].trim()}))
+                    .filter(value => value && value.value && value.key)
+                    .reduce((acc, item) =>
+                            acc.set(`osg_os_release_${item.key}`, item.value)
+                        , new Map<string, string>());
+                console.log("map", map);
+                let value: string | undefined = map.get(name);
+                if (!this.isSomeValueBogus(value)) {
+                    // @ts-ignore
+                    return <string>value.trim();
+                }
             }
         }
         return "";

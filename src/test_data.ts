@@ -78,16 +78,13 @@ test(`test against datas`, async () => {
 
         let ctx: RenderingContext = await prepareFakeContextFromData(json);
 
-
         let vars: { [p: string]: string } = Object.fromEntries(await ctx.getAllVariables());
-
         let extraInfo: { [p: string]: string } = {"file": shortFileName/*, "agent": json.userAgentStr*/};
-
         let result: { [p: string]: string } = Object.assign(extraInfo, vars);
-
         allVars.push(result);
     }
 
+    allVars.sort((a:any, b:any) => a && b && a.cloud && b.cloud ? a.cloud.localeCompare(b.cloud) : 0);
     console.table(allVars);
 
 
