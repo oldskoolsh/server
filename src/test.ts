@@ -6,12 +6,24 @@ import {TedisPool} from "tedis";
 import {DefaultGeoIPReaders, GeoIpReaders} from "./shared/geoip";
 import {CloudInitExpanderMerger} from "./expander_merger/expandermerger";
 import {BashScriptAsset} from "./assets/bash";
+import {JSScriptAsset} from "./assets/js";
+import {aff} from "./shared/utils";
+import {describe, expect, test, jest} from '@jest/globals';
+
+new aff();
+
 
 let tedisPool: TedisPool;
 let resolver: RepoResolver;
 let geoipReaders: GeoIpReaders;
 let defaultBaseUrl: string;
 let defaultClientIP: string;
+
+beforeEach(async () => {
+    // restore the original console.
+    // @ts-ignore
+    global.console = global.originalConsole;
+})
 
 beforeAll(async () => {
     defaultClientIP = "62.251.42.9";
@@ -43,6 +55,22 @@ test('default no-param bash', async () => {
 });
 
 
+test('default no-param js asset', async () => {
+    let context = new RenderingContext(defaultBaseUrl, tedisPool, geoipReaders);
+    context.clientIP = defaultClientIP;
+    await context.init();
+
+    let rendered = await (new JSScriptAsset(context, resolver, "showoff.mjs")).renderFromFile();
+
+    expect(rendered).toContain("#!/bin/bash");
+    expect(rendered).not.toContain("**INCLUDE");
+    expect(rendered).toContain("base64 --decode");
+    expect(rendered).toContain("jsLauncherPrepareNVM");
+    expect(rendered).toContain("jsLauncherNPMInstall");
+    expect(rendered).toContain("jsLauncherDoLaunch");
+});
+
+
 test('default no-param expand and merge', async () => {
     let context = new RenderingContext(defaultBaseUrl, tedisPool, geoipReaders);
     context.clientIP = defaultClientIP;
@@ -53,7 +81,6 @@ test('default no-param expand and merge', async () => {
 
     let expanderMerger: CloudInitExpanderMerger = new CloudInitExpanderMerger(context, resolver, initialRecipes);
     let smth = await expanderMerger.process();
-
 
 
     // processors run when everything else is already included.

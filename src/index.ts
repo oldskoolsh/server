@@ -1,9 +1,8 @@
 import {TedisPool} from "tedis";
 import logger from './shared/Logger';
 import {OldSkoolServer} from "./express/paths";
-import {aff} from "./shared/utils";
 import {DefaultGeoIPReaders} from "./shared/geoip";
-
+import {aff} from "./shared/utils";
 new aff();
 
 // Start the server

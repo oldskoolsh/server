@@ -4,7 +4,7 @@
   "license": "Apache-2.0",
   "version": "0.0.0",
   "scripts": {
-    "test": "npx jest ",
+    "test": "npx jest",
     "schema": "typescript-json-schema --required --noExtraProps --out recipe.schema.json tsconfig.json IRecipeFragmentDef",
     "build": "tsc --build tsconfig.prod.json",
     "start": "node ./dist --env=production",

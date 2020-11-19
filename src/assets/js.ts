@@ -54,7 +54,7 @@ export class JSScriptAsset extends BaseAsset {
         // write them all, via base64
 
         // render from here. otherwise too heavy!
-        mainScript = await (new BashScriptAsset(this.context, this.context.resolver, "js_runner_" + this.assetPath)).renderFromString(mainScript);
+        mainScript = await (new BashScriptAsset(this.context, this.repoResolver, "js_runner_" + this.assetPath)).renderFromString(mainScript);
 
         allAssets.forEach((asset: IAssetInfo) => {
             mainScript += `mkdir -p "$JS_LAUNCHER_DIR/${asset.mkdirName}"; \n`;
