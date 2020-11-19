@@ -58,7 +58,7 @@ export class RenderingContext {
 
     public async getRelease(): Promise<IOSRelease> {
         if (this._release) return this._release;
-        let release: string = this.getSomeParam(["release", "osg_ci_release"]);
+        let release: string = this.getSomeParam(["release", "osg_ci_release", "osg_os_release_version_id"]);
         this._release = (await this.getOS()).getRelease(release);
         return this._release;
     }
@@ -173,7 +173,8 @@ export class RenderingContext {
                     .reduce((acc, item) =>
                             acc.set(`osg_os_release_${item.key}`, item.value)
                         , new Map<string, string>());
-                console.log("map", map);
+                //console.log("map", map);
+                //console.log("bla", map.get("osg_os_release_version_id"));
                 let value: string | undefined = map.get(name);
                 if (!this.isSomeValueBogus(value)) {
                     // @ts-ignore
@@ -213,7 +214,6 @@ export class RenderingContext {
         if (!value.trim()) return true;
         if (value.startsWith("ci_missing_jinja_var/")) return true;
         if (value.startsWith("unknown")) return true;
-        if (value.length < 2) return true; // short stuff is bogus?
         return false;
     }
 

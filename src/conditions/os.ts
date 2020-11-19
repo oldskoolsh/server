@@ -10,6 +10,7 @@ export interface IOSRelease {
 
 export interface IOS {
     id: string;
+    other_names: string[];
     releases: IOSRelease[]
 
     getRelease(slug: string): IOSRelease;
@@ -20,12 +21,16 @@ export interface IOS {
 
 export abstract class BaseOS implements IOS {
     releases!: IOSRelease[];
+    other_names: string[] = [];
     id: string = "unknown";
 
     public static createOS(id: string): IOS {
-        let allOs: IOS[] = [new UnknownOS(), new Ubuntu(), new Debian()];
+        let allOs: IOS[] = [new UnknownOS(), new Ubuntu(), new Debian(), new CentOS(), new AmazonLinux()];
         if (!id) return allOs[0];
         let idMatch = allOs.filter(value => value.id === id);
+        if (idMatch.length != 1) {
+            idMatch = allOs.filter(value => value.other_names.includes(id));
+        }
         if (idMatch.length != 1) {
             console.warn(`Unknown OS: '${id}'`);
             return allOs[0];
@@ -42,6 +47,11 @@ export abstract class BaseOS implements IOS {
 
         let slugMatch = this.releases ? this.releases.filter(value => value.id === slug) : [];
         if (slugMatch.length != 1) {
+            // try combining the osName with the release. centos8.
+            slugMatch = this.releases ? this.releases.filter(value => value.id === this.id + slug) : [];
+        }
+
+        if (slugMatch.length != 1) {
             console.warn(`Unknown release: '${slug}' for os '${this.id}'`);
             return unknownRelease;
         }
@@ -52,6 +62,7 @@ export abstract class BaseOS implements IOS {
         const unknownRelease = {id: "unknown", lts: false, numVersion: 0, os: this, released: false, systemd: true};
         // unknown OS has no known releases.
         if (this.id === "unknown") return unknownRelease;
+        if (release.id === "unknown") return unknownRelease;
 
         let lowerOrEqualLtsReleases = this.releases ? this.releases
             // lower
@@ -83,6 +94,25 @@ class Debian extends BaseOS implements IOS {
     releases: IOSRelease[] = [
         {id: "buster", numVersion: 10, lts: true, released: true, systemd: true, os: this},
         {id: "squeeze", numVersion: 9, lts: true, released: true, systemd: true, os: this},
+    ];
+}
+
+
+class CentOS extends BaseOS implements IOS {
+    id: string = "centos";
+    other_names: string[] = ['centos linux'];
+    releases: IOSRelease[] = [
+        {id: "centos8", numVersion: 8, lts: true, released: true, systemd: true, os: this},
+        {id: "centos7", numVersion: 7, lts: true, released: true, systemd: true, os: this},
+    ];
+}
+
+
+class AmazonLinux extends BaseOS implements IOS {
+    id: string = "amazonlinux";
+    other_names: string[] = ['amazon linux'];
+    releases: IOSRelease[] = [
+        {id: "amazonlinux2", numVersion: 2, lts: true, released: true, systemd: true, os: this}
     ];
 }
 
