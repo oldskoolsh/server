@@ -190,7 +190,6 @@ export class RenderingContext {
             let val = this.getOneParam(name);
             if (val) return val;
         }
-        //console.warn("did not get any param", paramNamesInOrder, Object.fromEntries(this.paramsQS), Object.fromEntries(this.paramKV));
         return "";
     }
 

@@ -197,9 +197,9 @@ export class OldSkoolServer extends OldSkoolMiddleware {
             [`${this.uriNoCloudWithoutParams}/meta-data`,
                 `${this.uriNoCloudWithParams}/meta-data`],
             async (context: RenderingContext, res: Response) => {
-                let cloud = context.paramKV.get("cloud") || "noncloud";
-                let instanceId = context.paramKV.get("iid") || "i-87018aed";
-                let hostNameFull = context.paramKV.get("hostname") || (`${instanceId}.${cloud}`);
+                let cloud = context.getSomeParam(["cloud"]) || "nocloud";
+                let instanceId = context.getSomeParam(["iid"]) || "i-87018aed";
+                let hostNameFull = context.getSomeParam(["hostname"]) || (`${instanceId}.${cloud}`);
                 hostNameFull = hostNameFull.includes(".") ? hostNameFull : `${hostNameFull}.default.domain`;
 
                 let metaData: any = {};
