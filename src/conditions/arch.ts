@@ -6,13 +6,13 @@ export interface IArch {
 
 export class BaseArch {
     static createArch(arch: string): IArch {
-        let allArches: IArch[] = [new archAmd64(), new archI386(), new archArm64()];
+        let allArches: IArch[] = [new archUnknown(), new archAmd64(), new archI386(), new archArm64()];
         let idMatch = allArches.filter(value => value.id === arch);
         if (idMatch.length != 1) {
             idMatch = allArches.filter(value => value.other_names.includes(arch));
             if (idMatch.length != 1) {
                 console.warn(`Unknown Arch: ${arch}`);
-                return new archUnknown();
+                return allArches[0];
             }
         }
         return idMatch[0];

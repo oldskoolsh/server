@@ -12,7 +12,7 @@ export class BaseCloud {
         }
         if (idMatch.length != 1) {
             console.warn(`*** Unknown Cloud: '${cloud}'`);
-            return new UnknownCloud();
+            return allArches[0]; // unknown
         } else {
             return idMatch[0];
         }

@@ -21,11 +21,11 @@ export abstract class BaseOS implements IOS {
     id: string = "unknown";
 
     public static createOS(id: string): IOS {
-        let allOs: IOS[] = [new Ubuntu(), new Debian()];
+        let allOs: IOS[] = [new UnknownOS(), new Ubuntu(), new Debian()];
         let idMatch = allOs.filter(value => value.id === id);
         if (idMatch.length != 1) {
             console.warn(`Unknown OS: ${id}`);
-            return new UnknownOS();
+            return allOs[0];
         }
         return idMatch[0];
     }
