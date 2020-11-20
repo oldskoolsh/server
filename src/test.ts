@@ -20,6 +20,7 @@ let defaultResolver: RepoResolver;
 let geoipReaders: GeoIpReaders;
 let defaultBaseUrl: string;
 let defaultClientIP: string;
+const initialRecipes: string[] = ['k8s', 'conditions'];
 
 beforeEach(async () => {
     // restore the original console.
@@ -84,7 +85,6 @@ test('default no-param expand and merge', async () => {
     await context.init();
 
     // initial expansion.
-    let initialRecipes: string[] = ['k8s', 'conditions'];
     let expanderMerger: CloudInitExpanderMerger = new CloudInitExpanderMerger(context, defaultResolver, initialRecipes);
     let smth = await expanderMerger.process();
 
@@ -99,7 +99,6 @@ test('default no-param processor', async () => {
     await context.init();
 
     // initial expansion.
-    let initialRecipes: string[] = ['k8s', 'conditions'];
     let expanderMerger: CloudInitExpanderMerger = new CloudInitExpanderMerger(context, defaultResolver, initialRecipes);
     let smth = await expanderMerger.process();
     let finalResult: any = await new CloudInitProcessorStack(context, defaultResolver, smth).addDefaultStack().process();
@@ -117,7 +116,6 @@ test('default no-param launchers', async () => {
     await context.init();
 
     // initial expansion.
-    let initialRecipes: string[] = ['k8s', 'conditions'];
     let expanderMerger: CloudInitExpanderMerger = new CloudInitExpanderMerger(context, defaultResolver, initialRecipes);
     let yamlObj = await expanderMerger.process();
 

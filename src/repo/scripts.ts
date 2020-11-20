@@ -23,8 +23,6 @@ export class RecipeExecutablesProcessor {
     // super expander uses "initialRecipes", but needs initialScripts
     async process(): Promise<RecipeExecutablesProcessor> {
         // @TODO: do those each in its own promise, Promise.all then
-        let launcherScripts = await this.rc.recipes.asyncFlatMap((recipe) => recipe.getAutoScripts(recipe.def.auto_launchers));
-        let bashLaunchers: IExecutableScript[] = this.processLauncherInfo(launcherScripts, "bash/");
 
         this.initScripts = await this.rc.recipes.asyncFlatMap((recipe) => recipe.getAutoScripts(recipe.def.auto_initscripts));
 
@@ -32,6 +30,8 @@ export class RecipeExecutablesProcessor {
         let jsScripts = await this.rc.recipes.asyncFlatMap((recipe) => recipe.getAutoJSScripts(recipe.def.auto_js_launchers));
         let jsLaunchers: IExecutableScript[] = this.processLauncherInfo(jsScripts, "js/");
 
+        let launcherScripts = await this.rc.recipes.asyncFlatMap((recipe) => recipe.getAutoScripts(recipe.def.auto_launchers));
+        let bashLaunchers: IExecutableScript[] = this.processLauncherInfo(launcherScripts, "bash/");
 
         this.launcherDefs = [...bashLaunchers, ...jsLaunchers];
         return this;
