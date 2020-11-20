@@ -17,9 +17,6 @@ export class RenderingContext {
     public moduleUrl!: string;
     public recipesUrl!: string;
     public readonly tedisPool: TedisPool;
-
-    public expandedMergedResults?: ExpandMergeResults;
-
     public paramKV: ReadonlyMap<string, string> = new Map<string, string>();
     public resolver!: RepoResolver;
     public recipeNames: string[] = [];
@@ -43,6 +40,12 @@ export class RenderingContext {
         this.baseUrl = baseUrl;
         this.tedisPool = tedisPool;
         this.geoipReaders = geoipReaders;
+    }
+
+    private _expandedMergedResults?: ExpandMergeResults;
+
+    public set expandedMergedResults(value: ExpandMergeResults) {
+        this._expandedMergedResults = value;
     }
 
     public async getUserAgent() {
@@ -211,8 +214,8 @@ export class RenderingContext {
     }
 
     getExpandedMergedResultsOrThrow(throwWhy: string): ExpandMergeResults {
-        if (!this.expandedMergedResults) throw new Error(throwWhy);
-        return this.expandedMergedResults;
+        if (!this._expandedMergedResults) throw new Error(throwWhy);
+        return this._expandedMergedResults;
     }
 
     private isSomeValueBogus(value: string | undefined): boolean {

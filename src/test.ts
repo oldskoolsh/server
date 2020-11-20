@@ -1,6 +1,5 @@
 import {RepoResolver} from "./repo/resolver";
 import {RenderingContext} from "./repo/context";
-import {CloudInitProcessorStack} from "./processors/stack";
 import YAML from 'yaml';
 import {TedisPool} from "tedis";
 import {DefaultGeoIPReaders, GeoIpReaders} from "./shared/geoip";
@@ -98,11 +97,12 @@ test('default no-param processor', async () => {
     context.clientIP = defaultClientIP;
     await context.init();
 
-    // initial expansion.
+    // full expansion
     let expanderMerger: CloudInitExpanderMerger = new CloudInitExpanderMerger(context, defaultResolver, initialRecipes);
     let expanderMergerResult: ExpandMergeResults = await expanderMerger.process();
-    let cloudConfigObj = await new CloudInitProcessorStack(context, defaultResolver, expanderMergerResult).addDefaultStack().process();
-    expect(cloudConfigObj.messages).toBeUndefined();
+
+    let cloudConfigObj = expanderMergerResult.processedCloudConfig;
+    expect(cloudConfigObj.messages).toBeUndefined(); // make sure processors ran
     expect(cloudConfigObj.users).toBeDefined();
 
     let yaml: string = YAML.stringify(cloudConfigObj, {});

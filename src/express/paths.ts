@@ -1,5 +1,4 @@
 import {Express, Response} from "express";
-import {CloudInitProcessorStack} from "../processors/stack";
 import YAML from "yaml";
 import {BashScriptAsset} from "../assets/bash";
 import {MimeTextFragment} from "../shared/mime";
@@ -7,7 +6,7 @@ import StatusCodes from 'http-status-codes';
 import {OldSkoolMiddleware} from "./middleware";
 import {RenderingContext} from "../repo/context";
 import {JSScriptAsset} from "../assets/js";
-import {CloudInitExpanderMerger, ExpandMergeResults, IExecutableScript} from "../expander_merger/expandermerger";
+import {ExpandMergeResults, IExecutableScript} from "../expander_merger/expandermerger";
 import {LaunchersAsset} from "../assets/launchers";
 
 const {BAD_REQUEST, OK} = StatusCodes;
@@ -85,15 +84,13 @@ export class OldSkoolServer extends OldSkoolMiddleware {
                 `${this.uriNoCloudWithParams}/real/cloud/init/yaml`],
             async (context: RenderingContext, res: Response) => {
                 // merge and process.
-
-                let merged: ExpandMergeResults = await (new CloudInitExpanderMerger(context, context.resolver, context.recipeNames)).process();
-                let finalResult: any = await new CloudInitProcessorStack(context, context.resolver, merged).addDefaultStack().process();
+                let finalResults: ExpandMergeResults = context.getExpandedMergedResultsOrThrow("real_cloud needs it");
 
                 let body: string = "";
                 body += `## template: jinja\n`; // @TODO: remove, not used in the real stage. (should not even be used on gather)
                 body += `#cloud-config\n`;
                 body += `# final recipes: ${context.getExpandedMergedResultsOrThrow("Final Recipes").recipes.map(value => value.id).join(", ")} \n`;
-                body += YAML.stringify(finalResult);
+                body += YAML.stringify(finalResults.processedCloudConfig);
                 res.status(OK).contentType("text/plain").send(body);
             });
 
@@ -104,8 +101,7 @@ export class OldSkoolServer extends OldSkoolMiddleware {
                 `${this.uriNoCloudWithoutParams}/cloud/init/yaml/data/gather`,
                 `${this.uriNoCloudWithParams}/cloud/init/yaml/data/gather`],
             async (context: RenderingContext, res: Response) => {
-                let merged = await (new CloudInitExpanderMerger(context, context.resolver, context.recipeNames)).process();
-                let yaml = await new CloudInitProcessorStack(context, context.resolver, merged).addDefaultStack().processObj();
+                let yaml = context.getExpandedMergedResultsOrThrow("gather").processedCloudConfig;
 
                 let curlDatas = [ // @TODO: convert all to cloud-init query --format
                     `--data-urlencode "osg_ci_arch={{machine}}"`,

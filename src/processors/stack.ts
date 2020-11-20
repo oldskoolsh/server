@@ -6,20 +6,19 @@ import {CloudInitYamlProcessorSSHKeys} from "./ssh_keys";
 import {CloudInitYamlProcessorPackages} from "./packages";
 import {CloudInitYamlProcessorReplaceVariables} from "./variables";
 import {CloudInitYamlProcessorMessages} from "./messages";
-import {ExpandMergeResults} from "../expander_merger/expandermerger";
+import deepmerge from "deepmerge";
 
 export class CloudInitProcessorStack {
-    protected readonly expansionResults: ExpandMergeResults;
     protected stack: BaseYamlProcessor[] = [];
-
+    protected inputCloudConfig: any;
 
     protected readonly context: RenderingContext;
     protected readonly repoResolver: RepoResolver;
 
-    constructor(context: RenderingContext, resolver: RepoResolver, expansionResults: ExpandMergeResults) {
+    constructor(context: RenderingContext, resolver: RepoResolver, inputCloudConfig: any) {
         this.context = context;
         this.repoResolver = resolver;
-        this.expansionResults = expansionResults;
+        this.inputCloudConfig = inputCloudConfig;
     }
 
     add(item: BaseYamlProcessor) {
@@ -42,7 +41,7 @@ export class CloudInitProcessorStack {
     }
 
     async processObj(): Promise<any> {
-        let obj = this.expansionResults.cloudConfig;
+        let obj = deepmerge({}, this.inputCloudConfig);
         for (const processor of this.stack) {
             processor.prepare(this.context, this.repoResolver);
             obj = await processor.process(obj);

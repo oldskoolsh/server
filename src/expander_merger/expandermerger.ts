@@ -7,6 +7,7 @@ import {BaseCondition, ICondition} from "../conditions/ci_condition";
 import {IRecipeFragmentIfConditionsConditionEnum, IRecipeFragmentResultDef} from "../repo/recipe_def";
 import deepmerge from "deepmerge";
 import path from "path";
+import {CloudInitProcessorStack} from "../processors/stack";
 
 const debug = false;
 
@@ -199,7 +200,8 @@ export interface IExecutableScript {
 }
 
 export interface ExpandMergeResults {
-    cloudConfig: any;
+    cloudConfig: any; // @TODO: extended cloud-config schema
+    processedCloudConfig: any; // @TODO: standard cloud-config schema
     recipes: Recipe[];
     launcherDefs: IExecutableScript[];
     initScripts: string[];
@@ -223,12 +225,23 @@ export class CloudInitExpanderMerger {
     async process(): Promise<ExpandMergeResults> {
         try {
             await this.processOneRun();
+
+            // since that worked, invoke the processor stack; @TODO: context could modify the processor stack.
+            if (!this.currentMerger.cloudConfig) {
+                console.warn("here", this.currentMerger.cloudConfig);
+            }
+            const processedCloudConfig: any = await new CloudInitProcessorStack(this.context, this.repoResolver, this.currentMerger.cloudConfig)
+                .addDefaultStack()
+                .process();
+
             return {
                 cloudConfig: this.currentMerger.cloudConfig,
                 recipes: this.currentMerger.recipes,
                 initScripts: this.currentMerger.initScripts,
-                launcherDefs: this.currentMerger.launcherDefs
+                launcherDefs: this.currentMerger.launcherDefs,
+                processedCloudConfig: processedCloudConfig
             };
+
         } catch (e) {
             if (debug) console.log("Thrown!")
             if (e instanceof RestartProcessingException) {
