@@ -6,6 +6,7 @@ import {
     IRecipeFragmentResultDef,
     IRecipeResultIncludeDef
 } from "../repo/recipe_def";
+import {ExtendedCloudConfig} from "./expandermerger";
 
 export class CIRecipeFragmentResult implements IRecipeFragmentResultDef {
     and: IRecipeFragmentDef[];
@@ -21,7 +22,9 @@ export class CIRecipeFragmentResult implements IRecipeFragmentResultDef {
         this.cloudConfig = obj.cloudConfig || {};
         this.message = obj.message;
         this.andIf = new CIRecipeFragmentIf(obj.andIf || {}, this.sourceFragment);
-        this.and = obj.and?.map((value: IRecipeFragmentDef) => new CIRecipeFragment(new CIRecipeFragmentIf(value.if, this.sourceFragment), this.sourceFragment)) || [];
+        this.and = obj.and?.map((value: IRecipeFragmentDef) => {
+            return new CIRecipeFragment(new CIRecipeFragmentIf(<IRecipeFragmentIfDef>value.if, this.sourceFragment), this.sourceFragment);
+        }) || [];
     }
 
 }
@@ -67,11 +70,11 @@ export class CIRecipeFragment implements IRecipeFragmentDef {
  */
 export class CloudConfigSuperFragment {
     public readonly recipe: Recipe;
-    private readonly doc: any;
+    private readonly doc: CIRecipeFragment;
     private readonly sourceFile: string;
     private readonly fragment: number;
 
-    constructor(doc: any, recipe: Recipe, sourceFile: string, fragment: number) {
+    constructor(doc: CIRecipeFragment, recipe: Recipe, sourceFile: string, fragment: number) {
         this.doc = doc;
         this.recipe = recipe;
         this.sourceFile = sourceFile;

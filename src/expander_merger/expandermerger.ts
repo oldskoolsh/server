@@ -30,13 +30,12 @@ export interface StandardCloudConfig {
     apt?: any;
     packages?: any[];
     final_message?: string;
-
-    //[id: string]: any;
 }
 
 export interface ExtendedCloudConfig extends StandardCloudConfig {
     apt_sources?: any[];
     messages?: string[];
+    ssh_key_sets?: string[];
 }
 
 class RestartProcessingException extends Error {
@@ -149,7 +148,11 @@ class CloudInitSuperMerger {
 
             if (resultFrag.and) {
                 for (const iFrag of resultFrag.and) {
-                    await this.recursivelyEvaluate(new CIRecipeFragmentIf(iFrag.if, superFragment.sourceFragment));
+                    if (iFrag.if) {
+                        await this.recursivelyEvaluate(new CIRecipeFragmentIf(iFrag.if, superFragment.sourceFragment));
+                    } else {
+                        console.error("and without if!?")
+                    }
                 }
             }
         } finally {

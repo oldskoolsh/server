@@ -1,3 +1,5 @@
+import {ExtendedCloudConfig} from "../expander_merger/expandermerger";
+
 export enum IRecipeFragmentIfConditionsConditionEnum {
     os = "os",
     cloud = "cloud",
@@ -60,7 +62,7 @@ export interface IRecipeFragmentResultDef {
     /**
      * Merge the following object into cloud-config.
      */
-    cloudConfig?: object;
+    cloudConfig?: ExtendedCloudConfig;
 
     /**
      * Include more stuff into the context (recipes, initscripts, launchers).
@@ -79,9 +81,9 @@ export interface IRecipeFragmentResultDef {
 
 }
 
-export interface IRecipeFragmentDef {
+export interface IRecipeFragmentDef extends ExtendedCloudConfig {
     /**
      * Entrypoint definition for a recipe.
      */
-    if: IRecipeFragmentIfDef;
+    if?: IRecipeFragmentIfDef;
 }
