@@ -1,5 +1,4 @@
 import {TedisPool} from "tedis";
-import {Recipe} from "./recipe";
 import {RepoResolver} from "./resolver";
 import parser from "ua-parser-js";
 import {BaseOS, IOS, IOSRelease} from "../conditions/os";
@@ -10,6 +9,7 @@ import {BaseCloud, ICloud} from "../conditions/cloud";
 
 import {createHash} from "crypto";
 import * as fs from "fs";
+import {ExpandMergeResults} from "../expander_merger/expandermerger";
 
 export class RenderingContext {
 
@@ -17,7 +17,9 @@ export class RenderingContext {
     public moduleUrl!: string;
     public recipesUrl!: string;
     public readonly tedisPool: TedisPool;
-    public recipes: Recipe[] = [];
+
+    public expandedMergedResults?: ExpandMergeResults;
+
     public paramKV: ReadonlyMap<string, string> = new Map<string, string>();
     public resolver!: RepoResolver;
     public recipeNames: string[] = [];
@@ -206,6 +208,11 @@ export class RenderingContext {
         let cloud: string = this.getSomeParam(["cloud", "osg_ci_cloud", "osg_ci_platform"]);
         this._cloud = BaseCloud.createCloud(cloud);
         return this._cloud;
+    }
+
+    getExpandedMergedResultsOrThrow(throwWhy: string): ExpandMergeResults {
+        if (!this.expandedMergedResults) throw new Error(throwWhy);
+        return this.expandedMergedResults;
     }
 
     private isSomeValueBogus(value: string | undefined): boolean {

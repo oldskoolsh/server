@@ -6,9 +6,8 @@ import {MimeTextFragment} from "../shared/mime";
 import StatusCodes from 'http-status-codes';
 import {OldSkoolMiddleware} from "./middleware";
 import {RenderingContext} from "../repo/context";
-import {IExecutableScript, RecipeExecutablesProcessor} from "../repo/scripts";
 import {JSScriptAsset} from "../assets/js";
-import {CloudInitExpanderMerger} from "../expander_merger/expandermerger";
+import {CloudInitExpanderMerger, ExpandMergeResults, IExecutableScript} from "../expander_merger/expandermerger";
 import {LaunchersAsset} from "../assets/launchers";
 
 const {BAD_REQUEST, OK} = StatusCodes;
@@ -28,32 +27,35 @@ export class OldSkoolServer extends OldSkoolMiddleware {
                 `${this.uriNoCloudWithoutParams}/user-data`,
                 `${this.uriNoCloudWithParams}/user-data`],
             async (context: RenderingContext, res: Response) => {
-                let scriptsProcessor = await (new RecipeExecutablesProcessor(context)).process();
+                let expandedResults = context.getExpandedMergedResultsOrThrow("user-data needs it");
 
                 let body = "";
+                body += "#include\n\n";
 
-                // body += "## template: jinja\n"; // mark this as a jinja template. it does not work directly with #include!
-                body += "#include\n";
+                // list final expanded recipes:
+                body += `# Final expanded recipes:  ${context.recipeNames.join(", ")}\n\n`;
 
-                // @TODO: explanations!
+                // comment to link to the cmdline version;
+                body += `# for cmdline usage: \n#  curl --silent "${context.recipesUrl}/cmdline" | sudo bash\n\n`;
 
                 // use a launcher-script (that can gather info from the instance) and _then_ process that YAML.
                 // that in turn brings in the to the yaml-merger in /real/cloud/init/yaml
-                body += `${context.recipesUrl}/cloud/init/yaml/data/gather` + "\n";
+                body += `# cloud-config to gather data; has fallback data in case gather fails.\n`
+                body += `${context.recipesUrl}/cloud/init/yaml/data/gather` + "\n\n";
 
                 // link to the launcher-creators...
+                // we only list the launchers here, as comments. all the actual heavy
+                // lifting is done by /launchers with is an init-script!
                 // consider: boot-cmd processor; cloud-init-per; etc.
-                body += `# bash launchers : ${scriptsProcessor.launcherDefs.map((value: IExecutableScript) => value.launcherName).join(", ")}\n`;
-                body += `${context.recipesUrl}/launchers\n`;
+                body += `# launchers: \n#  -${expandedResults.launcherDefs.map((value: IExecutableScript) => `${value.launcherName} (${value.assetPath})`).join("\n#  -")}\n`;
+                body += `${context.recipesUrl}/launchers\n\n`;
 
                 // link to the init-scripts, directly.
-                scriptsProcessor.initScripts.forEach(script => {
-                    body += `# initscript: ${script}\n`;
-                    body += `${context.bashUrl}/${script}\n`;
+                expandedResults.initScripts.forEach(script => {
+                    body += `# - initscript: ${script}\n`;
+                    body += `${context.bashUrl}/${script}\n\n`;
                 });
 
-                // comment to link to the cmdline version;
-                body += `# for cmdline usage: curl --silent "${context.recipesUrl}/cmdline" | sudo bash\n`;
                 let fragment = new MimeTextFragment("text/x-include-url", "cloud-init-main-include.txt", body);
                 res.status(200).contentType("text/plain").send(fragment.body);
             });
@@ -84,14 +86,14 @@ export class OldSkoolServer extends OldSkoolMiddleware {
             async (context: RenderingContext, res: Response) => {
                 // merge and process.
 
-                let merged = await (new CloudInitExpanderMerger(context, context.resolver, context.recipeNames)).process();
-                let finalResult = await new CloudInitProcessorStack(context, context.resolver, merged).addDefaultStack().process();
+                let merged: ExpandMergeResults = await (new CloudInitExpanderMerger(context, context.resolver, context.recipeNames)).process();
+                let finalResult: any = await new CloudInitProcessorStack(context, context.resolver, merged).addDefaultStack().process();
 
                 let body: string = "";
-                body += `## template: jinja\n`;
+                body += `## template: jinja\n`; // @TODO: remove. Old cloud-init does not support it. And we (shall) use shell commands anyway.
                 body += `#cloud-config\n`;
-                body += `# final recipes: ${context.recipes.map(value => value.id).join(", ")} \n`;
-                body += finalResult;
+                body += `# final recipes: ${context.getExpandedMergedResultsOrThrow("Final Recipes").recipes.map(value => value.id).join(", ")} \n`;
+                body += YAML.stringify(finalResult);
                 res.status(OK).contentType("text/plain").send(body);
             });
 
@@ -105,7 +107,7 @@ export class OldSkoolServer extends OldSkoolMiddleware {
                 let merged = await (new CloudInitExpanderMerger(context, context.resolver, context.recipeNames)).process();
                 let yaml = await new CloudInitProcessorStack(context, context.resolver, merged).addDefaultStack().processObj();
 
-                let curlDatas = [
+                let curlDatas = [ // @TODO: convert all to cloud-init query --format
                     `--data-urlencode "osg_ci_arch={{machine}}"`,
                     `--data-urlencode "osg_ci_os={{distro}}"`,
                     `--data-urlencode "osg_ci_release={{distro_release}}"`,

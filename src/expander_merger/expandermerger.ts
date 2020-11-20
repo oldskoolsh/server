@@ -6,6 +6,7 @@ import {CIRecipeFragment, CIRecipeFragmentIf, CloudConfigSuperFragment} from "./
 import {BaseCondition, ICondition} from "../conditions/ci_condition";
 import {IRecipeFragmentIfConditionsConditionEnum, IRecipeFragmentResultDef} from "../repo/recipe_def";
 import deepmerge from "deepmerge";
+import path from "path";
 
 const debug = false;
 
@@ -13,18 +14,26 @@ class RestartProcessingException extends Error {
 }
 
 class CloudInitSuperMerger {
+    // string representations of the wantedRecipes
     public wantedRecipesSet: Set<string> = new Set<string>();
     public wantedRecipesStr: string[];
+
     // the stack... and results.
     public cloudConfig: any = {};
+    public recipes: Recipe[];
+    public launcherDefs: IExecutableScript[] = [];
+    public initScripts: string[] = [];
+
     protected readonly context: RenderingContext;
     protected readonly repoResolver: RepoResolver;
     protected readonly initialRecipes: Recipe[];
+
 
     constructor(context: RenderingContext, resolver: RepoResolver, initialRecipes: Recipe[]) {
         this.context = context;
         this.repoResolver = resolver;
         this.initialRecipes = initialRecipes;
+        this.recipes = initialRecipes;
         this.wantedRecipesStr = initialRecipes.map(value => value.id);
         this.wantedRecipesSet = new Set<string>(this.wantedRecipesStr);
     }
@@ -41,7 +50,11 @@ class CloudInitSuperMerger {
         // now parse them, fully async.
         let allParsedFragments: CIRecipeFragment[] = await Promise.all(allFragments.map(async value => value.parse()));
 
-        this.cloudConfig = {}; // every run starts clean.
+
+        // initial stack;
+        this.cloudConfig = {}; // every run starts clean cloud-Config wise.
+        await this.prepareLaunchersAndScripts(this.initialRecipes);
+
         for (const parsedFragment of allParsedFragments) {
             await this.recursivelyEvaluate(new CIRecipeFragmentIf(parsedFragment.if, parsedFragment.sourceFragment));
         }
@@ -157,6 +170,39 @@ class CloudInitSuperMerger {
     }
 
 
+    private async prepareLaunchersAndScripts(recipes: Recipe[]) {
+        this.initScripts = await recipes.asyncFlatMap((recipe) => recipe.getAutoScripts(recipe.def.auto_initscripts));
+
+        // js scripts "override"  bash scripts, if two exist with the same name
+        let jsScripts: string[] = await recipes.asyncFlatMap((recipe) => recipe.getAutoJSScripts(recipe.def.auto_js_launchers));
+        let bashScripts: string[] = await recipes.asyncFlatMap((recipe) => recipe.getAutoScripts(recipe.def.auto_launchers));
+
+        let jsLaunchers: IExecutableScript[] = jsScripts.map(value => this.processLauncherScript(value, "js/"));
+        let bashLaunchers: IExecutableScript[] = bashScripts.map(value => this.processLauncherScript(value, "bash/"));
+
+        this.launcherDefs = [...bashLaunchers, ...jsLaunchers];
+    }
+
+    private processLauncherScript(script: string, renderPath: string): IExecutableScript {
+        let parsed: path.ParsedPath = path.parse(script);
+        return ({
+            launcherName: parsed.name,
+            assetPath: `${renderPath}${parsed.dir ? `${parsed.dir}/` : ""}${parsed.name}${parsed.ext}`
+        });
+    }
+
+}
+
+export interface IExecutableScript {
+    assetPath: string;
+    launcherName: string;
+}
+
+export interface ExpandMergeResults {
+    cloudConfig: any;
+    recipes: Recipe[];
+    launcherDefs: IExecutableScript[];
+    initScripts: string[];
 }
 
 export class CloudInitExpanderMerger {
@@ -164,7 +210,6 @@ export class CloudInitExpanderMerger {
     protected readonly repoResolver: RepoResolver;
     protected readonly initialRecipes: string[];
     protected runNumber: number = 0;
-
     protected currentRecipes!: string[];
     protected currentMerger!: CloudInitSuperMerger;
 
@@ -175,9 +220,15 @@ export class CloudInitExpanderMerger {
         this.currentRecipes = this.initialRecipes;
     }
 
-    async process(): Promise<any> {
+    async process(): Promise<ExpandMergeResults> {
         try {
-            return await this.processOneRun();
+            await this.processOneRun();
+            return {
+                cloudConfig: this.currentMerger.cloudConfig,
+                recipes: this.currentMerger.recipes,
+                initScripts: this.currentMerger.initScripts,
+                launcherDefs: this.currentMerger.launcherDefs
+            };
         } catch (e) {
             if (debug) console.log("Thrown!")
             if (e instanceof RestartProcessingException) {
@@ -189,15 +240,17 @@ export class CloudInitExpanderMerger {
         }
     }
 
-    async processOneRun() {
+    private async processOneRun(): Promise<void> {
         this.runNumber++;
         if (debug) console.group("Single run number " + this.runNumber);
         try {
-            let newList: Recipe[] = await (new CloudInitRecipeListExpander(this.context, this.repoResolver, this.currentRecipes)).expand();
-            if (debug) await console.log("Expanded list", newList.map(value => value.id));
-            this.currentMerger = new CloudInitSuperMerger(this.context, this.repoResolver, newList);
+            // Expand according to simple rules...
+            let recipeList: Recipe[] = await (new CloudInitRecipeListExpander(this.context, this.repoResolver, this.currentRecipes)).expand();
+            if (debug) await console.log("Expanded list", recipeList.map(value => value.id));
+
+            this.currentMerger = new CloudInitSuperMerger(this.context, this.repoResolver, recipeList);
+            this.currentMerger.recipes = recipeList;
             await this.currentMerger.evaluateAndMergeAll();
-            return this.currentMerger.cloudConfig;
         } finally {
             if (debug) console.groupEnd();
         }

@@ -3,11 +3,11 @@ import StatusCodes from "http-status-codes";
 import {Express} from "express";
 import {RepoResolver} from "../repo/resolver";
 import {RenderingContext} from "../repo/context";
-import {CloudInitRecipeListExpander} from "../expander_merger/ci_expander";
 
 
 // Parse the User-Agent;...
 import {Query} from "express-serve-static-core";
+import {CloudInitExpanderMerger} from "../expander_merger/expandermerger";
 
 const {BAD_REQUEST, OK} = StatusCodes;
 
@@ -101,10 +101,10 @@ export abstract class OldSkoolMiddleware extends OldSkoolBase {
                 // read recipes from request path.
                 let initialRecipes: string[] = req.params.recipes.split(",");
 
-                // @TODO: either use expander/merger, or don't do it here...
-                req.oldSkoolContext.recipes = await (new CloudInitRecipeListExpander(req.oldSkoolContext, req.oldSkoolResolver, initialRecipes)).expand();
-                req.oldSkoolContext.recipeNames = req.oldSkoolContext.recipes.map(value => value.id);
-                req.oldSkoolContext.recipesUrl = req.oldSkoolContext.moduleUrl + "/" + req.oldSkoolContext.recipeNames.join(",");
+                // Full expansion. Expensive.
+                req.oldSkoolContext.expandedMergedResults = await new CloudInitExpanderMerger(req.oldSkoolContext, req.oldSkoolResolver, initialRecipes).process();
+                req.oldSkoolContext.recipeNames = req.oldSkoolContext.getExpandedMergedResultsOrThrow("right away").recipes.map(value => value.id);
+                req.oldSkoolContext.recipesUrl = req.oldSkoolContext.moduleUrl + "/" + initialRecipes.join(",");
             })
 
         this.middleware(

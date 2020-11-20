@@ -4,22 +4,22 @@ import {RepoResolver} from "../repo/resolver";
 import {CloudInitYamlProcessorAptSources} from "./apt_sources";
 import {CloudInitYamlProcessorSSHKeys} from "./ssh_keys";
 import {CloudInitYamlProcessorPackages} from "./packages";
-import YAML from 'yaml';
 import {CloudInitYamlProcessorReplaceVariables} from "./variables";
 import {CloudInitYamlProcessorMessages} from "./messages";
+import {ExpandMergeResults} from "../expander_merger/expandermerger";
 
 export class CloudInitProcessorStack {
-    protected readonly src: any;
+    protected readonly expansionResults: ExpandMergeResults;
     protected stack: BaseYamlProcessor[] = [];
 
 
     protected readonly context: RenderingContext;
     protected readonly repoResolver: RepoResolver;
 
-    constructor(context: RenderingContext, resolver: RepoResolver, srcYaml: any) {
+    constructor(context: RenderingContext, resolver: RepoResolver, expansionResults: ExpandMergeResults) {
         this.context = context;
         this.repoResolver = resolver;
-        this.src = srcYaml;
+        this.expansionResults = expansionResults;
     }
 
     add(item: BaseYamlProcessor) {
@@ -27,9 +27,9 @@ export class CloudInitProcessorStack {
         return this;
     }
 
-    async process(): Promise<string> {
+    async process(): Promise<any> {
         let obj = await this.processObj();
-        return YAML.stringify(obj);
+        return obj;
     }
 
     addDefaultStack() {
@@ -42,7 +42,7 @@ export class CloudInitProcessorStack {
     }
 
     async processObj(): Promise<any> {
-        let obj = this.src;
+        let obj = this.expansionResults.cloudConfig;
         for (const processor of this.stack) {
             processor.prepare(this.context, this.repoResolver);
             obj = await processor.process(obj);

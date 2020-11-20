@@ -4,7 +4,7 @@ import {CloudInitProcessorStack} from "./processors/stack";
 import YAML from 'yaml';
 import {TedisPool} from "tedis";
 import {DefaultGeoIPReaders, GeoIpReaders} from "./shared/geoip";
-import {CloudInitExpanderMerger} from "./expander_merger/expandermerger";
+import {CloudInitExpanderMerger, ExpandMergeResults} from "./expander_merger/expandermerger";
 import {BashScriptAsset} from "./assets/bash";
 import {JSScriptAsset} from "./assets/js";
 import {aff} from "./shared/utils";
@@ -86,10 +86,10 @@ test('default no-param expand and merge', async () => {
 
     // initial expansion.
     let expanderMerger: CloudInitExpanderMerger = new CloudInitExpanderMerger(context, defaultResolver, initialRecipes);
-    let smth = await expanderMerger.process();
+    let result: ExpandMergeResults = await expanderMerger.process();
 
-    expect(smth).toBeTruthy();
-    expect(smth.messages.length).toBeGreaterThan(3);
+    expect(result.cloudConfig).toBeTruthy();
+    expect(result.cloudConfig.messages.length).toBeGreaterThan(3);
 });
 
 
@@ -100,11 +100,12 @@ test('default no-param processor', async () => {
 
     // initial expansion.
     let expanderMerger: CloudInitExpanderMerger = new CloudInitExpanderMerger(context, defaultResolver, initialRecipes);
-    let smth = await expanderMerger.process();
-    let finalResult: any = await new CloudInitProcessorStack(context, defaultResolver, smth).addDefaultStack().process();
-    expect(finalResult.messages).toBeUndefined();
+    let expanderMergerResult: ExpandMergeResults = await expanderMerger.process();
+    let cloudConfigObj = await new CloudInitProcessorStack(context, defaultResolver, expanderMergerResult).addDefaultStack().process();
+    expect(cloudConfigObj.messages).toBeUndefined();
+    expect(cloudConfigObj.users).toBeDefined();
 
-    let yaml: string = YAML.stringify(finalResult, {});
+    let yaml: string = YAML.stringify(cloudConfigObj, {});
     expect(yaml).toContain("- ");
     expect(yaml).toContain("All conditions tested");
     console.log("yaml is", yaml.length, "bytes long.");
@@ -115,14 +116,16 @@ test('default no-param launchers', async () => {
     context.clientIP = defaultClientIP;
     await context.init();
 
-    // initial expansion.
-    let expanderMerger: CloudInitExpanderMerger = new CloudInitExpanderMerger(context, defaultResolver, initialRecipes);
-    let yamlObj = await expanderMerger.process();
+    // full expansion.
+    // put the expanded in context...
+    context.expandedMergedResults = await new CloudInitExpanderMerger(context, defaultResolver, initialRecipes).process();
 
     let body = await (new LaunchersAsset(context, defaultResolver, "oldskool-bundle")).renderFromFile();
 
     expect(body).toContain("#!/bin/bash");
     expect(body).not.toContain("**INCLUDE");
-    expect(body).toContain("createLauncherScript \"");
+    expect(body).toContain("createLauncherScript \"showoff"); // js launcher
+    expect(body).toContain("createLauncherScript \"example\" \"bash/example.sh\""); // bash launcher
+    expect(body).toContain("createLauncherScript \"tsshow\" \"js/tsshow.ts\""); // typescript launcher
 });
 
