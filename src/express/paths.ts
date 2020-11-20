@@ -90,7 +90,7 @@ export class OldSkoolServer extends OldSkoolMiddleware {
                 let finalResult: any = await new CloudInitProcessorStack(context, context.resolver, merged).addDefaultStack().process();
 
                 let body: string = "";
-                body += `## template: jinja\n`; // @TODO: remove. Old cloud-init does not support it. And we (shall) use shell commands anyway.
+                body += `## template: jinja\n`; // @TODO: remove, not used in the real stage. (should not even be used on gather)
                 body += `#cloud-config\n`;
                 body += `# final recipes: ${context.getExpandedMergedResultsOrThrow("Final Recipes").recipes.map(value => value.id).join(", ")} \n`;
                 body += YAML.stringify(finalResult);
@@ -143,7 +143,7 @@ export class OldSkoolServer extends OldSkoolMiddleware {
                 yaml.bootcmd = origBootCmds;
 
                 let body: string = "";
-                body += `## template: jinja\n`;
+                body += `## template: jinja\n`;// @TODO: remove. Old cloud-init does not support it. And we (shall) use shell commands anyway.
                 body += `#cloud-config\n`;
                 body += YAML.stringify(yaml);
                 res.status(OK).contentType("text/plain").send(body);
