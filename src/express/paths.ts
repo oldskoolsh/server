@@ -9,6 +9,7 @@ import {RenderingContext} from "../repo/context";
 import {IExecutableScript, RecipeExecutablesProcessor} from "../repo/scripts";
 import {JSScriptAsset} from "../assets/js";
 import {CloudInitExpanderMerger} from "../expander_merger/expandermerger";
+import {LaunchersAsset} from "../assets/launchers";
 
 const {BAD_REQUEST, OK} = StatusCodes;
 
@@ -146,7 +147,6 @@ export class OldSkoolServer extends OldSkoolMiddleware {
                 res.status(OK).contentType("text/plain").send(body);
             });
 
-
         // This produces a "initscript" that creates launchers.
         // Also a "oldskool_launchers" script that re-runs itself.
         this.handle(
@@ -154,22 +154,8 @@ export class OldSkoolServer extends OldSkoolMiddleware {
                 `${this.uriNoCloudWithoutParams}/launchers`,
                 `${this.uriNoCloudWithParams}/launchers`],
             async (context: RenderingContext, res: Response) => {
-                let scriptsProcessor = await (new RecipeExecutablesProcessor(context)).process();
-
-                let bashPrelude = `#!/bin/bash\n## **INCLUDE:bash_launchers.sh\n`;
-
-                let launchersReinstall = `createLauncherRelauncher "${context.recipesUrl}/launchers"\n`;
-
-                let bashTemplate: string =
-                    scriptsProcessor.launcherDefs.map((value: IExecutableScript) => `createLauncherScript "${value.launcherName}" "${value.assetPath}"`).join("\n") +
-                    `\n`;
-
-                let jsTemplate: string = ""; // `## **INCLUDE:js_launchers.sh\n`;
-
-                let allTemplates = bashPrelude + launchersReinstall + bashTemplate + `` + jsTemplate;
-                let body = await (new BashScriptAsset(context, context.resolver, "oldskool-bundle")).renderFromString(allTemplates);
+                let body = await (new LaunchersAsset(context, context.resolver, "oldskool-bundle")).renderFromFile();
                 res.status(OK).contentType("text/plain").send(body);
-
             });
 
         // This produces a "initscript" that runs cloud-init on a preinstalled machine. dangerous?

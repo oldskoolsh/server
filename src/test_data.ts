@@ -7,6 +7,7 @@ import path from "path";
 import fs from "fs";
 import fg from "fast-glob";
 import {RenderingContext} from "./repo/context";
+import {Console} from "console";
 
 new aff();
 
@@ -18,8 +19,11 @@ let defaultBaseUrl: string;
 
 beforeEach(async () => {
     // restore the original console.
-    // @ts-ignore
-    global.console = global.originalConsole;
+    global.console = new Console({
+        stdout: process.stdout,
+        stderr: process.stderr,
+        colorMode: true
+    });
 })
 
 beforeAll(async () => {
@@ -48,11 +52,12 @@ async function prepareFakeContextFromData(json: any): Promise<RenderingContext> 
     return context;
 }
 
+// @TODO: https://dev.to/flyingdot/data-driven-unit-tests-with-jest-26bh
 test(`test against datas`, async () => {
     let basePath = path.join(__dirname, "..", "data", "contexts");
     let files: string[] = await fg(`*.json`, {cwd: basePath});
 
-    const allSkipUARegexes: RegExp[] = [/mozilla/i, /cloud/i];
+    const allSkipUARegexes: RegExp[] = [/mozilla/i, /Cloud-Init\//, /Wget\//];
 
     let allVars: object[] = [];
     for (const file of files) {
@@ -79,13 +84,15 @@ test(`test against datas`, async () => {
         let ctx: RenderingContext = await prepareFakeContextFromData(json);
 
         let vars: { [p: string]: string } = Object.fromEntries(await ctx.getAllVariables());
-        let extraInfo: { [p: string]: string } = {"file": shortFileName/*, "agent": json.userAgentStr*/};
+        let extraInfo: { [p: string]: string } = {"file": shortFileName, "agent": json.userAgentStr.substring(0,20)};
         let result: { [p: string]: string } = Object.assign(extraInfo, vars);
         allVars.push(result);
+        console.table(result);
+
     }
 
-    allVars.sort((a:any, b:any) => a && b && a.cloud && b.cloud ? a.cloud.localeCompare(b.cloud) : 0);
-    console.table(allVars);
+    //allVars.sort((a: any, b: any) => a && b && a.cloud && b.cloud ? a.cloud.localeCompare(b.cloud) : 0);
+    //console.table(allVars);
 
 
 });

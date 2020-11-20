@@ -9,20 +9,25 @@ import {BashScriptAsset} from "./assets/bash";
 import {JSScriptAsset} from "./assets/js";
 import {aff} from "./shared/utils";
 import {expect, test} from '@jest/globals';
+import {LaunchersAsset} from "./assets/launchers";
+import {Console} from "console";
 
 new aff(); // crazy util.
 
 
 let tedisPool: TedisPool;
-let resolver: RepoResolver;
+let defaultResolver: RepoResolver;
 let geoipReaders: GeoIpReaders;
 let defaultBaseUrl: string;
 let defaultClientIP: string;
 
 beforeEach(async () => {
     // restore the original console.
-    // @ts-ignore
-    global.console = global.originalConsole;
+    global.console = new Console({
+        stdout: process.stdout,
+        stderr: process.stderr,
+        colorMode: true
+    });
 })
 
 beforeAll(async () => {
@@ -32,8 +37,8 @@ beforeAll(async () => {
     tedisPool = new TedisPool();
     geoipReaders = await (new DefaultGeoIPReaders()).prepareReaders();
 
-    resolver = new RepoResolver("/Users/pardini/Documents/Projects/github/oldskool", "oldskool-rpardini");
-    await resolver.rootResolve();
+    defaultResolver = new RepoResolver("/Users/pardini/Documents/Projects/github/oldskool", "oldskool-rpardini");
+    await defaultResolver.rootResolve();
 });
 
 afterAll(async () => {
@@ -47,8 +52,8 @@ test('default no-param bash', async () => {
     await context.init();
 
     // bash render.
-    let rendered = await (new BashScriptAsset(context, resolver, "base.sh")).renderFromFile();
-    console.log(rendered);
+    let rendered = await (new BashScriptAsset(context, defaultResolver, "base.sh")).renderFromFile();
+    console.log("Rendered is", rendered.length, "bytes long.");
 
     expect(rendered).toContain("#!/bin/bash");
     expect(rendered).not.toContain("**INCLUDE");
@@ -61,7 +66,7 @@ test('default no-param js asset', async () => {
     context.clientIP = defaultClientIP;
     await context.init();
 
-    let rendered = await (new JSScriptAsset(context, resolver, "showoff.mjs")).renderFromFile();
+    let rendered = await (new JSScriptAsset(context, defaultResolver, "showoff.mjs")).renderFromFile();
 
     expect(rendered).toContain("#!/bin/bash");
     expect(rendered).not.toContain("**INCLUDE");
@@ -70,7 +75,7 @@ test('default no-param js asset', async () => {
     expect(rendered).toContain("jsLauncherNPMInstall");
     expect(rendered).toContain("jsLauncherDoLaunch");
 
-    console.log(rendered);
+    console.log("Rendered is", rendered.length, "bytes long.");
 });
 
 test('default no-param expand and merge', async () => {
@@ -79,20 +84,47 @@ test('default no-param expand and merge', async () => {
     await context.init();
 
     // initial expansion.
-    let initialRecipes: string[] = ['k8s'];
-    let expanderMerger: CloudInitExpanderMerger = new CloudInitExpanderMerger(context, resolver, initialRecipes);
+    let initialRecipes: string[] = ['k8s', 'conditions'];
+    let expanderMerger: CloudInitExpanderMerger = new CloudInitExpanderMerger(context, defaultResolver, initialRecipes);
     let smth = await expanderMerger.process();
 
     expect(smth).toBeTruthy();
     expect(smth.messages.length).toBeGreaterThan(3);
+});
 
-    // processors run when everything else is already included.
-    let finalResult: any = await new CloudInitProcessorStack(context, resolver, smth).addDefaultStack().process();
+
+test('default no-param processor', async () => {
+    let context = new RenderingContext(defaultBaseUrl, tedisPool, geoipReaders);
+    context.clientIP = defaultClientIP;
+    await context.init();
+
+    // initial expansion.
+    let initialRecipes: string[] = ['k8s', 'conditions'];
+    let expanderMerger: CloudInitExpanderMerger = new CloudInitExpanderMerger(context, defaultResolver, initialRecipes);
+    let smth = await expanderMerger.process();
+    let finalResult: any = await new CloudInitProcessorStack(context, defaultResolver, smth).addDefaultStack().process();
     expect(finalResult.messages).toBeUndefined();
 
     let yaml: string = YAML.stringify(finalResult, {});
-
     expect(yaml).toContain("- ");
-    console.log(yaml);
+    expect(yaml).toContain("All conditions tested");
+    console.log("yaml is", yaml.length, "bytes long.");
+});
+
+test('default no-param launchers', async () => {
+    let context = new RenderingContext(defaultBaseUrl, tedisPool, geoipReaders);
+    context.clientIP = defaultClientIP;
+    await context.init();
+
+    // initial expansion.
+    let initialRecipes: string[] = ['k8s', 'conditions'];
+    let expanderMerger: CloudInitExpanderMerger = new CloudInitExpanderMerger(context, defaultResolver, initialRecipes);
+    let yamlObj = await expanderMerger.process();
+
+    let body = await (new LaunchersAsset(context, defaultResolver, "oldskool-bundle")).renderFromFile();
+
+    expect(body).toContain("#!/bin/bash");
+    expect(body).not.toContain("**INCLUDE");
+    expect(body).toContain("createLauncherScript \"");
 });
 

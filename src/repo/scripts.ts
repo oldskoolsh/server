@@ -16,6 +16,11 @@ export class RecipeExecutablesProcessor {
         this.rc = rc;
     }
 
+    // real @TODO here is integrate this into the merge recursive logic.
+    // scripts are to be read. they can emit new recipes, or just contribute packages/messages
+    // if new recipes, re-throw, like yaml
+
+    // super expander uses "initialRecipes", but needs initialScripts
     async process(): Promise<RecipeExecutablesProcessor> {
         // @TODO: do those each in its own promise, Promise.all then
         let launcherScripts = await this.rc.recipes.asyncFlatMap((recipe) => recipe.getAutoScripts(recipe.def.auto_launchers));
