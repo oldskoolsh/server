@@ -11,6 +11,34 @@ import {CloudInitProcessorStack} from "../processors/stack";
 
 const debug = false;
 
+export interface IExecutableScript {
+    assetPath: string;
+    launcherName: string;
+}
+
+export interface ExpandMergeResults {
+    cloudConfig: ExtendedCloudConfig;
+    processedCloudConfig: StandardCloudConfig;
+    recipes: Recipe[];
+    launcherDefs: IExecutableScript[];
+    initScripts: string[];
+}
+
+export interface StandardCloudConfig {
+    bootcmd?: string[];
+    users?: any[];
+    apt?: any;
+    packages?: any[];
+    final_message?: string;
+
+    //[id: string]: any;
+}
+
+export interface ExtendedCloudConfig extends StandardCloudConfig {
+    apt_sources?: any[];
+    messages?: string[];
+}
+
 class RestartProcessingException extends Error {
 }
 
@@ -20,7 +48,7 @@ class CloudInitSuperMerger {
     public wantedRecipesStr: string[];
 
     // the stack... and results.
-    public cloudConfig: any = {};
+    public cloudConfig: ExtendedCloudConfig = {};
     public recipes: Recipe[];
     public launcherDefs: IExecutableScript[] = [];
     public initScripts: string[] = [];
@@ -194,19 +222,6 @@ class CloudInitSuperMerger {
 
 }
 
-export interface IExecutableScript {
-    assetPath: string;
-    launcherName: string;
-}
-
-export interface ExpandMergeResults {
-    cloudConfig: any; // @TODO: extended cloud-config schema
-    processedCloudConfig: any; // @TODO: standard cloud-config schema
-    recipes: Recipe[];
-    launcherDefs: IExecutableScript[];
-    initScripts: string[];
-}
-
 export class CloudInitExpanderMerger {
     protected readonly context: RenderingContext;
     protected readonly repoResolver: RepoResolver;
@@ -230,7 +245,7 @@ export class CloudInitExpanderMerger {
             if (!this.currentMerger.cloudConfig) {
                 console.warn("here", this.currentMerger.cloudConfig);
             }
-            const processedCloudConfig: any = await new CloudInitProcessorStack(this.context, this.repoResolver, this.currentMerger.cloudConfig)
+            const processedCloudConfig: StandardCloudConfig = await new CloudInitProcessorStack(this.context, this.repoResolver, this.currentMerger.cloudConfig)
                 .addDefaultStack()
                 .process();
 
@@ -240,7 +255,7 @@ export class CloudInitExpanderMerger {
                 initScripts: this.currentMerger.initScripts,
                 launcherDefs: this.currentMerger.launcherDefs,
                 processedCloudConfig: processedCloudConfig
-            };
+            } as ExpandMergeResults;
 
         } catch (e) {
             if (debug) console.log("Thrown!")

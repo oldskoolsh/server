@@ -2,6 +2,7 @@ import {RenderingContext} from "../repo/context";
 import {RepoResolver} from "../repo/resolver";
 
 import fetch from "node-fetch";
+import {ExtendedCloudConfig, StandardCloudConfig} from "../expander_merger/expandermerger";
 
 
 export abstract class BaseYamlProcessor {
@@ -13,7 +14,7 @@ export abstract class BaseYamlProcessor {
         this.repoResolver = resolver;
     }
 
-    abstract async process(input: any): Promise<any>;
+    abstract async process(input: ExtendedCloudConfig): Promise<StandardCloudConfig>;
 
     async cached(cacheKey: string, ttl: number, producer: () => Promise<string>): Promise<string> {
         //await console.log("Getting from cache", cacheKey);

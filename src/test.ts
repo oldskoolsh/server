@@ -3,7 +3,7 @@ import {RenderingContext} from "./repo/context";
 import YAML from 'yaml';
 import {TedisPool} from "tedis";
 import {DefaultGeoIPReaders, GeoIpReaders} from "./shared/geoip";
-import {CloudInitExpanderMerger, ExpandMergeResults} from "./expander_merger/expandermerger";
+import {CloudInitExpanderMerger, ExpandMergeResults, StandardCloudConfig} from "./expander_merger/expandermerger";
 import {BashScriptAsset} from "./assets/bash";
 import {JSScriptAsset} from "./assets/js";
 import {aff} from "./shared/utils";
@@ -88,7 +88,7 @@ test('default no-param expand and merge', async () => {
     let result: ExpandMergeResults = await expanderMerger.process();
 
     expect(result.cloudConfig).toBeTruthy();
-    expect(result.cloudConfig.messages.length).toBeGreaterThan(3);
+    expect(result.cloudConfig.messages?.length).toBeGreaterThan(3);
 });
 
 
@@ -101,7 +101,7 @@ test('default no-param processor', async () => {
     let expanderMerger: CloudInitExpanderMerger = new CloudInitExpanderMerger(context, defaultResolver, initialRecipes);
     let expanderMergerResult: ExpandMergeResults = await expanderMerger.process();
 
-    let cloudConfigObj = expanderMergerResult.processedCloudConfig;
+    let cloudConfigObj: any = expanderMergerResult.processedCloudConfig; // any is for testing purposes only
     expect(cloudConfigObj.messages).toBeUndefined(); // make sure processors ran
     expect(cloudConfigObj.users).toBeDefined();
 

@@ -7,15 +7,16 @@ import {CloudInitYamlProcessorPackages} from "./packages";
 import {CloudInitYamlProcessorReplaceVariables} from "./variables";
 import {CloudInitYamlProcessorMessages} from "./messages";
 import deepmerge from "deepmerge";
+import {ExtendedCloudConfig, StandardCloudConfig} from "../expander_merger/expandermerger";
 
 export class CloudInitProcessorStack {
     protected stack: BaseYamlProcessor[] = [];
-    protected inputCloudConfig: any;
+    protected inputCloudConfig: ExtendedCloudConfig;
 
     protected readonly context: RenderingContext;
     protected readonly repoResolver: RepoResolver;
 
-    constructor(context: RenderingContext, resolver: RepoResolver, inputCloudConfig: any) {
+    constructor(context: RenderingContext, resolver: RepoResolver, inputCloudConfig: ExtendedCloudConfig) {
         this.context = context;
         this.repoResolver = resolver;
         this.inputCloudConfig = inputCloudConfig;
@@ -26,8 +27,12 @@ export class CloudInitProcessorStack {
         return this;
     }
 
-    async process(): Promise<any> {
-        let obj = await this.processObj();
+    async process(): Promise<StandardCloudConfig> {
+        let obj:ExtendedCloudConfig = deepmerge({}, this.inputCloudConfig); // clone it!
+        for (const processor of this.stack) {
+            processor.prepare(this.context, this.repoResolver);
+            obj = await processor.process(obj);
+        }
         return obj;
     }
 
@@ -40,12 +45,4 @@ export class CloudInitProcessorStack {
             .add(new CloudInitYamlProcessorMessages())
     }
 
-    async processObj(): Promise<any> {
-        let obj = deepmerge({}, this.inputCloudConfig);
-        for (const processor of this.stack) {
-            processor.prepare(this.context, this.repoResolver);
-            obj = await processor.process(obj);
-        }
-        return obj;
-    }
 }

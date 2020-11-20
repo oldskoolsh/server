@@ -1,7 +1,8 @@
 import {BaseYamlProcessor} from "./base";
+import {ExtendedCloudConfig, StandardCloudConfig} from "../expander_merger/expandermerger";
 
 export class CloudInitYamlProcessorMessages extends BaseYamlProcessor {
-    async process(src: any): Promise<any> {
+    async process(src: ExtendedCloudConfig): Promise<StandardCloudConfig> {
         src.final_message = src.final_message || "";
 
         if (src.messages) {

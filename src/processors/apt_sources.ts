@@ -1,8 +1,9 @@
 import * as openpgp from "openpgp";
 import {BaseYamlProcessor} from "./base";
+import {ExtendedCloudConfig, StandardCloudConfig} from "../expander_merger/expandermerger";
 
 export class CloudInitYamlProcessorAptSources extends BaseYamlProcessor {
-    async process(src: any): Promise<any> {
+    async process(src: ExtendedCloudConfig): Promise<StandardCloudConfig> {
         if (!src["apt_sources"]) return src;
         // store, and remove from return
         let orig_sources = src["apt_sources"];

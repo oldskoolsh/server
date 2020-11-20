@@ -6,7 +6,7 @@ import StatusCodes from 'http-status-codes';
 import {OldSkoolMiddleware} from "./middleware";
 import {RenderingContext} from "../repo/context";
 import {JSScriptAsset} from "../assets/js";
-import {ExpandMergeResults, IExecutableScript} from "../expander_merger/expandermerger";
+import {ExpandMergeResults, IExecutableScript, StandardCloudConfig} from "../expander_merger/expandermerger";
 import {LaunchersAsset} from "../assets/launchers";
 
 const {BAD_REQUEST, OK} = StatusCodes;
@@ -101,7 +101,7 @@ export class OldSkoolServer extends OldSkoolMiddleware {
                 `${this.uriNoCloudWithoutParams}/cloud/init/yaml/data/gather`,
                 `${this.uriNoCloudWithParams}/cloud/init/yaml/data/gather`],
             async (context: RenderingContext, res: Response) => {
-                let yaml = context.getExpandedMergedResultsOrThrow("gather").processedCloudConfig;
+                let yaml: StandardCloudConfig = context.getExpandedMergedResultsOrThrow("gather").processedCloudConfig;
 
                 let curlDatas = [ // @TODO: convert all to cloud-init query --format
                     `--data-urlencode "osg_ci_arch={{machine}}"`,
