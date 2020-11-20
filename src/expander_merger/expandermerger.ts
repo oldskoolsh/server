@@ -1,7 +1,7 @@
 import {RenderingContext} from "../repo/context";
 import {RepoResolver} from "../repo/resolver";
 import {Recipe} from "../repo/recipe";
-import {CloudInitRecipeListExpander} from "./ci_expander";
+import {CloudInitFlatRecipeExpanderFromRecipeDefs} from "./ci_expander";
 import {CIRecipeFragment, CIRecipeFragmentIf, CloudConfigSuperFragment} from "./superfragment";
 import {BaseCondition, ICondition} from "../conditions/ci_condition";
 import {IRecipeFragmentIfConditionsConditionEnum, IRecipeFragmentResultDef} from "../repo/recipe_def";
@@ -279,7 +279,7 @@ export class CloudInitExpanderMerger {
         if (debug) console.group("Single run number " + this.runNumber);
         try {
             // Expand according to simple rules...
-            let recipeList: Recipe[] = await (new CloudInitRecipeListExpander(this.context, this.repoResolver, this.currentRecipes)).expand();
+            let recipeList: Recipe[] = await (new CloudInitFlatRecipeExpanderFromRecipeDefs(this.context, this.repoResolver, this.currentRecipes)).expand();
             if (debug) await console.log("Expanded list", recipeList.map(value => value.id));
 
             this.currentMerger = new CloudInitSuperMerger(this.context, this.repoResolver, recipeList);

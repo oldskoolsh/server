@@ -2,7 +2,7 @@ import {RenderingContext} from "../repo/context";
 import {RepoResolver} from "../repo/resolver";
 import {Recipe} from "../repo/recipe";
 
-export class CloudInitRecipeListExpander {
+export class CloudInitFlatRecipeExpanderFromRecipeDefs {
     protected readonly context: RenderingContext;
     protected readonly repoResolver: RepoResolver;
     protected readonly initialRecipes: string[];
