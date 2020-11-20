@@ -4,48 +4,19 @@ import {Recipe} from "../repo/recipe";
 import {CloudInitFlatRecipeExpanderFromRecipeDefs} from "./ci_expander";
 import {CIRecipeFragment, CIRecipeFragmentIf, CloudConfigSuperFragment} from "./superfragment";
 import {BaseCondition, ICondition} from "../conditions/ci_condition";
-import {IRecipeFragmentIfConditionsConditionEnum, IRecipeFragmentResultDef} from "../repo/recipe_fragment";
+import {IRecipeFragmentIfConditionsConditionEnum, IRecipeFragmentResultDef} from "../schema/recipe_fragment";
 import deepmerge from "deepmerge";
 import path from "path";
 import {CloudInitProcessorStack} from "../processors/stack";
+import {ExpandMergeResults, IExecutableScript} from "../schema/results";
+import {ExtendedCloudConfig, StandardCloudConfig} from "../schema/cloud-init-schema";
 
 const debug = false;
 
-export interface IExecutableScript {
-    assetPath: string;
-    launcherName: string;
-}
-
-export interface ExpandMergeResults {
-    cloudConfig: ExtendedCloudConfig;
-    processedCloudConfig: StandardCloudConfig;
-    recipes: Recipe[];
-    launcherDefs: IExecutableScript[];
-    initScripts: string[];
-}
-
-export interface StandardCloudConfig {
-    bootcmd?: string[];
-    users?: any[];
-    apt?: any;
-    packages?: any[];
-    final_message?: string;
-    resize_rootfs?: boolean;
-    disable_root?: boolean;
-    package_update?: boolean;
-    package_reboot_if_required?: boolean;
-    package_upgrade?: boolean;
-    ssh_authorized_keys?: string[];
-}
-
-export interface ExtendedCloudConfig extends StandardCloudConfig {
-    apt_sources?: any[];
-    messages?: string[];
-    ssh_key_sets?: string[];
-}
 
 class RestartProcessingException extends Error {
 }
+
 
 class CloudInitSuperMerger {
     // string representations of the wantedRecipes

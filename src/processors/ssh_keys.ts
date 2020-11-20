@@ -1,6 +1,6 @@
 import {BaseYamlProcessor} from "./base";
 import YAML from 'yaml';
-import {ExtendedCloudConfig, StandardCloudConfig} from "../expander_merger/expandermerger";
+import {ExtendedCloudConfig, StandardCloudConfig} from "../schema/cloud-init-schema";
 
 export class CloudInitYamlProcessorSSHKeys extends BaseYamlProcessor {
 

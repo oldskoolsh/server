@@ -6,8 +6,9 @@ import StatusCodes from 'http-status-codes';
 import {OldSkoolMiddleware} from "./middleware";
 import {RenderingContext} from "../repo/context";
 import {JSScriptAsset} from "../assets/js";
-import {ExpandMergeResults, IExecutableScript, StandardCloudConfig} from "../expander_merger/expandermerger";
 import {LaunchersAsset} from "../assets/launchers";
+import {ExpandMergeResults, IExecutableScript} from "../schema/results";
+import {StandardCloudConfig} from "../schema/cloud-init-schema";
 
 const {BAD_REQUEST, OK} = StatusCodes;
 

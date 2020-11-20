@@ -9,7 +9,7 @@ import {BaseCloud, ICloud} from "../conditions/cloud";
 
 import {createHash} from "crypto";
 import * as fs from "fs";
-import {ExpandMergeResults} from "../expander_merger/expandermerger";
+import {ExpandMergeResults} from "../schema/results";
 
 export class RenderingContext {
 

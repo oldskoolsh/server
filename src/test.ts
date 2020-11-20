@@ -3,13 +3,14 @@ import {RenderingContext} from "./repo/context";
 import YAML from 'yaml';
 import {TedisPool} from "tedis";
 import {DefaultGeoIPReaders, GeoIpReaders} from "./shared/geoip";
-import {CloudInitExpanderMerger, ExpandMergeResults, StandardCloudConfig} from "./expander_merger/expandermerger";
+import {CloudInitExpanderMerger} from "./expander_merger/expandermerger";
 import {BashScriptAsset} from "./assets/bash";
 import {JSScriptAsset} from "./assets/js";
 import {aff} from "./shared/utils";
 import {expect, test} from '@jest/globals';
 import {LaunchersAsset} from "./assets/launchers";
 import {Console} from "console";
+import {ExpandMergeResults} from "./schema/results";
 
 new aff(); // crazy util.
 

@@ -2,7 +2,7 @@ import {RenderingContext} from "../repo/context";
 import {RepoResolver} from "../repo/resolver";
 
 import fetch from "node-fetch";
-import {ExtendedCloudConfig, StandardCloudConfig} from "../expander_merger/expandermerger";
+import {ExtendedCloudConfig, StandardCloudConfig} from "../schema/cloud-init-schema";
 
 
 export abstract class BaseYamlProcessor {

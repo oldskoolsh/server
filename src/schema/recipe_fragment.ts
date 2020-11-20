@@ -1,4 +1,4 @@
-import {ExtendedCloudConfig} from "../expander_merger/expandermerger";
+import {ExtendedCloudConfig} from "./cloud-init-schema";
 
 export enum IRecipeFragmentIfConditionsConditionEnum {
     os = "os",

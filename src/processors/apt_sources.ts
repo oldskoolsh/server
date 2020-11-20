@@ -1,6 +1,6 @@
 import * as openpgp from "openpgp";
 import {BaseYamlProcessor} from "./base";
-import {ExtendedCloudConfig, StandardCloudConfig} from "../expander_merger/expandermerger";
+import {ExtendedCloudConfig, StandardCloudConfig} from "../schema/cloud-init-schema";
 
 export class CloudInitYamlProcessorAptSources extends BaseYamlProcessor {
     async process(src: ExtendedCloudConfig): Promise<StandardCloudConfig> {

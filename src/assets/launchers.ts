@@ -1,6 +1,6 @@
 import {BaseAsset} from "./base_asset";
 import {BashScriptAsset} from "./bash";
-import {IExecutableScript} from "../expander_merger/expandermerger";
+import {IExecutableScript} from "../schema/results";
 
 export class LaunchersAsset extends BaseAsset {
 

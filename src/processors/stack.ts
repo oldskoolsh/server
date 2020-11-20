@@ -7,7 +7,7 @@ import {CloudInitYamlProcessorPackages} from "./packages";
 import {CloudInitYamlProcessorReplaceVariables} from "./variables";
 import {CloudInitYamlProcessorMessages} from "./messages";
 import deepmerge from "deepmerge";
-import {ExtendedCloudConfig, StandardCloudConfig} from "../expander_merger/expandermerger";
+import {ExtendedCloudConfig, StandardCloudConfig} from "../schema/cloud-init-schema";
 
 export class CloudInitProcessorStack {
     protected stack: BaseYamlProcessor[] = [];
