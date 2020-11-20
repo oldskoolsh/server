@@ -4,7 +4,7 @@ import {Recipe} from "../repo/recipe";
 import {CloudInitFlatRecipeExpanderFromRecipeDefs} from "./ci_expander";
 import {CIRecipeFragment, CIRecipeFragmentIf, CloudConfigSuperFragment} from "./superfragment";
 import {BaseCondition, ICondition} from "../conditions/ci_condition";
-import {IRecipeFragmentIfConditionsConditionEnum, IRecipeFragmentResultDef} from "../repo/recipe_def";
+import {IRecipeFragmentIfConditionsConditionEnum, IRecipeFragmentResultDef} from "../repo/recipe_fragment";
 import deepmerge from "deepmerge";
 import path from "path";
 import {CloudInitProcessorStack} from "../processors/stack";

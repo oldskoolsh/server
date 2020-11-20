@@ -5,7 +5,7 @@ import {
     IRecipeFragmentIfDef,
     IRecipeFragmentResultDef,
     IRecipeResultIncludeDef
-} from "../repo/recipe_def";
+} from "../repo/recipe_fragment";
 import {ExtendedCloudConfig} from "./expandermerger";
 
 export class CIRecipeFragmentResult implements IRecipeFragmentResultDef {
