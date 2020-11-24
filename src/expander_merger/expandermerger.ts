@@ -64,12 +64,6 @@ class CloudInitSuperMerger {
         for (const parsedFragment of allParsedFragments) {
             await this.recursivelyEvaluate(new CIRecipeFragmentIf(parsedFragment.if, parsedFragment.sourceFragment));
         }
-
-        // If we get here, all initScripts/launchers have been stable-resolved, recipe-wise.
-        // Process the scripts to find other recipes/initScripts/launchers in the comments.
-        // Throw if not in the stack;
-        // await this.processAllScripts();
-
     }
 
 
@@ -112,7 +106,7 @@ class CloudInitSuperMerger {
     }
 
     private async recursivelyEvaluate(superFragment: CIRecipeFragmentIf) {
-        if (debug) console.group("fragment => ", superFragment.sourceFragment.sourceRef()) // @TODO: propagate source info to CIRecipeFragment
+        if (debug) console.group("fragment => ", superFragment.sourceFragment.sourceRef())
         try {
             let resultFrag: IRecipeFragmentResultDef;
             if (await this.doesIfConditionEvaluateToTrue(superFragment)) {
@@ -260,14 +254,15 @@ export class CloudInitExpanderMerger {
                 .process();
 
             // Now we resolve the scripts into assets:
+            // @TODO: possible place 2
             let finalInitScripts = this.currentMerger.initScripts.map(value => this.processLauncherScript(value));
-            let finalLauncherDefs = this.currentMerger.launcherScripts.map(value => this.processLauncherScript(value));
+            let finalLauncherScripts = this.currentMerger.launcherScripts.map(value => this.processLauncherScript(value));
 
             return {
                 cloudConfig: this.currentMerger.cloudConfig,
                 recipes: this.currentMerger.recipes,
                 initScripts: finalInitScripts,
-                launcherDefs: finalLauncherDefs,
+                launcherScripts: finalLauncherScripts,
                 processedCloudConfig: processedCloudConfig
             } as ExpandMergeResults;
 
@@ -290,7 +285,14 @@ export class CloudInitExpanderMerger {
         let parsed: path.ParsedPath = path.parse(script);
         let extension = path.extname(script);
         //console.log("scirpt", script, "ext", extension);
-        let renderPath = (extension == ".sh") ? "bash/" : "js/"; // @TODO: really? bad...
+
+        // here we'll read the damn scripts, finally.
+        console.log("Will read ", script)
+
+        let isShell = extension == ".sh";
+
+
+        let renderPath = isShell ? "bash/" : "js/"; // @TODO: really? bad...
         return ({
             launcherName: parsed.name,
             assetPath: `${renderPath}${parsed.dir ? `${parsed.dir}/` : ""}${parsed.name}${parsed.ext}`
@@ -314,7 +316,7 @@ export class CloudInitExpanderMerger {
             let initialInitScripts: string[] = [...new Set([...recipeInitScripts, ...this.currentInitScripts])];
             let initialLauncherScripts: string[] = [...new Set([...recipeLaunchers, ...this.currentLaunchers])];
 
-            // @TODO: process the executables to get new recipes? and throw.
+            // @TODO: process the executables to get new recipes? and throw. possible place 1
 
             this.currentMerger = new CloudInitSuperMerger(this.context, this.repoResolver, resolvedCurrentRecipes, initialInitScripts, initialLauncherScripts);
             await this.currentMerger.evaluateAndMergeAll();

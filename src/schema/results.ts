@@ -10,6 +10,6 @@ export interface ExpandMergeResults {
     cloudConfig: ExtendedCloudConfig;
     processedCloudConfig: StandardCloudConfig;
     recipes: Recipe[];
-    launcherDefs: IExecutableScript[];
+    launcherScripts: IExecutableScript[];
     initScripts: IExecutableScript[];
 }

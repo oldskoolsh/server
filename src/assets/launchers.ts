@@ -14,7 +14,7 @@ export class LaunchersAsset extends BaseAsset {
         let launchersReinstall = `createLauncherRelauncher "${this.context.recipesUrl}/launchers"\n`;
 
         let bashTemplate: string =
-            expandedResults.launcherDefs.map((value: IExecutableScript) => `createLauncherScript "${value.launcherName}" "${value.assetPath}"`).join("\n") +
+            expandedResults.launcherScripts.map((value: IExecutableScript) => `createLauncherScript "${value.launcherName}" "${value.assetPath}"`).join("\n") +
             `\n`;
 
         let allTemplates = bashPrelude + launchersReinstall + bashTemplate;
