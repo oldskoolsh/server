@@ -11,38 +11,42 @@ import {CloudInitProcessorStack} from "../processors/stack";
 import {ExpandMergeResults, IExecutableScript} from "../schema/results";
 import {ExtendedCloudConfig, StandardCloudConfig} from "../schema/cloud-init-schema";
 
-const debug = true;
+const debug = false;
 
 
 class RestartProcessingException extends Error {
+
+    public wantedRecipes: string[];
+    public wantedExecutables: string[];
+
+    constructor(message: string, wantedRecipes: string[], wantedExecutables: string[]) {
+        super(message);
+        this.wantedRecipes = wantedRecipes;
+        this.wantedExecutables = wantedExecutables;
+    }
 }
 
 
 class CloudInitSuperMerger {
-    // string representations of the wantedRecipes
-    public wantedRecipesSet: Set<string> = new Set<string>();
-    public wantedRecipesStr: string[];
-
     // the stack... and results.
     public cloudConfig: ExtendedCloudConfig = {};
-    public recipes: Recipe[];
-    public launcherDefs: IExecutableScript[] = [];
-    public initScripts: IExecutableScript[] = [];
 
+    //public launcherDefs: IExecutableScript[] = [];
+    //public initScripts: IExecutableScript[] = [];
+
+    public readonly recipes: Recipe[];
+    public readonly executables: string[] = [];
     protected readonly context: RenderingContext;
     protected readonly repoResolver: RepoResolver;
-    protected readonly initialRecipes: Recipe[];
-    private resolvedInitScripts: string[] = [];
-    private resolvedLaunchers: string[] = [];
 
+    //private resolvedInitScripts: string[] = [];
+    //private resolvedLaunchers: string[] = [];
 
-    constructor(context: RenderingContext, resolver: RepoResolver, initialRecipes: Recipe[]) {
+    constructor(context: RenderingContext, resolver: RepoResolver, recipes: Recipe[], executables: string[]) {
         this.context = context;
         this.repoResolver = resolver;
-        this.initialRecipes = initialRecipes;
-        this.recipes = initialRecipes;
-        this.wantedRecipesStr = initialRecipes.map(value => value.id);
-        this.wantedRecipesSet = new Set<string>(this.wantedRecipesStr);
+        this.recipes = recipes;
+        this.executables = executables;
     }
 
     async evaluateAndMergeAll() {
@@ -50,16 +54,18 @@ class CloudInitSuperMerger {
         let allFragments: CloudConfigSuperFragment[] = [];
 
         // get a list of actual fragments; yamls are multi-doc
-        for (const recipe of this.initialRecipes) {
+        for (const recipe of this.recipes) {
             allFragments.push(...await recipe.getCloudConfigDocs());
         }
 
         // now parse them, fully async.
         let allParsedFragments: CIRecipeFragment[] = await Promise.all(allFragments.map(async value => value.parse()));
 
-        // initial stack;
+        // initial cloud-config stack.
         this.cloudConfig = {}; // every run starts clean cloud-Config wise.
-        await this.expandGlobsForScriptsFromRecipes(this.initialRecipes);
+
+        // initial initScripts, coming from the executables.
+        // initial launcherScripts, coming from the executables.
 
         for (const parsedFragment of allParsedFragments) {
             await this.recursivelyEvaluate(new CIRecipeFragmentIf(parsedFragment.if, parsedFragment.sourceFragment));
@@ -68,58 +74,51 @@ class CloudInitSuperMerger {
         // If we get here, all initScripts/launchers have been stable-resolved, recipe-wise.
         // Process the scripts to find other recipes/initScripts/launchers in the comments.
         // Throw if not in the stack;
-        await this.processAllScripts();
+        // await this.processAllScripts();
 
     }
 
 
-    private async includeInitScriptAndThrowIfNotAlreadyIncluded(initScripts: string[], sourceRecipe: Recipe) {
-        if (initScripts.length == 0) return;
-        if (debug) console.warn("Should include ", initScripts);
+    private async includeExecutableAndThrowIfNotAlreadyIncluded(possiblyNewExecutables: string[], sourceRecipe: Recipe) {
+        if (possiblyNewExecutables.length == 0) return;
+        if (debug) console.warn("Should include ", possiblyNewExecutables);
 
         // Resolve the globs.
-        // Compare the resolved globs to this.resolvedInitScripts;
+        // Compare the resolved globs to this.possiblyNewExpandedGlobs;
         // if not present already; throw.
-        let resolvedInitScripts = await sourceRecipe.expandGlobs(initScripts);
-        console.warn("resolved included", resolvedInitScripts, "vs", this.resolvedInitScripts);
+        let possiblyNewExpandedGlobs = await sourceRecipe.expandGlobs(possiblyNewExecutables);
+        console.warn("resolved included", possiblyNewExpandedGlobs);
 
-        for (const onePossiblyNewScript of resolvedInitScripts) {
-            if (this.resolvedInitScripts.includes(onePossiblyNewScript)) {
-                console.warn(`Init Script '${onePossiblyNewScript}' resolved from glob '${initScripts}' already in context...`);
-                continue;
-            }
-            console.warn(`Init Script '${onePossiblyNewScript}' resolved from glob '${initScripts}' IS NEW!...`);
+        let newExecutables: string[] = possiblyNewExpandedGlobs.filter(onePossiblyNewExec => !this.executables.includes(onePossiblyNewExec));
+        console.warn("newExecutables", newExecutables);
+        if (newExecutables.length == 0) return;
 
-            // @TODO: process the script text; extract possibly new recipes, initScripts and launchers, also packages, etc.
-            // Should work for every kind of script; .sh and .js have different comment markers though.
-            // account for that in the regex?
-            // @TODO: do that in the initial expansion as well, of course.
-
-            // if nothing extracted from the script text, or the extracted is already in context, simply include the script.
-            // @TODO: for init scripts, we need to keep the fucking order; so splice is needed.
-            this.resolvedInitScripts.push(onePossiblyNewScript);
-        }
-
-
+        let wantedExecutables = this.executables.concat(newExecutables);
+        console.warn("wantedExecutables", wantedExecutables);
+        // keep the same recipes, but add the executables.
+        throw new RestartProcessingException("Included new executables " + newExecutables.join(","), this.recipes.map(value => value.id), wantedExecutables);
     }
 
-    private includeRecipeAndThrowIfNotAlreadyIncluded(recipes: string[], sourceRecipe: Recipe) {
-        if (recipes.length == 0) return;
+    private includeRecipeAndThrowIfNotAlreadyIncluded(possiblyNewRecipes: string[], sourceRecipe: Recipe) {
+        let wantedRecipesStr = this.recipes.map(value => value.id); // all the initial...
+
+        if (possiblyNewRecipes.length == 0) return;
 
         // filter out the recipes we already have...
-        let newRecipes = recipes.filter(possiblyNewRecipeName => !this.wantedRecipesSet.has(possiblyNewRecipeName));
+        let newRecipes = possiblyNewRecipes.filter(possiblyNewRecipeName => wantedRecipesStr.includes(possiblyNewRecipeName));
         if (newRecipes.length == 0) return;
 
-        let currentRecipeIndex = this.wantedRecipesStr.indexOf(sourceRecipe.id) + 1;
-        if (debug) console.log("splice before", this.wantedRecipesStr, "index", currentRecipeIndex, "source", sourceRecipe.id);
+        let currentRecipeIndex = wantedRecipesStr.indexOf(sourceRecipe.id) + 1;
+        if (debug) console.log("splice before", wantedRecipesStr, "index", currentRecipeIndex, "source", sourceRecipe.id);
 
         for (const recipe of newRecipes) {
-            this.wantedRecipesStr.splice(currentRecipeIndex, 0, recipe);
+            wantedRecipesStr.splice(currentRecipeIndex, 0, recipe);
             currentRecipeIndex++;
         }
-        if (debug) console.log("after", this.wantedRecipesStr)
+        if (debug) console.log("after", wantedRecipesStr)
 
-        throw new RestartProcessingException("Included new recipes " + newRecipes.join(","));
+        // keep the same executables...
+        throw new RestartProcessingException("Included new recipes " + newRecipes.join(","), wantedRecipesStr, this.executables);
     }
 
     private async recursivelyEvaluate(superFragment: CIRecipeFragmentIf) {
@@ -160,10 +159,7 @@ class CloudInitSuperMerger {
 
                 if (resultFrag.include.initScripts) {
                     if (debug) console.log("Including initscripts...", resultFrag.include.initScripts);
-                    if (resultFrag.include.initScripts instanceof Array)
-                        await this.includeInitScriptAndThrowIfNotAlreadyIncluded(resultFrag.include.initScripts, superFragment.sourceFragment.recipe);
-                    else
-                        await this.includeInitScriptAndThrowIfNotAlreadyIncluded([resultFrag.include.initScripts], superFragment.sourceFragment.recipe);
+                    await this.includeExecutableAndThrowIfNotAlreadyIncluded([...resultFrag.include.initScripts], superFragment.sourceFragment.recipe);
 
                 }
 
@@ -228,16 +224,13 @@ class CloudInitSuperMerger {
         return BaseCondition.getConditionImplementation(this.context, name, value);
     }
 
-
-    private async expandGlobsForScriptsFromRecipes(recipes: Recipe[]) {
-        this.resolvedInitScripts = await recipes.asyncFlatMap((recipe) => recipe.expandGlobs(recipe.def.auto_initscripts));
-        this.resolvedLaunchers = await recipes.asyncFlatMap((recipe) => recipe.expandGlobs(recipe.def.auto_launchers));
-    }
-
-    private async processAllScripts() {
-        this.launcherDefs = this.resolvedLaunchers.map(value => this.processLauncherScript(value));
-        this.initScripts = this.resolvedInitScripts.map(value => this.processLauncherScript(value));
-    }
+    // @TODO:
+    /*
+        private async processAllScripts() {
+            this.launcherDefs = this.resolvedLaunchers.map(value => this.processLauncherScript(value));
+            this.initScripts = this.resolvedInitScripts.map(value => this.processLauncherScript(value));
+        }
+    */
 
     private processLauncherScript(script: string): IExecutableScript {
         let parsed: path.ParsedPath = path.parse(script);
@@ -256,15 +249,20 @@ export class CloudInitExpanderMerger {
     protected readonly context: RenderingContext;
     protected readonly repoResolver: RepoResolver;
     protected readonly initialRecipes: string[];
+    protected readonly initialExecutables: string[];
     protected runNumber: number = 0;
     protected currentRecipes!: string[];
+    protected currentExecutables!: string[];
     protected currentMerger!: CloudInitSuperMerger;
 
-    constructor(context: RenderingContext, resolver: RepoResolver, initialRecipes: string[]) {
+    constructor(context: RenderingContext, resolver: RepoResolver, initialRecipes: string[], initialExecutables: string[]) {
         this.context = context;
         this.repoResolver = resolver;
         this.initialRecipes = initialRecipes;
         this.currentRecipes = this.initialRecipes;
+
+        this.initialExecutables = initialExecutables;
+        this.currentExecutables = this.initialExecutables;
     }
 
     async process(): Promise<ExpandMergeResults> {
@@ -272,6 +270,7 @@ export class CloudInitExpanderMerger {
             await this.processOneYAMLRun();
 
             // since that worked (did not throw), invoke the processor stack; context could modify the processor stack.
+            // processor stack CAN'T add new recipes or executables!
             const processedCloudConfig: StandardCloudConfig = await new CloudInitProcessorStack(this.context, this.repoResolver, this.currentMerger.cloudConfig)
                 .addDefaultStack()
                 .process();
@@ -287,8 +286,10 @@ export class CloudInitExpanderMerger {
         } catch (e) {
             if (debug) console.log("Thrown!")
             if (e instanceof RestartProcessingException) {
+                let rep: RestartProcessingException = e;
                 if (debug) console.log(`Thrown RestartProcessingException! :: ${e.message}`)
-                this.currentRecipes = this.currentMerger.wantedRecipesStr;
+                this.currentRecipes = rep.wantedRecipes;
+                this.currentExecutables = rep.wantedExecutables;
                 return await this.process();
             }
             throw e;
@@ -299,14 +300,21 @@ export class CloudInitExpanderMerger {
         this.runNumber++;
         if (debug) console.group("Single run number " + this.runNumber);
         try {
-            // Expand according to simple rules...
-            let recipeList: Recipe[] = await (new CloudInitFlatRecipeExpanderFromRecipeDefs(this.context, this.repoResolver, this.currentRecipes)).expand();
-            if (debug) await console.log("Expanded list", recipeList.map(value => value.id));
+            // Recipes: expand according to TOML rules.
+            let resolvedCurrentRecipes: Recipe[] = await (new CloudInitFlatRecipeExpanderFromRecipeDefs(this.context, this.repoResolver, this.currentRecipes)).expand();
+            if (debug) await console.log("Expanded list", resolvedCurrentRecipes.map(value => value.id));
 
-            this.currentMerger = new CloudInitSuperMerger(this.context, this.repoResolver, recipeList);
-            this.currentMerger.recipes = recipeList;
+            // Executables: expand according to TOML rules from the recipes.
+            let resolvedInitScripts = await resolvedCurrentRecipes.asyncFlatMap((recipe) => recipe.expandGlobs(recipe.def.auto_initscripts));
+            let resolvedLaunchers = await resolvedCurrentRecipes.asyncFlatMap((recipe) => recipe.expandGlobs(recipe.def.auto_launchers));
+
+            // make unique
+            let resolvedCurrentExecutables = [...new Set([...resolvedInitScripts, ...resolvedLaunchers, ...this.currentExecutables])];
+            // @TODO: process the executables to get new recipes? and throw.
+
+
+            this.currentMerger = new CloudInitSuperMerger(this.context, this.repoResolver, resolvedCurrentRecipes, resolvedCurrentExecutables);
             await this.currentMerger.evaluateAndMergeAll();
-
 
         } finally {
             if (debug) console.groupEnd();

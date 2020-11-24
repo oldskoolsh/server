@@ -102,7 +102,7 @@ export abstract class OldSkoolMiddleware extends OldSkoolBase {
                 let initialRecipes: string[] = req.params.recipes.split(",");
 
                 // Full expansion. Expensive.
-                req.oldSkoolContext.expandedMergedResults = await new CloudInitExpanderMerger(req.oldSkoolContext, req.oldSkoolResolver, initialRecipes).process();
+                req.oldSkoolContext.expandedMergedResults = await new CloudInitExpanderMerger(req.oldSkoolContext, req.oldSkoolResolver, initialRecipes, []).process();
 
                 req.oldSkoolContext.recipeNames = req.oldSkoolContext.getExpandedMergedResultsOrThrow("right away").recipes.map(value => value.id);
                 req.oldSkoolContext.recipesUrl = req.oldSkoolContext.moduleUrl + "/" + initialRecipes.join(",");

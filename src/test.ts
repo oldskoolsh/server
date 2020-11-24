@@ -85,7 +85,7 @@ test('default no-param expand and merge', async () => {
     await context.init();
 
     // initial expansion.
-    let expanderMerger: CloudInitExpanderMerger = new CloudInitExpanderMerger(context, defaultResolver, initialRecipes);
+    let expanderMerger: CloudInitExpanderMerger = new CloudInitExpanderMerger(context, defaultResolver, initialRecipes, ['']);
     let result: ExpandMergeResults = await expanderMerger.process();
 
     expect(result.cloudConfig).toBeTruthy();
@@ -99,7 +99,7 @@ test('default no-param processor', async () => {
     await context.init();
 
     // full expansion
-    let expanderMerger: CloudInitExpanderMerger = new CloudInitExpanderMerger(context, defaultResolver, initialRecipes);
+    let expanderMerger: CloudInitExpanderMerger = new CloudInitExpanderMerger(context, defaultResolver, initialRecipes, ['']);
     let expanderMergerResult: ExpandMergeResults = await expanderMerger.process();
 
     let cloudConfigObj: any = expanderMergerResult.processedCloudConfig; // any is for testing purposes only
@@ -119,7 +119,7 @@ test('default no-param launchers', async () => {
 
     // full expansion.
     // put the expanded in context...
-    context.expandedMergedResults = await new CloudInitExpanderMerger(context, defaultResolver, initialRecipes).process();
+    context.expandedMergedResults = await new CloudInitExpanderMerger(context, defaultResolver, initialRecipes, ['']).process();
 
     let body = await (new LaunchersAsset(context, defaultResolver, "oldskool-bundle")).renderFromFile();
 

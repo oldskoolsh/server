@@ -46,7 +46,6 @@ export class Recipe {
         try {
             if ((!scriptGlobs) || (scriptGlobs.length < 1)) return [];
             let solvedGlobs: string[] = (await scriptGlobs.asyncFlatMap(((value: string) => this.repo.resolveGlob(value))));
-            //console.log("scriptGlobs:", scriptGlobs, "result", solvedGlobs);
             return solvedGlobs;
         } catch (e) {
             throw new Error(`Could not expand globs: recipe '${this.id}': ${e.message}`);
