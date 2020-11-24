@@ -7,7 +7,7 @@ import {CloudInitExpanderMerger} from "./expander_merger/expandermerger";
 import {BashScriptAsset} from "./assets/bash";
 import {JSScriptAsset} from "./assets/js";
 import {aff} from "./shared/utils";
-import {expect, test} from '@jest/globals';
+import {expect, test, beforeEach, beforeAll, afterAll} from '@jest/globals';
 import {LaunchersAsset} from "./assets/launchers";
 import {Console} from "console";
 import {ExpandMergeResults} from "./schema/results";

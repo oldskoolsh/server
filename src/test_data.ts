@@ -2,7 +2,7 @@ import {RepoResolver} from "./repo/resolver";
 import {TedisPool} from "tedis";
 import {DefaultGeoIPReaders, GeoIpReaders} from "./shared/geoip";
 import {aff} from "./shared/utils";
-import {test} from '@jest/globals';
+import {expect, test, beforeEach, beforeAll, afterAll} from '@jest/globals';
 import path from "path";
 import fs from "fs";
 import fg from "fast-glob";

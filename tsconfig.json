@@ -82,7 +82,6 @@
     /* Disallow inconsistently-cased references to the same file. */
   },
   "include": [
-    "src/**/*.ts",
-    "node_modules/@types/jest/index.d.ts"
+    "src/**/*.ts"
   ]
 }

@@ -193,8 +193,8 @@ class CloudInitSuperMerger {
     private processLauncherScript(script: string): IExecutableScript {
         let parsed: path.ParsedPath = path.parse(script);
         let extension = path.extname(script);
-        console.log("scirpt", script, "ext", extension);
-        let renderPath = (extension == ".sh") ? "bash/" : "js/";
+        //console.log("scirpt", script, "ext", extension);
+        let renderPath = (extension == ".sh") ? "bash/" : "js/"; // @TODO: really? bad...
         return ({
             launcherName: parsed.name,
             assetPath: `${renderPath}${parsed.dir ? `${parsed.dir}/` : ""}${parsed.name}${parsed.ext}`
