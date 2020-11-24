@@ -42,17 +42,11 @@ export class Recipe {
         return allDocs;
     }
 
-    async getAutoScripts(scriptGlobs: string[]): Promise<string[]> {
+    async expandGlobs(scriptGlobs: string[]): Promise<string[]> {
         if ((!scriptGlobs) || (scriptGlobs.length < 1)) return [];
-        let solvedGlobs = (await Promise.all(scriptGlobs.map(value => this.repo.globOwnScripts(value)))).flatMap(value => value);
+        let solvedGlobs = (await Promise.all(scriptGlobs.map(value => this.repo.resolveGlob(value)))).flatMap(value => value);
         //console.log("scriptGlobs:", scriptGlobs, "result", solvedGlobs);
         return solvedGlobs;
     }
 
-    async getAutoJSScripts(scriptGlobs: string[]): Promise<string[]> {
-        if ((!scriptGlobs) || (scriptGlobs.length < 1)) return [];
-        let solvedGlobs = (await Promise.all(scriptGlobs.map(value => this.repo.globOwnJS(value)))).flatMap(value => value);
-        //console.log("scriptGlobs:", scriptGlobs, "result", solvedGlobs);
-        return solvedGlobs;
-    }
 }

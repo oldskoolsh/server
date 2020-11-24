@@ -11,5 +11,5 @@ export interface ExpandMergeResults {
     processedCloudConfig: StandardCloudConfig;
     recipes: Recipe[];
     launcherDefs: IExecutableScript[];
-    initScripts: string[];
+    initScripts: IExecutableScript[];
 }

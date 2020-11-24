@@ -10,7 +10,7 @@ const staticFileBase64Regex = /##\*\*STATICFILEBASE64\:(.+)\*\*##/gm;
 export class BashScriptAsset extends BaseAsset {
 
     async renderFromFile(): Promise<string> {
-        return await this.doRenderFromString(await this.repoResolver.getRawAsset(`scripts/${this.assetPath}`));
+        return await this.doRenderFromString(await this.repoResolver.getRawAsset(`${this.assetPath}`));
     }
 
     async renderFromString(str: string): Promise<string> {
@@ -29,7 +29,7 @@ export class BashScriptAsset extends BaseAsset {
             replaced = await replaceAsync(replaced, includeRegex, (async (substring, includedRef) => {
                 if (!includeOnceMap.has(includedRef)) {
                     hasReplaced = true;
-                    let included = await this.repoResolver.getRawAsset(`scripts/${includedRef}`);
+                    let included = await this.repoResolver.getRawAsset(`scripts/${includedRef}`); // @TODO: include path?
                     includeOnceMap.add(includedRef);
                     return `\n## <OldSkoolInclude:${includedRef}>\n` + included + `\n## </OldSkoolInclude:${includedRef}>\n`;
                 } else {

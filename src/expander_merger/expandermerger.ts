@@ -27,7 +27,7 @@ class CloudInitSuperMerger {
     public cloudConfig: ExtendedCloudConfig = {};
     public recipes: Recipe[];
     public launcherDefs: IExecutableScript[] = [];
-    public initScripts: string[] = [];
+    public initScripts: IExecutableScript[] = [];
 
     protected readonly context: RenderingContext;
     protected readonly repoResolver: RepoResolver;
@@ -180,20 +180,21 @@ class CloudInitSuperMerger {
 
 
     private async prepareLaunchersAndScripts(recipes: Recipe[]) {
-        this.initScripts = await recipes.asyncFlatMap((recipe) => recipe.getAutoScripts(recipe.def.auto_initscripts));
+        let resolvedInitScripts = await recipes.asyncFlatMap((recipe) => recipe.expandGlobs(recipe.def.auto_initscripts));
 
-        // js scripts "override"  bash scripts, if two exist with the same name
-        let jsScripts: string[] = await recipes.asyncFlatMap((recipe) => recipe.getAutoJSScripts(recipe.def.auto_js_launchers));
-        let bashScripts: string[] = await recipes.asyncFlatMap((recipe) => recipe.getAutoScripts(recipe.def.auto_launchers));
 
-        let jsLaunchers: IExecutableScript[] = jsScripts.map(value => this.processLauncherScript(value, "js/"));
-        let bashLaunchers: IExecutableScript[] = bashScripts.map(value => this.processLauncherScript(value, "bash/"));
+        let launcherScripts: string[] = await recipes.asyncFlatMap((recipe) => recipe.expandGlobs(recipe.def.auto_launchers));
+        this.launcherDefs = launcherScripts.map(value => this.processLauncherScript(value));
 
-        this.launcherDefs = [...bashLaunchers, ...jsLaunchers];
+        this.initScripts = resolvedInitScripts.map(value => this.processLauncherScript(value));
+
     }
 
-    private processLauncherScript(script: string, renderPath: string): IExecutableScript {
+    private processLauncherScript(script: string): IExecutableScript {
         let parsed: path.ParsedPath = path.parse(script);
+        let extension = path.extname(script);
+        console.log("scirpt", script, "ext", extension);
+        let renderPath = (extension == ".sh") ? "bash/" : "js/";
         return ({
             launcherName: parsed.name,
             assetPath: `${renderPath}${parsed.dir ? `${parsed.dir}/` : ""}${parsed.name}${parsed.ext}`
@@ -219,7 +220,7 @@ export class CloudInitExpanderMerger {
 
     async process(): Promise<ExpandMergeResults> {
         try {
-            await this.processOneRun();
+            await this.processOneYAMLRun();
 
             // since that worked (did not throw), invoke the processor stack; context could modify the processor stack.
             const processedCloudConfig: StandardCloudConfig = await new CloudInitProcessorStack(this.context, this.repoResolver, this.currentMerger.cloudConfig)
@@ -245,7 +246,7 @@ export class CloudInitExpanderMerger {
         }
     }
 
-    private async processOneRun(): Promise<void> {
+    private async processOneYAMLRun(): Promise<void> {
         this.runNumber++;
         if (debug) console.group("Single run number " + this.runNumber);
         try {
@@ -256,6 +257,8 @@ export class CloudInitExpanderMerger {
             this.currentMerger = new CloudInitSuperMerger(this.context, this.repoResolver, recipeList);
             this.currentMerger.recipes = recipeList;
             await this.currentMerger.evaluateAndMergeAll();
+
+
         } finally {
             if (debug) console.groupEnd();
         }

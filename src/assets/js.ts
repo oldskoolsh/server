@@ -18,7 +18,7 @@ export class JSScriptAsset extends BaseAsset {
         set -e\n`;
 
         // get the actual path
-        let mainJS: IAssetInfo = await this.repoResolver.getAssetInfo(`js/${this.assetPath}`);
+        let mainJS: IAssetInfo = await this.repoResolver.getAssetInfo(`${this.assetPath}`);
 
         // get other JS resources relative to that path. what about resolver hierarchy?
         let otherAssets: IAssetInfo[] = await this.getAllAssetInfoInDir(mainJS.containingDir,

@@ -51,9 +51,9 @@ export class OldSkoolServer extends OldSkoolMiddleware {
                 body += `${context.recipesUrl}/launchers\n\n`;
 
                 // link to the init-scripts, directly.
-                expandedResults.initScripts.forEach(script => {
-                    body += `# - initscript: ${script}\n`;
-                    body += `${context.bashUrl}/${script}\n\n`;
+                expandedResults.initScripts.forEach((script: IExecutableScript) => {
+                    body += `# - initscript: ${script.launcherName}\n`;
+                    body += `${context.moduleUrl}/${script.assetPath}\n\n`;
                 });
 
                 let fragment = new MimeTextFragment("text/x-include-url", "cloud-init-main-include.txt", body);

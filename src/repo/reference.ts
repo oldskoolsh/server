@@ -52,17 +52,12 @@ export class PathRepoReference {
         }
     }
 
-    async globScripts(glob: string): Promise<string[]> {
-        let scriptsPath = path.resolve(this.baseDirectory, "scripts");
-        const entries: string[] = await fg([`${scriptsPath}/${glob}`], {dot: false});
-        return entries.map(value => path.relative(scriptsPath, value));
+    async resolveGlob(glob: string): Promise<string[]> {
+        let scriptsPath = path.resolve(this.baseDirectory);
+        const entries: string[] = await fg([`${glob}`], {cwd: scriptsPath, onlyFiles: true, dot: false});
+        return entries.map(value => /*path.relative(scriptsPath, value)*/ value);
     }
 
-    async globJavaScripts(glob: string): Promise<string[]> {
-        let scriptsPath = path.resolve(this.baseDirectory, "js");
-        const entries: string[] = await fg([`${scriptsPath}/${glob}`], {dot: false});
-        return entries.map(value => path.relative(scriptsPath, value));
-    }
 
     async getCloudInitYamlFiles(): Promise<string[]> {
         let ciPath = path.resolve(this.baseDirectory, "ci");

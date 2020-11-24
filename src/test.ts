@@ -53,7 +53,7 @@ test('default no-param bash', async () => {
     await context.init();
 
     // bash render.
-    let rendered = await (new BashScriptAsset(context, defaultResolver, "base.sh")).renderFromFile();
+    let rendered = await (new BashScriptAsset(context, defaultResolver, "scripts/base.sh")).renderFromFile();
     console.log("Rendered is", rendered.length, "bytes long.");
 
     expect(rendered).toContain("#!/bin/bash");
@@ -67,7 +67,7 @@ test('default no-param js asset', async () => {
     context.clientIP = defaultClientIP;
     await context.init();
 
-    let rendered = await (new JSScriptAsset(context, defaultResolver, "showoff.mjs")).renderFromFile();
+    let rendered = await (new JSScriptAsset(context, defaultResolver, "js/showoff.mjs")).renderFromFile();
 
     expect(rendered).toContain("#!/bin/bash");
     expect(rendered).not.toContain("**INCLUDE");
@@ -126,7 +126,7 @@ test('default no-param launchers', async () => {
     expect(body).toContain("#!/bin/bash");
     expect(body).not.toContain("**INCLUDE");
     expect(body).toContain("createLauncherScript \"showoff"); // js launcher
-    expect(body).toContain("createLauncherScript \"example\" \"bash/example.sh\""); // bash launcher
-    expect(body).toContain("createLauncherScript \"tsshow\" \"js/tsshow.ts\""); // typescript launcher
+    expect(body).toContain("createLauncherScript \"example\" \"bash/scripts/example.sh\""); // bash launcher
+    expect(body).toContain("createLauncherScript \"tsshow\" \"js/js/tsshow.ts\""); // typescript launcher
 });
 

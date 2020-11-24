@@ -30,8 +30,10 @@ export class Repository {
         // @ts-ignore
         let descriptor: IRepoDescriptor = TOML.parse(tomlString);
 
+        /*
         await this.convertToYamlDescriptor(descriptor);
         await this.convertToTomlDescriptor(descriptor);
+        */
 
         //console.log("TOML", toml);
         this.name = descriptor.name;
@@ -145,12 +147,8 @@ export class Repository {
         return map;
     }
 
-    public async globOwnScripts(value: string): Promise<string[]> {
-        return await this.myRef.globScripts(value);
-    }
-
-    public async globOwnJS(value: string): Promise<string[]> {
-        return await this.myRef.globJavaScripts(value);
+    public async resolveGlob(value: string): Promise<string[]> {
+        return await this.myRef.resolveGlob(value);
     }
 
     private async processRecipes() {
@@ -180,7 +178,6 @@ export class Repository {
 
     private createDefaultRecipeForYaml(yamlId: string): IRepoRecipe {
         return {
-            auto_js_launchers: [],
             node_version: "latest",
             always_include: false,
             auto_initscripts: [],
