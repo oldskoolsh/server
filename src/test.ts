@@ -125,6 +125,7 @@ test('default no-param launchers', async () => {
 
     expect(body).toContain("#!/bin/bash");
     expect(body).not.toContain("**INCLUDE");
+    // @TODO: test for base.sh
     expect(body).toContain("createLauncherScript \"showoff"); // js launcher
     expect(body).toContain("createLauncherScript \"example\" \"bash/scripts/example.sh\""); // bash launcher
     expect(body).toContain("createLauncherScript \"tsshow\" \"js/js/tsshow.ts\""); // typescript launcher

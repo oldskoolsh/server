@@ -11,7 +11,7 @@ import {CloudInitProcessorStack} from "../processors/stack";
 import {ExpandMergeResults, IExecutableScript} from "../schema/results";
 import {ExtendedCloudConfig, StandardCloudConfig} from "../schema/cloud-init-schema";
 
-const debug = false;
+const debug = true;
 
 
 class RestartProcessingException extends Error {
@@ -32,6 +32,8 @@ class CloudInitSuperMerger {
     protected readonly context: RenderingContext;
     protected readonly repoResolver: RepoResolver;
     protected readonly initialRecipes: Recipe[];
+    private resolvedInitScripts: string[] = [];
+    private resolvedLaunchers: string[] = [];
 
 
     constructor(context: RenderingContext, resolver: RepoResolver, initialRecipes: Recipe[]) {
@@ -55,14 +57,49 @@ class CloudInitSuperMerger {
         // now parse them, fully async.
         let allParsedFragments: CIRecipeFragment[] = await Promise.all(allFragments.map(async value => value.parse()));
 
-
         // initial stack;
         this.cloudConfig = {}; // every run starts clean cloud-Config wise.
-        await this.prepareLaunchersAndScripts(this.initialRecipes);
+        await this.expandGlobsForScriptsFromRecipes(this.initialRecipes);
 
         for (const parsedFragment of allParsedFragments) {
             await this.recursivelyEvaluate(new CIRecipeFragmentIf(parsedFragment.if, parsedFragment.sourceFragment));
         }
+
+        // If we get here, all initScripts/launchers have been stable-resolved, recipe-wise.
+        // Process the scripts to find other recipes/initScripts/launchers in the comments.
+        // Throw if not in the stack;
+        await this.processAllScripts();
+
+    }
+
+
+    private async includeInitScriptAndThrowIfNotAlreadyIncluded(initScripts: string[], sourceRecipe: Recipe) {
+        if (initScripts.length == 0) return;
+        if (debug) console.warn("Should include ", initScripts);
+
+        // Resolve the globs.
+        // Compare the resolved globs to this.resolvedInitScripts;
+        // if not present already; throw.
+        let resolvedInitScripts = await sourceRecipe.expandGlobs(initScripts);
+        console.warn("resolved included", resolvedInitScripts, "vs", this.resolvedInitScripts);
+
+        for (const onePossiblyNewScript of resolvedInitScripts) {
+            if (this.resolvedInitScripts.includes(onePossiblyNewScript)) {
+                console.warn(`Init Script '${onePossiblyNewScript}' resolved from glob '${initScripts}' already in context...`);
+                continue;
+            }
+            console.warn(`Init Script '${onePossiblyNewScript}' resolved from glob '${initScripts}' IS NEW!...`);
+
+            // @TODO: process the script text; extract possibly new recipes, initScripts and launchers, also packages, etc.
+            // Should work for every kind of script; .sh and .js have different comment markers though.
+            // account for that in the regex?
+            // @TODO: do that in the initial expansion as well, of course.
+
+            // if nothing extracted from the script text, or the extracted is already in context, simply include the script.
+            // @TODO: for init scripts, we need to keep the fucking order; so splice is needed.
+            this.resolvedInitScripts.push(onePossiblyNewScript);
+        }
+
 
     }
 
@@ -106,6 +143,9 @@ class CloudInitSuperMerger {
 
             if (resultFrag.message) {
                 this.cloudConfig = deepmerge(this.cloudConfig, {messages: [`[${superFragment.sourceFragment.sourceRef()}] ${resultFrag.message}`]});
+                if (resultFrag.message === "WTF") {
+                    console.warn("aqui");
+                }
             }
 
             // Handle the inclusions. Each inclusion can cause exception...
@@ -117,6 +157,16 @@ class CloudInitSuperMerger {
                     else
                         this.includeRecipeAndThrowIfNotAlreadyIncluded([resultFrag.include.recipes], superFragment.sourceFragment.recipe);
                 }
+
+                if (resultFrag.include.initScripts) {
+                    if (debug) console.log("Including initscripts...", resultFrag.include.initScripts);
+                    if (resultFrag.include.initScripts instanceof Array)
+                        await this.includeInitScriptAndThrowIfNotAlreadyIncluded(resultFrag.include.initScripts, superFragment.sourceFragment.recipe);
+                    else
+                        await this.includeInitScriptAndThrowIfNotAlreadyIncluded([resultFrag.include.initScripts], superFragment.sourceFragment.recipe);
+
+                }
+
             }
 
             if (resultFrag.andIf) {
@@ -179,12 +229,14 @@ class CloudInitSuperMerger {
     }
 
 
-    private async prepareLaunchersAndScripts(recipes: Recipe[]) {
-        let resolvedInitScripts: string[] = await recipes.asyncFlatMap((recipe) => recipe.expandGlobs(recipe.def.auto_initscripts));
-        let launcherScripts: string[] = await recipes.asyncFlatMap((recipe) => recipe.expandGlobs(recipe.def.auto_launchers));
+    private async expandGlobsForScriptsFromRecipes(recipes: Recipe[]) {
+        this.resolvedInitScripts = await recipes.asyncFlatMap((recipe) => recipe.expandGlobs(recipe.def.auto_initscripts));
+        this.resolvedLaunchers = await recipes.asyncFlatMap((recipe) => recipe.expandGlobs(recipe.def.auto_launchers));
+    }
 
-        this.launcherDefs = launcherScripts.map(value => this.processLauncherScript(value));
-        this.initScripts = resolvedInitScripts.map(value => this.processLauncherScript(value));
+    private async processAllScripts() {
+        this.launcherDefs = this.resolvedLaunchers.map(value => this.processLauncherScript(value));
+        this.initScripts = this.resolvedInitScripts.map(value => this.processLauncherScript(value));
     }
 
     private processLauncherScript(script: string): IExecutableScript {

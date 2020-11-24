@@ -50,7 +50,7 @@ export interface IRecipeResultIncludeDef {
     /**
      * Include one or more initialization scripts to the context.
      */
-    initScript?: string | string[];
+    initScripts?: string | string[];
 }
 
 export interface IRecipeFragmentResultDef {
