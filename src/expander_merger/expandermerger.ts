@@ -180,14 +180,11 @@ class CloudInitSuperMerger {
 
 
     private async prepareLaunchersAndScripts(recipes: Recipe[]) {
-        let resolvedInitScripts = await recipes.asyncFlatMap((recipe) => recipe.expandGlobs(recipe.def.auto_initscripts));
-
-
+        let resolvedInitScripts: string[] = await recipes.asyncFlatMap((recipe) => recipe.expandGlobs(recipe.def.auto_initscripts));
         let launcherScripts: string[] = await recipes.asyncFlatMap((recipe) => recipe.expandGlobs(recipe.def.auto_launchers));
+
         this.launcherDefs = launcherScripts.map(value => this.processLauncherScript(value));
-
         this.initScripts = resolvedInitScripts.map(value => this.processLauncherScript(value));
-
     }
 
     private processLauncherScript(script: string): IExecutableScript {

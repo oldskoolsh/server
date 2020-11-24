@@ -55,7 +55,8 @@ export class PathRepoReference {
     async resolveGlob(glob: string): Promise<string[]> {
         let scriptsPath = path.resolve(this.baseDirectory);
         const entries: string[] = await fg([`${glob}`], {cwd: scriptsPath, onlyFiles: true, dot: false});
-        return entries.map(value => /*path.relative(scriptsPath, value)*/ value);
+        if (entries.length == 0) throw new Error(`Glob: '${glob}' did not expand.`);
+        return entries;
     }
 
 
