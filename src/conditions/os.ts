@@ -82,6 +82,7 @@ export abstract class BaseOS implements IOS {
 class Ubuntu extends BaseOS implements IOS {
     id: string = "ubuntu";
     releases: IOSRelease[] = [
+        {id: "hirsute", numVersion: 2104, lts: false, released: false, os: this, systemd: true},
         {id: "groovy", numVersion: 2010, lts: false, released: true, os: this, systemd: true},
         {id: "focal", numVersion: 2004, lts: true, released: true, os: this, systemd: true},
         {id: "bionic", numVersion: 1804, lts: true, released: true, os: this, systemd: true},
