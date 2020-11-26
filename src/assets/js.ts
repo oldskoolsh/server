@@ -36,11 +36,19 @@ export class JSScriptAsset extends BaseAsset {
 
         // re-find main asset to get correct path assignment
         this.realMainJS = otherAssets.filter(value => value.pathOnDisk === mainJS.pathOnDisk)[0];
+        this.isJavaScript = this.realMainJS.name.endsWith(".js") || this.realMainJS.name.endsWith(".mjs");
+        this.isTypeScript = this.realMainJS.name.endsWith(".ts");
 
         // get the package.json if it is included in the assets.
-
         let existingPackageJson = otherAssets.filter((value: IAssetInfo) => value.name === "package.json" && value.mkdirName === ".");
         let hasPackageLock = otherAssets.some((value: IAssetInfo) => value.name === "package-lock.json" && value.mkdirName === ".");
+
+        if (this.isTypeScript) {
+            let hasOwnTsConfig = otherAssets.some((value: IAssetInfo) => value.name === "tsconfig.json" && value.mkdirName === ".");
+            if (!hasOwnTsConfig) {
+                otherAssets.push(await this.forgeTsConfig());
+            }
+        }
 
         let allAssets: IAssetInfo[] = [];
         if (existingPackageJson.length == 1) {
@@ -98,10 +106,32 @@ export class JSScriptAsset extends BaseAsset {
         }
     }
 
-    private async forgePackageJson(src: any): Promise<IAssetInfo> {
-        this.isJavaScript = this.realMainJS.name.endsWith(".js") || this.realMainJS.name.endsWith(".mjs");
-        this.isTypeScript = this.realMainJS.name.endsWith(".ts");
+    private async forgeTsConfig(): Promise<IAssetInfo> {
+        return {
+            containingDir: "",
+            mkdirName: ".",
+            base64contents: Buffer.from(JSON.stringify({
+                "compilerOptions": {
+                    "target": "ES2019",
+                    "module": "commonjs",
+                    "lib": [
+                        "ES2019",
+                        "ES2020.String"
+                    ],
+                    "sourceMap": true,
+                    "outDir": "dist",
+                    "strict": true,
+                    "esModuleInterop": true,
+                    "skipLibCheck": true,
+                    "forceConsistentCasingInFileNames": true
+                }
+            })).toString("base64"),
+            name: "tsconfig.json",
+            pathOnDisk: ""
+        };
+    }
 
+    private async forgePackageJson(src: any): Promise<IAssetInfo> {
         let scripts: any = src.scripts || {};
         let dependencies: any = src.dependencies || {};
 
@@ -110,7 +140,7 @@ export class JSScriptAsset extends BaseAsset {
 
         if (this.isTypeScript) {
             //scripts[this.realMainJS.name] = `cd $OLDSKOOL_PWD && node -r $OLDSKOOL_ROOT/node_modules/ts-node/register $OLDSKOOL_ROOT/${this.realMainJS.name}`;
-            scripts[this.realMainJS.name] = `cd $OLDSKOOL_PWD && ts-node $OLDSKOOL_ROOT/${this.realMainJS.name}`;
+            scripts[this.realMainJS.name] = `cd $OLDSKOOL_PWD && ts-node --project $OLDSKOOL_ROOT/tsconfig.json $OLDSKOOL_ROOT/${this.realMainJS.name}`;
             if (!this.hasProvidedPackageJson) dependencies = {
                 ...dependencies, ...{
                     "@types/commander": "~2",
