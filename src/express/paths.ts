@@ -9,6 +9,7 @@ import {JSScriptAsset} from "../assets/js";
 import {LaunchersAsset} from "../assets/launchers";
 import {ExpandMergeResults, IExecutableScript} from "../schema/results";
 import {StandardCloudConfig} from "../schema/cloud-init-schema";
+import {AssetFactory} from "../assets/asset_factory";
 
 const {BAD_REQUEST, OK} = StatusCodes;
 
@@ -47,12 +48,12 @@ export class OldSkoolServer extends OldSkoolMiddleware {
                 // we only list the launchers here, as comments. all the actual heavy
                 // lifting is done by /launchers with is an init-script!
                 // consider: boot-cmd processor; cloud-init-per; etc.
-                body += `# launchers: \n#  -${expandedResults.launcherScripts.map((value: IExecutableScript) => `${value.launcherName} (${value.assetPath})`).join("\n#  -")}\n`;
+                body += `# launchers: \n#  -${expandedResults.launcherScripts.map((value: IExecutableScript) => `${value.callSign} (${value.assetPath})`).join("\n#  -")}\n`;
                 body += `${context.recipesUrl}/launchers\n\n`;
 
                 // link to the init-scripts, directly.
                 expandedResults.initScripts.forEach((script: IExecutableScript) => {
-                    body += `# - initscript: ${script.launcherName}\n`;
+                    body += `# - initscript: ${script.callSign}\n`;
                     body += `${context.moduleUrl}/${script.assetPath}\n\n`;
                 });
 
@@ -60,6 +61,15 @@ export class OldSkoolServer extends OldSkoolMiddleware {
                 res.status(200).contentType("text/plain").send(fragment.body);
             });
 
+
+        // asset renders; this does not specify recipes, but scripts can come up with their own, and "base"-like auto-includes work.
+        this.handle(
+            [`${this.uriOwnerRepoCommitish}/_/:path(*)`, `${this.uriNoCloudWithParams}/_/:path(*)`],
+            async (context: RenderingContext, res: Response) => {
+                let assetImpl = AssetFactory.createAssetByFileName(context, context.resolver, context.assetRenderPath);
+                let body = await assetImpl.renderFromFile();
+                res.status(OK).contentType("text/plain").send(body);
+            });
 
         // specific bash handler. this has no recipes!
         this.handle(

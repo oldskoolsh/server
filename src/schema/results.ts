@@ -3,7 +3,24 @@ import {ExtendedCloudConfig, StandardCloudConfig} from "./cloud-init-schema";
 
 export interface IExecutableScript {
     assetPath: string;
-    launcherName: string;
+    callSign: string;
+}
+
+export interface IScriptComments {
+    recipes: string[];
+    /**
+     * Important: this are *NOT* blobs! Scripts have no sourceRecipe and thus no glob()
+     */
+    launcherScripts: string[];
+    /**
+     * Important: this are *NOT* blobs! Scripts have no sourceRecipe and thus no glob()
+     */
+    initScripts: string[];
+
+    /**
+     * Packages to be included in cloud-config. @TODO: ubuntu/debian->centos/fedora translation, for example.
+     */
+    packages: string[];
 }
 
 export interface ExpandMergeResults {

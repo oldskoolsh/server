@@ -22,9 +22,9 @@ export class RenderingContext {
     public recipeNames: string[] = [];
     public assetRender: boolean = false;
     public assetRenderPath: string = "";
-    public bashUrl: string = "wrongbashpath";
+    //public bashUrl: string = "wrongbashpath";
     public paramsQS: ReadonlyMap<string, string> = new Map<string, string>();
-    public jsUrl: string = "wrongjspath";
+    //public jsUrl: string = "wrongjspath";
     public userAgentStr: string | undefined;
     public clientIP!: string;
     private readonly geoipReaders: GeoIpReaders;

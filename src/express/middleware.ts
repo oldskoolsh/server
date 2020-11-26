@@ -64,8 +64,8 @@ export abstract class OldSkoolMiddleware extends OldSkoolBase {
 
                 // real stuff
                 context.moduleUrl = `${context.baseUrl}${req.params.owner}/${req.params.repo}/${req.params.commitish}`;
-                context.bashUrl = `${context.moduleUrl}/bash`;
-                context.jsUrl = `${context.moduleUrl}/js`;
+                //context.bashUrl = `${context.moduleUrl}/bash`;
+                //context.jsUrl = `${context.moduleUrl}/js`;
                 context.resolver = resolver; // shortcut only
                 await context.init();
                 req.oldSkoolContext = context;
@@ -75,6 +75,8 @@ export abstract class OldSkoolMiddleware extends OldSkoolBase {
         // first the special case /bash; it does not have recipes; mark as such for the next mw
         this.middleware(
             [
+                `${this.uriNoCloudWithParams}/_/:path(*)`,
+                `${this.uriOwnerRepoCommitish}/_/:path(*)`,
                 `${this.uriNoCloudWithParams}/bash/:path(*)`,
                 `${this.uriOwnerRepoCommitish}/bash/:path(*)`,
                 `${this.uriNoCloudWithParams}/js/:path(*)`,
@@ -131,8 +133,8 @@ export abstract class OldSkoolMiddleware extends OldSkoolBase {
 
                 // set the recipes URL so it keeps on passing the params.
                 req.oldSkoolContext.recipesUrl = `${req.oldSkoolContext.recipesUrl}/params/${paramStr}/dsnocloud`;
-                req.oldSkoolContext.bashUrl = `${req.oldSkoolContext.recipesUrl}/bash`;
-                req.oldSkoolContext.jsUrl = `${req.oldSkoolContext.recipesUrl}/js`;
+                //req.oldSkoolContext.bashUrl = `${req.oldSkoolContext.recipesUrl}/bash`;
+                //req.oldSkoolContext.jsUrl = `${req.oldSkoolContext.recipesUrl}/js`;
 
                 req.oldSkoolContext.logClientData();
 

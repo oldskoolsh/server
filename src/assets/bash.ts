@@ -1,5 +1,6 @@
 import {BaseAsset} from "./base_asset";
 import replaceAsync from "string-replace-async";
+import * as path from "path";
 
 const includeRegex = /##\ \*\*INCLUDE:(.+)/gm;
 const escapedIncludeRegex = /##\ \*\*ESCAPEDINCLUDE:(.+)/gm;
@@ -15,6 +16,10 @@ export class BashScriptAsset extends BaseAsset {
 
     async renderFromString(str: string): Promise<string> {
         return await this.doRenderFromString(str);
+    }
+
+    accepts(fileName: string): boolean {
+        return path.extname(fileName) === ".sh";
     }
 
     private async doRenderFromString(read: string) {

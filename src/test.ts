@@ -11,6 +11,7 @@ import {expect, test, beforeEach, beforeAll, afterAll} from '@jest/globals';
 import {LaunchersAsset} from "./assets/launchers";
 import {Console} from "console";
 import {ExpandMergeResults} from "./schema/results";
+import {AssetFactory} from "./assets/asset_factory";
 
 new aff(); // crazy util.
 
@@ -52,9 +53,15 @@ test('default no-param bash', async () => {
     context.clientIP = defaultClientIP;
     await context.init();
 
+    // factory render
+    let assetImpl = AssetFactory.createAssetByFileName(context, defaultResolver, "scripts/base.sh");
+    let factoryRendered = await assetImpl.renderFromFile();
+
     // bash render.
     let rendered = await (new BashScriptAsset(context, defaultResolver, "scripts/base.sh")).renderFromFile();
     console.log("Rendered is", rendered.length, "bytes long.");
+
+    expect(rendered).toBe(factoryRendered);
 
     expect(rendered).toContain("#!/bin/bash");
     expect(rendered).not.toContain("**INCLUDE");
@@ -102,7 +109,7 @@ test('default no-param processor', async () => {
     let expanderMerger: CloudInitExpanderMerger = new CloudInitExpanderMerger(context, defaultResolver, initialRecipes, [], []);
     let expanderMergerResult: ExpandMergeResults = await expanderMerger.process();
 
-    let cloudConfigObj: any = expanderMergerResult.processedCloudConfig; // any is for testing purposes only
+    let cloudConfigObj: any = expanderMergerResult.processedCloudConfig; // "any" is for testing purposes only
     expect(cloudConfigObj.messages).toBeUndefined(); // make sure processors ran
     expect(cloudConfigObj.users).toBeDefined();
 
@@ -129,7 +136,7 @@ test('default no-param launchers', async () => {
     expect(body).not.toContain("**INCLUDE");
     // @TODO: test for base.sh
     expect(body).toContain("createLauncherScript \"showoff"); // js launcher
-    expect(body).toContain("createLauncherScript \"example\" \"bash/scripts/example.sh\""); // bash launcher
-    expect(body).toContain("createLauncherScript \"tsshow\" \"js/js/tsshow.ts\""); // typescript launcher
+    expect(body).toContain("createLauncherScript \"example\" \"_/scripts/example.sh\""); // bash launcher
+    expect(body).toContain("createLauncherScript \"tsshow\" \"_/js/tsshow.ts\""); // typescript launcher
 });
 

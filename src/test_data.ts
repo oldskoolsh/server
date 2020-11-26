@@ -2,7 +2,7 @@ import {RepoResolver} from "./repo/resolver";
 import {TedisPool} from "tedis";
 import {DefaultGeoIPReaders, GeoIpReaders} from "./shared/geoip";
 import {aff} from "./shared/utils";
-import {expect, test, beforeEach, beforeAll, afterAll} from '@jest/globals';
+import {afterAll, beforeAll, beforeEach, test} from '@jest/globals';
 import path from "path";
 import fs from "fs";
 import fg from "fast-glob";
@@ -84,7 +84,7 @@ test(`test against datas`, async () => {
         let ctx: RenderingContext = await prepareFakeContextFromData(json);
 
         let vars: { [p: string]: string } = Object.fromEntries(await ctx.getAllVariables());
-        let extraInfo: { [p: string]: string } = {"file": shortFileName, "agent": json.userAgentStr.substring(0,20)};
+        let extraInfo: { [p: string]: string } = {"file": shortFileName, "agent": json.userAgentStr.substring(0, 20)};
         let result: { [p: string]: string } = Object.assign(extraInfo, vars);
         allVars.push(result);
         console.table(result);

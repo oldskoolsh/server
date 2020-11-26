@@ -94,7 +94,9 @@ export class CloudInitFlatRecipeExpanderFromRecipeDefs {
             console.warn("Here");
         }
         let expanded = [];
-        if (!recipe.def.virtual) expanded.push(recipe.id);
+        // @FIXME: undefined "virtual", wtf?
+        // if (!recipe.def.virtual) expanded.push(recipe.id);
+        expanded.push(recipe.id);
         if (recipe.def.expand) {
             for (const expansion of recipe.def.expand) {
                 expanded.push(...this.expandRecipe(this.getRecipeById(expansion)));

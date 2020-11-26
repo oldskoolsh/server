@@ -12,6 +12,10 @@ export class JSScriptAsset extends BaseAsset {
     private isTypeScript: boolean = false;
     private hasProvidedPackageJson: boolean = false;
 
+    accepts(fileName: string): boolean {
+        return [".js", ".mjs", ".ts"].includes(path.extname(fileName));
+    }
+
     async renderFromFile(): Promise<string> {
         let mainScript = `#!/bin/bash
         ## **INCLUDE:js_launchers.sh

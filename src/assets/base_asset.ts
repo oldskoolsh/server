@@ -12,6 +12,9 @@ export abstract class BaseAsset {
         this.assetPath = assetPath;
     }
 
+
     public abstract async renderFromFile(): Promise<string>;
+
+    public abstract accepts(fileName: string): boolean;
 
 }

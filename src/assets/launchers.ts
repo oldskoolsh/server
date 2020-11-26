@@ -4,6 +4,10 @@ import {IExecutableScript} from "../schema/results";
 
 export class LaunchersAsset extends BaseAsset {
 
+    accepts(fileName: string): boolean {
+        return false;
+    }
+
     async renderFromFile(): Promise<string> {
         // Yeah, stop using. Get from context.
 
@@ -14,7 +18,7 @@ export class LaunchersAsset extends BaseAsset {
         let launchersReinstall = `createLauncherRelauncher "${this.context.recipesUrl}/launchers"\n`;
 
         let bashTemplate: string =
-            expandedResults.launcherScripts.map((value: IExecutableScript) => `createLauncherScript "${value.launcherName}" "${value.assetPath}"`).join("\n") +
+            expandedResults.launcherScripts.map((value: IExecutableScript) => `createLauncherScript "${value.callSign}" "${value.assetPath}"`).join("\n") +
             `\n`;
 
         let allTemplates = bashPrelude + launchersReinstall + bashTemplate;
