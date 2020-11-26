@@ -1,6 +1,7 @@
 import {BaseAsset} from "./base_asset";
 import {BashScriptAsset} from "./bash";
 import {IExecutableScript} from "../schema/results";
+import {MimeTextFragment} from "../shared/mime";
 
 export class LaunchersAsset extends BaseAsset {
 
@@ -8,7 +9,7 @@ export class LaunchersAsset extends BaseAsset {
         return false;
     }
 
-    async renderFromFile(): Promise<string> {
+    async renderFromFile(): Promise<MimeTextFragment> {
         // Yeah, stop using. Get from context.
 
         let expandedResults = await this.context.getExpandedMergedResults();
@@ -22,8 +23,7 @@ export class LaunchersAsset extends BaseAsset {
             `\n`;
 
         let allTemplates = bashPrelude + launchersReinstall + bashTemplate;
-        let body = await (new BashScriptAsset(this.context, this.repoResolver, this.assetPath)).renderFromString(allTemplates);
-        return body;
+        return await (new BashScriptAsset(this.context, this.repoResolver, this.assetPath)).renderFromString(allTemplates);
     }
 
 

@@ -4,6 +4,7 @@ import {IAssetInfo} from "../repo/resolver";
 import path from "path";
 import fg from "fast-glob";
 import fs from "fs";
+import {MimeTextFragment} from "../shared/mime";
 
 export class JSScriptAsset extends BaseAsset {
 
@@ -16,8 +17,8 @@ export class JSScriptAsset extends BaseAsset {
         return [".js", ".mjs", ".ts"].includes(path.extname(fileName));
     }
 
-    async renderFromFile(): Promise<string> {
-        let mainScript = `#!/bin/bash
+    async renderFromFile(): Promise<MimeTextFragment> {
+        let mainScript:string = `#!/bin/bash
         ## **INCLUDE:js_launchers.sh
         set -e\n`;
 
@@ -58,7 +59,7 @@ export class JSScriptAsset extends BaseAsset {
         // write them all, via base64
 
         // render from here. otherwise too heavy!
-        mainScript = await (new BashScriptAsset(this.context, this.repoResolver, "js_runner_" + this.assetPath)).renderFromString(mainScript);
+        mainScript = (await (new BashScriptAsset(this.context, this.repoResolver, "js_runner_" + this.assetPath)).renderFromString(mainScript)).body;
 
         allAssets.forEach((asset: IAssetInfo) => {
             mainScript += `mkdir -p "$JS_LAUNCHER_DIR/${asset.mkdirName}"; \n`;
@@ -73,8 +74,7 @@ export class JSScriptAsset extends BaseAsset {
         // run!
         mainScript += `jsLauncherDoLaunch "${this.realMainJS.name}" "$@" \n`;
 
-
-        return mainScript;
+        return new MimeTextFragment("text/x-shellscript", this.assetPath, mainScript);
     }
 
     private async getAllAssetInfoInDir(containingDir: string, globs: string[]): Promise<IAssetInfo[]> {

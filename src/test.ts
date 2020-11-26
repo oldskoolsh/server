@@ -57,10 +57,10 @@ test('default no-param bash', async () => {
     let factoryRendered = await assetImpl.renderFromFile();
 
     // bash render.
-    let rendered = await (new BashScriptAsset(context, defaultResolver, "scripts/base.sh")).renderFromFile();
+    let rendered = (await (new BashScriptAsset(context, defaultResolver, "scripts/base.sh")).renderFromFile()).body ;
     console.log("Rendered is", rendered.length, "bytes long.");
 
-    expect(rendered).toBe(factoryRendered);
+    expect(rendered).toBe(factoryRendered.body);
 
     expect(rendered).toContain("#!/bin/bash");
     expect(rendered).not.toContain("**INCLUDE");
@@ -72,7 +72,7 @@ test('default no-param js asset', async () => {
     let context = new RenderingContext(defaultBaseUrl, tedisPool, geoipReaders, defaultResolver);
     context.clientIP = defaultClientIP;
 
-    let rendered = await (new JSScriptAsset(context, defaultResolver, "js/showoff.mjs")).renderFromFile();
+    let rendered = (await (new JSScriptAsset(context, defaultResolver, "js/showoff.mjs")).renderFromFile()).body;
 
     expect(rendered).toContain("#!/bin/bash");
     expect(rendered).not.toContain("**INCLUDE");
@@ -119,7 +119,7 @@ test('default no-param launchers', async () => {
     let context = new RenderingContext(defaultBaseUrl, tedisPool, geoipReaders, defaultResolver);
     context.clientIP = defaultClientIP;
 
-    let body = await (new LaunchersAsset(context, defaultResolver, "oldskool-bundle")).renderFromFile();
+    let body = (await (new LaunchersAsset(context, defaultResolver, "oldskool-bundle")).renderFromFile()).body;
 
     expect(body).toContain("#!/bin/bash");
     expect(body).not.toContain("**INCLUDE");

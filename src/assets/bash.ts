@@ -1,6 +1,7 @@
 import {BaseAsset} from "./base_asset";
 import replaceAsync from "string-replace-async";
 import * as path from "path";
+import {MimeTextFragment} from "../shared/mime";
 
 const includeRegex = /##\ \*\*INCLUDE:(.+)/gm;
 const escapedIncludeRegex = /##\ \*\*ESCAPEDINCLUDE:(.+)/gm;
@@ -10,11 +11,11 @@ const staticFileBase64Regex = /##\*\*STATICFILEBASE64\:(.+)\*\*##/gm;
 
 export class BashScriptAsset extends BaseAsset {
 
-    async renderFromFile(): Promise<string> {
+    async renderFromFile(): Promise<MimeTextFragment> {
         return await this.doRenderFromString(await this.repoResolver.getRawAsset(`${this.assetPath}`));
     }
 
-    async renderFromString(str: string): Promise<string> {
+    async renderFromString(str: string): Promise<MimeTextFragment> {
         return await this.doRenderFromString(str);
     }
 
@@ -22,7 +23,7 @@ export class BashScriptAsset extends BaseAsset {
         return path.extname(fileName) === ".sh";
     }
 
-    private async doRenderFromString(read: string) {
+    private async doRenderFromString(read: string): Promise<MimeTextFragment> {
         let replaced = read;
         // resolve the extracted includes in a loop, so includes' includes are included. lol
         let loopCounter = 0;
@@ -67,7 +68,6 @@ export class BashScriptAsset extends BaseAsset {
             return await this.repoResolver.getRawAsset(`assets/${includedRef}`, 'base64');
         }));
 
-
-        return replaced;
+        return new MimeTextFragment("text/x-shellscript", this.assetPath, replaced);
     }
 }

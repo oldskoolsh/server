@@ -1,5 +1,6 @@
 import {RepoResolver} from "../repo/resolver";
 import {RenderingContext} from "../repo/context";
+import {MimeTextFragment} from "../shared/mime";
 
 export abstract class BaseAsset {
     protected readonly context: RenderingContext;
@@ -13,7 +14,7 @@ export abstract class BaseAsset {
     }
 
 
-    public abstract async renderFromFile(): Promise<string>;
+    public abstract async renderFromFile(): Promise<MimeTextFragment>;
 
     public abstract accepts(fileName: string): boolean;
 

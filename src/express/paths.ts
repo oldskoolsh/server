@@ -65,8 +65,7 @@ export class OldSkoolServer extends OldSkoolMiddleware {
             [`${this.uriOwnerRepoCommitish}/_/:path(*)`, `${this.uriNoCloudWithParams}/_/:path(*)`],
             async (context: RenderingContext, res: Response) => {
                 let assetImpl = AssetFactory.createAssetByFileName(context, context.resolver, context.assetRenderPath);
-                let body = await assetImpl.renderFromFile();
-                res.status(OK).contentType("text/plain").send(body);
+                return await assetImpl.renderFromFile();
             });
 
         // This produces the YAML for #cloud-config, merged.
@@ -144,8 +143,7 @@ export class OldSkoolServer extends OldSkoolMiddleware {
                 `${this.uriNoCloudWithoutParams}/launchers`,
                 `${this.uriNoCloudWithParams}/launchers`],
             async (context: RenderingContext, res: Response) => {
-                let body = await (new LaunchersAsset(context, context.resolver, "oldskool-bundle")).renderFromFile();
-                res.status(OK).contentType("text/plain").send(body);
+                return await (new LaunchersAsset(context, context.resolver, "oldskool-bundle")).renderFromFile();
             });
 
         // This produces a "initscript" that runs cloud-init on a preinstalled machine. dangerous?
@@ -153,8 +151,7 @@ export class OldSkoolServer extends OldSkoolMiddleware {
             [`${this.uriOwnerRepoCommitishRecipes}/cmdline`],
             async (context: RenderingContext, res: Response) => {
                 let bashTemplate = `#!/bin/bash\n## **INCLUDE:ci_launchers.sh\ncmdLineCloudInit "${context.recipesUrl}/"\n`;
-                let body = await (new BashScriptAsset(context, context.resolver, "cmdline_starter")).renderFromString(bashTemplate);
-                res.status(OK).contentType("text/plain").send(body);
+                return await (new BashScriptAsset(context, context.resolver, "cmdline_starter")).renderFromString(bashTemplate);
             });
 
         // This produces a "initscript" that runs cloud-init on a preinstalled machine. dangerous?
@@ -162,8 +159,7 @@ export class OldSkoolServer extends OldSkoolMiddleware {
             [`${this.uriOwnerRepoCommitishRecipes}/cmdline/docker`],
             async (context: RenderingContext, res: Response) => {
                 let bashTemplate = `#!/bin/bash\n## **INCLUDE:ci_launchers.sh\ncmdLineCloudInitDocker "${context.recipesUrl}/"\n`;
-                let body = await (new BashScriptAsset(context, context.resolver, "cmdline_docker_starter")).renderFromString(bashTemplate);
-                res.status(OK).contentType("text/plain").send(body);
+                return await (new BashScriptAsset(context, context.resolver, "cmdline_docker_starter")).renderFromString(bashTemplate);
             });
 
 
