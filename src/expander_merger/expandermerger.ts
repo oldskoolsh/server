@@ -255,10 +255,10 @@ export class CloudInitExpanderMerger {
             await this.processOneScriptRun(); // will throw if any scripts are included, but once.
 
             // Now we resolve the scripts into assets, will throw if any recipes or scripts are included.
-            if (debug)  console.group("Scripts processing...")
+            if (debug) console.group("Scripts processing...")
             let finalInitScripts = await this.currentMerger.initScripts.asyncFlatMap(value => this.processLauncherScript(value));
             let finalLauncherScripts = await this.currentMerger.launcherScripts.asyncFlatMap(value => this.processLauncherScript(value));
-            if (debug)  console.groupEnd();
+            if (debug) console.groupEnd();
 
             // since that worked (did not throw), invoke the processor stack; context could modify the processor stack.
             // processor stack CAN'T add new recipes or executables!

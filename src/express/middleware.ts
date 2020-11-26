@@ -1,12 +1,11 @@
 import {OldSkoolBase} from "./base";
 import StatusCodes from "http-status-codes";
-import {Express, Request} from "express";
+import {Express} from "express";
 import {RepoResolver} from "../repo/resolver";
 import {RenderingContext} from "../repo/context";
 
 
 // Parse the User-Agent;...
-import {Query} from "express-serve-static-core";
 
 const {BAD_REQUEST, OK} = StatusCodes;
 

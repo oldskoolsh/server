@@ -28,7 +28,7 @@ export class CloudInitProcessorStack {
     }
 
     async process(): Promise<StandardCloudConfig> {
-        let obj:ExtendedCloudConfig = deepmerge({}, this.inputCloudConfig); // clone it!
+        let obj: ExtendedCloudConfig = deepmerge({}, this.inputCloudConfig); // clone it!
         for (const processor of this.stack) {
             processor.prepare(this.context, this.repoResolver);
             obj = await processor.process(obj);
