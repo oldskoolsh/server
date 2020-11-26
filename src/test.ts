@@ -57,7 +57,7 @@ test('default no-param bash', async () => {
     let factoryRendered = await assetImpl.renderFromFile();
 
     // bash render.
-    let rendered = (await (new BashScriptAsset(context, defaultResolver, "scripts/base.sh")).renderFromFile()).body ;
+    let rendered = (await (new BashScriptAsset(context, defaultResolver, "scripts/base.sh")).renderFromFile()).body;
     console.log("Rendered is", rendered.length, "bytes long.");
 
     expect(rendered).toBe(factoryRendered.body);

@@ -18,7 +18,7 @@ export class JSScriptAsset extends BaseAsset {
     }
 
     async renderFromFile(): Promise<MimeTextFragment> {
-        let mainScript:string = `#!/bin/bash
+        let mainScript: string = `#!/bin/bash
         ## **INCLUDE:js_launchers.sh
         set -e\n`;
 
