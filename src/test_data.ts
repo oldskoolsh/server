@@ -43,12 +43,11 @@ afterAll(async () => {
 });
 
 async function prepareFakeContextFromData(json: any): Promise<RenderingContext> {
-    let context = new RenderingContext(defaultBaseUrl, tedisPool, geoipReaders);
+    let context = new RenderingContext(defaultBaseUrl, tedisPool, geoipReaders, resolver);
     context.paramsQS = new Map<string, string>(Object.entries(json.paramsQS));
     context.paramKV = new Map<string, string>(Object.entries(json.paramsKV));
     context.clientIP = json.clientIP;
     context.userAgentStr = json.userAgentStr;
-    await context.init();
     return context;
 }
 

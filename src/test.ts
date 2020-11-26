@@ -7,7 +7,7 @@ import {CloudInitExpanderMerger} from "./expander_merger/expandermerger";
 import {BashScriptAsset} from "./assets/bash";
 import {JSScriptAsset} from "./assets/js";
 import {aff} from "./shared/utils";
-import {expect, test, beforeEach, beforeAll, afterAll} from '@jest/globals';
+import {afterAll, beforeAll, beforeEach, expect, test} from '@jest/globals';
 import {LaunchersAsset} from "./assets/launchers";
 import {Console} from "console";
 import {ExpandMergeResults} from "./schema/results";
@@ -49,9 +49,8 @@ afterAll(async () => {
 
 
 test('default no-param bash', async () => {
-    let context = new RenderingContext(defaultBaseUrl, tedisPool, geoipReaders);
+    let context = new RenderingContext(defaultBaseUrl, tedisPool, geoipReaders, defaultResolver);
     context.clientIP = defaultClientIP;
-    await context.init();
 
     // factory render
     let assetImpl = AssetFactory.createAssetByFileName(context, defaultResolver, "scripts/base.sh");
@@ -70,9 +69,8 @@ test('default no-param bash', async () => {
 
 
 test('default no-param js asset', async () => {
-    let context = new RenderingContext(defaultBaseUrl, tedisPool, geoipReaders);
+    let context = new RenderingContext(defaultBaseUrl, tedisPool, geoipReaders, defaultResolver);
     context.clientIP = defaultClientIP;
-    await context.init();
 
     let rendered = await (new JSScriptAsset(context, defaultResolver, "js/showoff.mjs")).renderFromFile();
 
@@ -87,9 +85,8 @@ test('default no-param js asset', async () => {
 });
 
 test('default no-param expand and merge', async () => {
-    let context = new RenderingContext(defaultBaseUrl, tedisPool, geoipReaders);
+    let context = new RenderingContext(defaultBaseUrl, tedisPool, geoipReaders, defaultResolver);
     context.clientIP = defaultClientIP;
-    await context.init();
 
     // initial expansion.
     let expanderMerger: CloudInitExpanderMerger = new CloudInitExpanderMerger(context, defaultResolver, initialRecipes, [], []);
@@ -101,9 +98,8 @@ test('default no-param expand and merge', async () => {
 
 
 test('default no-param processor', async () => {
-    let context = new RenderingContext(defaultBaseUrl, tedisPool, geoipReaders);
+    let context = new RenderingContext(defaultBaseUrl, tedisPool, geoipReaders, defaultResolver);
     context.clientIP = defaultClientIP;
-    await context.init();
 
     // full expansion
     let expanderMerger: CloudInitExpanderMerger = new CloudInitExpanderMerger(context, defaultResolver, initialRecipes, [], []);
@@ -120,15 +116,8 @@ test('default no-param processor', async () => {
 });
 
 test('default no-param launchers', async () => {
-    let context = new RenderingContext(defaultBaseUrl, tedisPool, geoipReaders);
+    let context = new RenderingContext(defaultBaseUrl, tedisPool, geoipReaders, defaultResolver);
     context.clientIP = defaultClientIP;
-    await context.init();
-
-    // full expansion.
-    // put the expanded in context...
-    context.expandedMergedResults = await (new CloudInitExpanderMerger(context, defaultResolver, initialRecipes, [], [])).process();
-    let results = context.getExpandedMergedResultsOrThrow("test");
-    console.log(results);
 
     let body = await (new LaunchersAsset(context, defaultResolver, "oldskool-bundle")).renderFromFile();
 

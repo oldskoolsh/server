@@ -5,6 +5,7 @@ import morgan from "morgan";
 import StatusCodes from "http-status-codes";
 import {RenderingContext} from "../repo/context";
 import {GeoIpReaders} from "../shared/geoip";
+import {Query} from "express-serve-static-core";
 // Hack into Express to be able to catch exceptions thrown from async handlers.
 // Yes, a "require" here is the only way to make this work.
 require('express-async-errors');
@@ -90,5 +91,34 @@ export abstract class OldSkoolBase {
 
     abstract addEntranceMiddleware(app: Express): void;
 
+    protected readParamsQS(req: Request) {
+        let paramsQS: Map<string, string> = new Map<string, string>();
+        let qsKey: string;
+        let expressQS: Query = req.query;
+        for (qsKey of Object.keys(expressQS)) {
+            let qsValue: string | string[] | Query | Query[] | undefined = req.query[qsKey];
+            if (qsValue === undefined) continue;
+            if (qsValue instanceof Array) {
+                let lastArrVal = qsValue[qsValue.length - 1]
+                paramsQS.set(qsKey.toLowerCase(), lastArrVal.toString().toLowerCase());
+            } else {
+                paramsQS.set(qsKey.toLowerCase(), qsValue.toString().toLowerCase());
+            }
+        }
+        return paramsQS;
+    }
+
+    protected readParamKV(req: Request) {
+        let paramStr: string = req.params.defaults || "";
+        let strKeyValuePairs: string[] = paramStr.split(",");
+        let keyValuesPairs: string[][] = strKeyValuePairs.map(value => value.split("=")).filter(value => value.length == 2);
+        let parsedKeyVal: { value: string; key: string }[] = keyValuesPairs.map(value => ({
+            key: value[0].toLowerCase(),
+            value: value[1].toLowerCase()
+        }));
+        let keyValueMap: Map<string, string> = new Map<string, string>();
+        parsedKeyVal.forEach(value => keyValueMap.set(value.key, value.value));
+        return {paramStr, keyValueMap};
+    }
 
 }

@@ -10,23 +10,23 @@ import {BaseCloud, ICloud} from "../conditions/cloud";
 import {createHash} from "crypto";
 import * as fs from "fs";
 import {ExpandMergeResults} from "../schema/results";
+import {CloudInitExpanderMerger} from "../expander_merger/expandermerger";
 
 export class RenderingContext {
 
     public readonly baseUrl: string;
+    public readonly resolver: RepoResolver;
     public moduleUrl!: string;
+    public recipesUrlNoParams!: string;
     public recipesUrl!: string;
     public readonly tedisPool: TedisPool;
     public paramKV: ReadonlyMap<string, string> = new Map<string, string>();
-    public resolver!: RepoResolver;
-    public recipeNames: string[] = [];
     public assetRender: boolean = false;
     public assetRenderPath: string = "";
-    //public bashUrl: string = "wrongbashpath";
     public paramsQS: ReadonlyMap<string, string> = new Map<string, string>();
-    //public jsUrl: string = "wrongjspath";
     public userAgentStr: string | undefined;
     public clientIP!: string;
+    public initialRecipes?: string[];
     private readonly geoipReaders: GeoIpReaders;
     private _os!: IOS;
     private _release!: IOSRelease;
@@ -35,17 +35,13 @@ export class RenderingContext {
     private _asn!: Asn;
     private _city!: City;
     private _cloud!: ICloud;
+    private _expandedMergedResults?: ExpandMergeResults;
 
-    constructor(baseUrl: string, tedisPool: TedisPool, geoipReaders: GeoIpReaders) {
+    constructor(baseUrl: string, tedisPool: TedisPool, geoipReaders: GeoIpReaders, resolver: RepoResolver) {
         this.baseUrl = baseUrl;
         this.tedisPool = tedisPool;
         this.geoipReaders = geoipReaders;
-    }
-
-    private _expandedMergedResults?: ExpandMergeResults;
-
-    public set expandedMergedResults(value: ExpandMergeResults) {
-        this._expandedMergedResults = value;
+        this.resolver = resolver;
     }
 
     public async getUserAgent() {
@@ -68,9 +64,6 @@ export class RenderingContext {
         return this._release;
     }
 
-
-    async init() {
-    }
 
     // on the end of each request, after its done (client is already served, we dont have req/res anymore)
     // we have time to collect usage information.
@@ -213,8 +206,10 @@ export class RenderingContext {
         return this._cloud;
     }
 
-    getExpandedMergedResultsOrThrow(throwWhy: string): ExpandMergeResults {
-        if (!this._expandedMergedResults) throw new Error(throwWhy);
+    public async getExpandedMergedResults(): Promise<ExpandMergeResults> {
+        if (!this._expandedMergedResults) this._expandedMergedResults = await
+            (new CloudInitExpanderMerger(this, this.resolver, this.initialRecipes ?? [], [], []))
+                .process();
         return this._expandedMergedResults;
     }
 

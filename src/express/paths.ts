@@ -28,16 +28,16 @@ export class OldSkoolServer extends OldSkoolMiddleware {
                 `${this.uriNoCloudWithoutParams}/user-data`,
                 `${this.uriNoCloudWithParams}/user-data`],
             async (context: RenderingContext, res: Response) => {
-                let expandedResults = context.getExpandedMergedResultsOrThrow("user-data needs it");
+                let expandedResults = await context.getExpandedMergedResults();
 
                 let body = "";
                 body += "#include\n\n";
 
                 // list final expanded recipes:
-                body += `# Final expanded recipes:  ${context.recipeNames.join(", ")}\n\n`;
+                body += `# Final expanded recipes:  ${expandedResults.recipes.map(value => value.id).join(", ")}\n\n`;
 
                 // comment to link to the cmdline version;
-                body += `# for cmdline usage: \n#  curl --silent "${context.recipesUrl}/cmdline" | sudo bash\n\n`;
+                body += `# for cmdline usage: \n#  curl --silent "${context.recipesUrlNoParams}/cmdline" | sudo bash\n\n`;
 
                 // use a launcher-script (that can gather info from the instance) and _then_ process that YAML.
                 // that in turn brings in the to the yaml-merger in /real/cloud/init/yaml
@@ -95,12 +95,12 @@ export class OldSkoolServer extends OldSkoolMiddleware {
                 `${this.uriNoCloudWithParams}/real/cloud/init/yaml`],
             async (context: RenderingContext, res: Response) => {
                 // merge and process.
-                let finalResults: ExpandMergeResults = context.getExpandedMergedResultsOrThrow("real_cloud needs it");
+                let finalResults: ExpandMergeResults = await context.getExpandedMergedResults();
 
                 let body: string = "";
                 body += `## template: jinja\n`; // @TODO: remove, not used in the real stage. (should not even be used on gather)
                 body += `#cloud-config\n`;
-                body += `# final recipes: ${context.getExpandedMergedResultsOrThrow("Final Recipes").recipes.map(value => value.id).join(", ")} \n`;
+                body += `# final recipes: ${finalResults.recipes.map(value => value.id).join(", ")} \n`;
                 body += YAML.stringify(finalResults.processedCloudConfig);
                 res.status(OK).contentType("text/plain").send(body);
             });
@@ -112,7 +112,7 @@ export class OldSkoolServer extends OldSkoolMiddleware {
                 `${this.uriNoCloudWithoutParams}/cloud/init/yaml/data/gather`,
                 `${this.uriNoCloudWithParams}/cloud/init/yaml/data/gather`],
             async (context: RenderingContext, res: Response) => {
-                let yaml: StandardCloudConfig = context.getExpandedMergedResultsOrThrow("gather").processedCloudConfig;
+                let yaml: StandardCloudConfig = (await context.getExpandedMergedResults()).processedCloudConfig;
 
                 let curlDatas = [ // @TODO: convert all to cloud-init query --format
                     `--data-urlencode "osg_ci_arch={{machine}}"`,

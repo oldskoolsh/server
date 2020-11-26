@@ -11,7 +11,7 @@ export class LaunchersAsset extends BaseAsset {
     async renderFromFile(): Promise<string> {
         // Yeah, stop using. Get from context.
 
-        let expandedResults = this.context.getExpandedMergedResultsOrThrow("LaunchersAsset needs it");
+        let expandedResults = await this.context.getExpandedMergedResults();
 
         let bashPrelude = `#!/bin/bash\n## **INCLUDE:bash_launchers.sh\n`;
 
