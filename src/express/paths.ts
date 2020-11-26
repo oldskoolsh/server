@@ -5,7 +5,6 @@ import {MimeTextFragment} from "../shared/mime";
 import StatusCodes from 'http-status-codes';
 import {OldSkoolMiddleware} from "./middleware";
 import {RenderingContext} from "../repo/context";
-import {JSScriptAsset} from "../assets/js";
 import {LaunchersAsset} from "../assets/launchers";
 import {ExpandMergeResults, IExecutableScript} from "../schema/results";
 import {StandardCloudConfig} from "../schema/cloud-init-schema";
@@ -48,7 +47,7 @@ export class OldSkoolServer extends OldSkoolMiddleware {
                 // we only list the launchers here, as comments. all the actual heavy
                 // lifting is done by /launchers with is an init-script!
                 // consider: boot-cmd processor; cloud-init-per; etc.
-                body += `# launchers: \n#  -${expandedResults.launcherScripts.map((value: IExecutableScript) => `${value.callSign} (${value.assetPath})`).join("\n#  -")}\n`;
+                body += `# launchers: \n#  - ${expandedResults.launcherScripts.map((value: IExecutableScript) => `${value.callSign} (${context.moduleUrl}/${value.assetPath})`).join("\n#  - ")}\n`;
                 body += `${context.recipesUrl}/launchers\n\n`;
 
                 // link to the init-scripts, directly.
@@ -57,8 +56,7 @@ export class OldSkoolServer extends OldSkoolMiddleware {
                     body += `${context.moduleUrl}/${script.assetPath}\n\n`;
                 });
 
-                let fragment = new MimeTextFragment("text/x-include-url", "cloud-init-main-include.txt", body);
-                res.status(200).contentType("text/plain").send(fragment.body);
+                return new MimeTextFragment("text/x-include-url", "cloud-init-main-include.txt", body);
             });
 
 
@@ -70,23 +68,6 @@ export class OldSkoolServer extends OldSkoolMiddleware {
                 let body = await assetImpl.renderFromFile();
                 res.status(OK).contentType("text/plain").send(body);
             });
-
-        // specific bash handler. this has no recipes!
-        this.handle(
-            [`${this.uriOwnerRepoCommitish}/bash/:path(*)`, `${this.uriNoCloudWithParams}/bash/:path(*)`],
-            async (context: RenderingContext, res: Response) => {
-                let body = await (new BashScriptAsset(context, context.resolver, context.assetRenderPath)).renderFromFile();
-                res.status(OK).contentType("text/plain").send(body);
-            });
-
-        // specific js handler. this has no recipes!
-        this.handle(
-            [`${this.uriOwnerRepoCommitish}/js/:path(*)`, `${this.uriNoCloudWithParams}/js/:path(*)`],
-            async (context: RenderingContext, res: Response) => {
-                let body = await (new JSScriptAsset(context, context.resolver, context.assetRenderPath)).renderFromFile();
-                res.status(OK).contentType("text/plain").send(body);
-            });
-
 
         // This produces the YAML for #cloud-config, merged.
         this.handle(
@@ -211,5 +192,6 @@ export class OldSkoolServer extends OldSkoolMiddleware {
 
 
     }
+
 
 }

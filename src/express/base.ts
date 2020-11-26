@@ -2,10 +2,12 @@ import {TedisPool} from "tedis";
 import logger from "../shared/Logger";
 import express, {Express, NextFunction, Request, Response} from "express";
 import morgan from "morgan";
+import hljs from 'highlight.js';
 import StatusCodes from "http-status-codes";
 import {RenderingContext} from "../repo/context";
 import {GeoIpReaders} from "../shared/geoip";
 import {Query} from "express-serve-static-core";
+import {MimeTextFragment} from "../shared/mime";
 // Hack into Express to be able to catch exceptions thrown from async handlers.
 // Yes, a "require" here is the only way to make this work.
 require('express-async-errors');
@@ -23,10 +25,13 @@ export abstract class OldSkoolBase {
         this.geoipReaders = geoIpReaders;
     }
 
-    handle(paths: string[], handler: (context: RenderingContext, res: Response, req: Request) => Promise<void>) {
+    handle(paths: string[], handler: (context: RenderingContext, res: Response, req: Request) => Promise<MimeTextFragment | void>) {
         for (const path of paths) {
             this.app.get(path, async (req, res, next) => {
-                await handler(req.oldSkoolContext, res, req);
+                let ret: MimeTextFragment | void = await handler(req.oldSkoolContext, res, req);
+                if (ret) {
+                    await this.writeSingleFragmentToResponse(req.oldSkoolContext, res, req, ret);
+                }
                 next();
             });
         }
@@ -119,6 +124,36 @@ export abstract class OldSkoolBase {
         let keyValueMap: Map<string, string> = new Map<string, string>();
         parsedKeyVal.forEach(value => keyValueMap.set(value.key, value.value));
         return {paramStr, keyValueMap};
+    }
+
+    private async writeSingleFragmentToResponse(oldSkoolContext: RenderingContext, res: Response, req: Request, fragment: MimeTextFragment) {
+        let ua = await oldSkoolContext.getUserAgent();
+        console.warn("ua", ua);
+        if (ua.engine.name) {
+
+            let autoHighlightResult = hljs.highlightAuto(fragment.body);
+            const highlightedCode = autoHighlightResult.value;
+
+            const html = `<html lang="en">
+<head>
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.4.0/styles/default.min.css">
+    <title>OldSkool: ${oldSkoolContext.initialRecipes?.join(",")}</title></head>
+<body>
+<pre>${highlightedCode}</pre>
+</body>
+</html>`
+
+            // @TODO: colorize this bullshit!!!!
+            // @TODO: html links in include files
+            res.status(200)
+                .contentType("text/html")
+                .send(html);
+        } else {
+            // fuck express, order of calls is significant
+            let response: Response = res.status(200).attachment(fragment.filename).type(fragment.type);
+            let buffer: Buffer = Buffer.from(fragment.body);
+            response.send(buffer);
+        }
     }
 
 }
