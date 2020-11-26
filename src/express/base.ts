@@ -10,8 +10,9 @@ import {Query} from "express-serve-static-core";
 import {MimeTextFragment} from "../shared/mime";
 // Hack into Express to be able to catch exceptions thrown from async handlers.
 // Yes, a "require" here is the only way to make this work.
-require('express-async-errors');
+import linkifyUrls from "linkify-urls";
 
+require('express-async-errors');
 const {BAD_REQUEST, OK} = StatusCodes;
 
 export abstract class OldSkoolBase {
@@ -25,7 +26,7 @@ export abstract class OldSkoolBase {
         this.geoipReaders = geoIpReaders;
     }
 
-    handle(paths: string[], handler: (context: RenderingContext, res: Response, req: Request) => Promise<MimeTextFragment | void>) {
+    handle(paths: string[], handler: (context: RenderingContext, res: Response, req: Request) => Promise<MimeTextFragment>) {
         for (const path of paths) {
             this.app.get(path, async (req, res, next) => {
                 let ret: MimeTextFragment | void = await handler(req.oldSkoolContext, res, req);
@@ -130,29 +131,43 @@ export abstract class OldSkoolBase {
         let ua = await oldSkoolContext.getUserAgent();
         console.warn("ua", ua);
         if (ua.engine.name) {
+            let title = fragment.filename;
+            let highlightedCode: string = fragment.body;
 
-            let autoHighlightResult = hljs.highlightAuto(fragment.body);
-            const highlightedCode = autoHighlightResult.value;
+            switch (fragment.type) {
+                case "text/x-shellscript":
+                    highlightedCode = hljs.highlight("bash", fragment.body).value;
+                    break;
+
+                case "text/cloud-config":
+                case "text/yaml":
+                    highlightedCode = hljs.highlight("yaml", fragment.body).value;
+                    break;
+
+                case "text/x-include-url":
+                    highlightedCode = linkifyUrls(highlightedCode, {attributes: {target: '_blank'}});
+                    break;
+
+                default:
+                    throw new Error("Don't know how to render " + fragment.type);
+            }
+
 
             const html = `<html lang="en">
 <head>
     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.4.0/styles/default.min.css">
-    <title>OldSkool: ${oldSkoolContext.initialRecipes?.join(",")}</title></head>
+    <title>${title}</title></head>
 <body>
 <pre>${highlightedCode}</pre>
 </body>
 </html>`
 
-            // @TODO: colorize this bullshit!!!!
-            // @TODO: html links in include files
             res.status(200)
                 .contentType("text/html")
                 .send(html);
         } else {
             // fuck express, order of calls is significant
-            let response: Response = res.status(200).attachment(fragment.filename).type(fragment.type);
-            let buffer: Buffer = Buffer.from(fragment.body);
-            response.send(buffer);
+            res.status(200).attachment(fragment.filename).type(fragment.type).send(fragment.body);
         }
     }
 
