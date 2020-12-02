@@ -4,6 +4,7 @@ import {BashScriptAsset} from "./bash";
 import {JSScriptAsset} from "./js";
 import {BaseAsset} from "./base_asset";
 import {IScriptComments} from "../schema/results";
+import {JBangScriptAsset} from "./jbang";
 
 const includeRecipeRegex: RegExp = /^(\s*)(##|\/\/)\ \*\*RECIPE:(?<recipe>.+)/gm;
 const includeInitScriptRegex: RegExp = /^(\s*)(##|\/\/)\ \*\*INITSCRIPT:(?<script>.+)/gm;
@@ -16,7 +17,8 @@ export class AssetFactory {
     public static createAssetByFileName(context: RenderingContext, repoResolver: RepoResolver, fileName: string): BaseAsset {
         let impls = [
             new BashScriptAsset(context, repoResolver, fileName),
-            new JSScriptAsset(context, repoResolver, fileName)
+            new JSScriptAsset(context, repoResolver, fileName),
+            new JBangScriptAsset(context, repoResolver, fileName)
         ];
         let impl = impls.filter(value => value.accepts(fileName));
         if (impl.length == 1) return impl[0];
