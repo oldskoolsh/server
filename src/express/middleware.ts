@@ -1,13 +1,9 @@
 import {OldSkoolBase} from "./base";
-import StatusCodes from "http-status-codes";
 import {Express} from "express";
 import {RepoResolver} from "../repo/resolver";
 import {RenderingContext} from "../repo/context";
 
-
-// Parse the User-Agent;...
-
-const {BAD_REQUEST, OK} = StatusCodes;
+const debug = false;
 
 export abstract class OldSkoolMiddleware extends OldSkoolBase {
     protected uriOwnerRepoCommitish: string = "/:owner/:repo/:commitish";
@@ -17,13 +13,10 @@ export abstract class OldSkoolMiddleware extends OldSkoolBase {
 
     addEntranceMiddleware(app: Express) {
 
-        //this.middleware(['/'], async (req, res) => {});
-
-
         // common middleware for all do-something URLs.
         this.middleware(
             [`${this.uriOwnerRepoCommitish}`],
-            async (req, res) => {
+            async (req) => {
 
                 // Fake, should come from :owner/:repo/:commitish
                 const resolver = new RepoResolver("/Users/pardini/Documents/Projects/github/oldskool", "oldskool-rpardini");
@@ -45,9 +38,9 @@ export abstract class OldSkoolMiddleware extends OldSkoolBase {
                 `${this.uriNoCloudWithParams}/_/:path(*)`,
                 `${this.uriOwnerRepoCommitish}/_/:path(*)`
             ],
-            async (req, res) => {
+            async (req) => {
                 // Mark as asset render path, so the next handler does not try to resolve recipes.
-                console.warn("Common middleware (Script/JS, with PARAMS)!");
+                (debug) && console.warn("Common middleware (Script/JS, with PARAMS)!");
                 req.oldSkoolContext.assetRender = true;
                 req.oldSkoolContext.assetRenderPath = req.params.path;
             })
@@ -56,7 +49,7 @@ export abstract class OldSkoolMiddleware extends OldSkoolBase {
         // read and expand recipes from the path.
         this.middleware(
             [`${this.uriOwnerRepoCommitishRecipes}`],
-            async (req, res) => {
+            async (req) => {
                 if (req.oldSkoolContext.assetRender) {
                     return;
                 }
@@ -68,7 +61,7 @@ export abstract class OldSkoolMiddleware extends OldSkoolBase {
         this.middleware(
             [`${this.uriNoCloudWithParams}`],
             async (req, res) => {
-                console.warn("Common middleware + NOCLOUD WITH PARAMS!");
+                (debug) && console.warn("Common middleware + NOCLOUD WITH PARAMS!");
                 let {paramStr, keyValueMap} = this.readParamKV(req);
                 req.oldSkoolContext.paramKV = keyValueMap;
                 req.oldSkoolContext.recipesUrl = `${req.oldSkoolContext.recipesUrl}/params/${paramStr}/dsnocloud`;
@@ -78,7 +71,7 @@ export abstract class OldSkoolMiddleware extends OldSkoolBase {
 
         this.middleware(
             [`${this.uriNoCloudWithoutParams}`], async (req, res) => {
-                console.warn("Common middleware + NOCLOUD WITHOUT PARAMS");
+                (debug) && console.warn("Common middleware + NOCLOUD WITHOUT PARAMS");
                 // set the recipes URL so it keeps on passing the params.
                 req.oldSkoolContext.recipesUrl = `${req.oldSkoolContext.recipesUrl}/dsnocloud`;
             })
@@ -88,7 +81,7 @@ export abstract class OldSkoolMiddleware extends OldSkoolBase {
     addExitMiddleware(app: Express) {
         this.middleware(
             [`${this.uriOwnerRepoCommitish}`], async (req, res) => {
-                console.warn("Common middleware ORC END!");
+                (debug) && console.warn("Common middleware ORC END!");
                 // @TODO: we don't need to await this.
                 req.oldSkoolContext.logClientData().then(value => {
                     if (value) console.warn(`De-initted: ${value}`);

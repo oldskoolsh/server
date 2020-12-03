@@ -129,7 +129,6 @@ export abstract class OldSkoolBase {
 
     private async writeSingleFragmentToResponse(oldSkoolContext: RenderingContext, res: Response, req: Request, fragment: MimeTextFragment) {
         let ua = await oldSkoolContext.getUserAgent();
-        console.warn("ua", ua);
         if (ua.engine.name) {
             let title = fragment.filename;
             let highlightedCode: string = fragment.body;

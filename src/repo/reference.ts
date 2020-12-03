@@ -3,6 +3,8 @@ import path from "path";
 import fs from "fs";
 import fg from "fast-glob";
 
+const debug: boolean = false;
+
 export class PathRepoReference {
     id: string;
     basePath: string;
@@ -25,15 +27,15 @@ export class PathRepoReference {
             this.ownPath = "";
         }
         let intermediate = path.resolve(this.basePath, this.ownPath);
-        console.log("intermediate", intermediate);
+        if (debug) console.log("intermediate", intermediate);
 
         if (fs.existsSync(path.resolve(intermediate, ".oldskool"))) {
             this.baseDirectory = path.resolve(intermediate, ".oldskool");
-            console.log("baseDirectory via .oldskool", this.baseDirectory);
+            if (debug) console.log("baseDirectory via .oldskool", this.baseDirectory);
             this.tomlRelativePath = "oldskool.toml";
         } else {
             this.baseDirectory = intermediate;
-            console.log("baseDirectory via intermediate", this.baseDirectory);
+            if (debug) console.log("baseDirectory via intermediate", this.baseDirectory);
             this.tomlRelativePath = ".oldskool.toml";
         }
 

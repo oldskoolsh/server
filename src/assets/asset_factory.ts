@@ -6,10 +6,10 @@ import {BaseAsset} from "./base_asset";
 import {IScriptComments} from "../schema/results";
 import {JBangScriptAsset} from "./jbang";
 
-const includeRecipeRegex: RegExp = /^(\s*)(##|\/\/)\ \*\*RECIPE:(?<recipe>.+)/gm;
-const includeInitScriptRegex: RegExp = /^(\s*)(##|\/\/)\ \*\*INITSCRIPT:(?<script>.+)/gm;
-const includeLauncherScriptRegex: RegExp = /^(\s*)(##|\/\/)\ \*\*LAUNCHER:(?<script>.+)/gm;
-const includePackageRegex: RegExp = /^(\s*)(##|\/\/)\ \*\*PACKAGE:(?<package>.+)/gm;
+const includeRecipeRegex: RegExp = /^(\s*)(##|\/\/) \*\*RECIPE:(?<recipe>.+)/gm;
+const includeInitScriptRegex: RegExp = /^(\s*)(##|\/\/) \*\*INITSCRIPT:(?<script>.+)/gm;
+const includeLauncherScriptRegex: RegExp = /^(\s*)(##|\/\/) \*\*LAUNCHER:(?<script>.+)/gm;
+const includePackageRegex: RegExp = /^(\s*)(##|\/\/) \*\*PACKAGE:(?<package>.+)/gm;
 
 export class AssetFactory {
 

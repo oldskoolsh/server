@@ -3,11 +3,11 @@ import replaceAsync from "string-replace-async";
 import * as path from "path";
 import {MimeTextFragment} from "../shared/mime";
 
-const includeRegex = /##\ \*\*INCLUDE:(.+)/gm;
-const escapedIncludeRegex = /##\ \*\*ESCAPEDINCLUDE:(.+)/gm;
+const includeRegex = /## \*\*INCLUDE:(.+)/gm;
+const escapedIncludeRegex = /## \*\*ESCAPEDINCLUDE:(.+)/gm;
 const scriptNameRegex = /##\*\*SCRIPTNAME\*\*##/gm;
 const baseUrlRegex = /##\*\*BASEURL\*\*##/gm;
-const staticFileBase64Regex = /##\*\*STATICFILEBASE64\:(.+)\*\*##/gm;
+const staticFileBase64Regex = /##\*\*STATICFILEBASE64:(.+)\*\*##/gm;
 
 export class BashScriptAsset extends BaseAsset {
 

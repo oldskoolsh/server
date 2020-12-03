@@ -6,6 +6,8 @@ import {PathRepoReference} from "./reference";
 import YAML from 'yaml';
 import path from "path";
 
+const debug: boolean = false;
+
 export class Repository {
     public name: string | undefined;
     public desc: string | undefined;
@@ -60,8 +62,8 @@ export class Repository {
     }
 
     async recursivelyResolve() {
-        await console.log(`recursivelyResolve '${this.myRef.id}'...`);
-        await console.group();
+        if (debug) await console.log(`recursivelyResolve '${this.myRef.id}'...`);
+        if (debug) await console.group();
         try {
             await this.readTomlDescriptor();
             await this.processRecipes();
@@ -75,8 +77,8 @@ export class Repository {
             // once done with it release it
             this.rawUsesRef = [];
         } finally {
-            await console.groupEnd();
-            await console.log(`done recursivelyResolve '${this.myRef.id}'...`)
+            if (debug) await console.groupEnd();
+            if (debug) await console.log(`done recursivelyResolve '${this.myRef.id}'...`)
         }
     }
 
