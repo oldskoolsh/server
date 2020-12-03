@@ -29,7 +29,7 @@ export class JBangScriptAsset extends BaseAsset {
         mainScript += `mkdir -p "$JBANG_LAUNCHER_DIR/${mainJBang.mkdirName}"; \n`;
         mainScript += `echo '${mainJBang.base64contents}' | base64 --decode > "$JBANG_LAUNCHER_DIR/${mainJBang.name}"; \n`;
 
-        mainScript += `jbangLauncherPrepareJBang "${mainJBang.name}" "smth" "smth2" \n`;
+        mainScript += `jbangLauncherPrepareJBang "${mainJBang.name}" "0.55.2" \n`;
 
 
         // run!

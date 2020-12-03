@@ -37,6 +37,9 @@ export class BaseCondition {
             case "release_init":
                 return new ReleaseInitSystemCondition(rc, value);
 
+            case "package_manager":
+                return new ReleasePackageManagerCondition(rc, value);
+
             case "release_lts":
                 return new UbuntuReleaseLTSCondition(rc, value);
 
@@ -122,6 +125,12 @@ export class OSCondition extends SimpleValueOperatorCondition implements ICondit
 export class ReleaseCondition extends SimpleValueOperatorCondition {
     protected async getActualValue(): Promise<string> {
         return (await this.context.getRelease()).id;
+    }
+}
+
+export class ReleasePackageManagerCondition extends SimpleValueOperatorCondition {
+    protected async getActualValue(): Promise<string> {
+        return (await this.context.getRelease()).packageManager;
     }
 }
 

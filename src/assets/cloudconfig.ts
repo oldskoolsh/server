@@ -32,18 +32,18 @@ export class CloudConfigAsset extends BaseAsset {
 export class GatherCloudConfigAsset extends CloudConfigAsset {
 
     protected processCloudConfig(cloudConfig: StandardCloudConfig): StandardCloudConfig {
-        let curlDatas = [ // @TODO: convert all to cloud-init query --format
-            `--data-urlencode "osg_ci_arch={{machine}}"`,
-            `--data-urlencode "osg_ci_os={{distro}}"`,
-            `--data-urlencode "osg_ci_release={{distro_release}}"`,
-            `--data-urlencode "osg_ci_cloud={{cloud_name}}"`,
-            `--data-urlencode "osg_ci_platform={{platform}}"`,
-            `--data-urlencode "osg_ci_az={{availability_zone}}"`,
-            `--data-urlencode "osg_ci_region={{region}}"`,
-            `--data-urlencode "osg_ci_iid={{instance_id}}"`,
-            `--data-urlencode "osg_ci_sys_plat={{system_platform}}"`,
-            `--data-urlencode "osg_ci_kernel={{kernel_release}}"`,
-            `--data-urlencode "osg_ci_iid={{instance_id}}"`,
+        let curlDatas = [
+            `--data-urlencode "osg_ci_arch=$(cloud-init query -f "{{machine}}")"`,
+            `--data-urlencode "osg_ci_os=$(cloud-init query -f "{{distro}}")"`,
+            `--data-urlencode "osg_ci_release=$(cloud-init query -f "{{distro_release}}")"`,
+            `--data-urlencode "osg_ci_cloud=$(cloud-init query -f "{{cloud_name}}")"`,
+            `--data-urlencode "osg_ci_platform=$(cloud-init query -f "{{platform}}")"`,
+            `--data-urlencode "osg_ci_az=$(cloud-init query -f "{{availability_zone}}")"`,
+            `--data-urlencode "osg_ci_region=$(cloud-init query -f "{{region}}")"`,
+            `--data-urlencode "osg_ci_iid=$(cloud-init query -f "{{instance_id}}")"`,
+            `--data-urlencode "osg_ci_sys_plat=$(cloud-init query -f "{{system_platform}}")"`,
+            `--data-urlencode "osg_ci_kernel=$(cloud-init query -f "{{kernel_release}}")"`,
+            `--data-urlencode "osg_ci_iid=$(cloud-init query -f "{{instance_id}}")"`,
             `--data-urlencode "osg_os_arch=$(arch || true) "`,
             `--data-urlencode "osg_os_ci_version=$(cloud-init --version || true)"`,
             `--data-urlencode "osg_os_release_pairs=$(cat /etc/os-release | grep -e "_ID" -e "VERSION" -e "NAME" | grep -v -i -e "http" | sed -e 's/\\"//g' | tr "\\n" ";" || true) "`,

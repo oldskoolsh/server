@@ -6,6 +6,7 @@ export enum IRecipeFragmentIfConditionsConditionEnum {
     release_lts = "release_lts",
     release_init = "release_init",
     release_status = "release_status",
+    package_manager = "package_manager",
     ip_resolve = "ip_resolve",
     release = "release",
     geoip_country = "geoip_country",

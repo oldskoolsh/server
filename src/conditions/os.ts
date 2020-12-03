@@ -5,6 +5,7 @@ export interface IOSRelease {
     systemd: boolean;
     released: boolean;
     numVersion: number;
+    packageManager: string;
 }
 
 
@@ -39,7 +40,15 @@ export abstract class BaseOS implements IOS {
     }
 
     getRelease(slug: string): IOSRelease {
-        const unknownRelease = {id: "unknown", lts: false, numVersion: 0, os: this, released: false, systemd: true};
+        const unknownRelease: IOSRelease = {
+            id: "unknown",
+            lts: false,
+            numVersion: 0,
+            os: this,
+            released: false,
+            systemd: true,
+            packageManager: "none"
+        };
         // unknown OS has no known releases.
         if (this.id === "unknown") return unknownRelease;
 
@@ -59,7 +68,15 @@ export abstract class BaseOS implements IOS {
     }
 
     public getClosestLowerLTS(release: IOSRelease): IOSRelease {
-        const unknownRelease = {id: "unknown", lts: false, numVersion: 0, os: this, released: false, systemd: true};
+        const unknownRelease: IOSRelease = {
+            id: "unknown",
+            lts: false,
+            numVersion: 0,
+            os: this,
+            released: false,
+            systemd: true,
+            packageManager: "none"
+        };
         // unknown OS has no known releases.
         if (this.id === "unknown") return unknownRelease;
         if (release.id === "unknown") return unknownRelease;
@@ -82,19 +99,19 @@ export abstract class BaseOS implements IOS {
 class Ubuntu extends BaseOS implements IOS {
     id: string = "ubuntu";
     releases: IOSRelease[] = [
-        {id: "hirsute", numVersion: 2104, lts: false, released: false, os: this, systemd: true},
-        {id: "groovy", numVersion: 2010, lts: false, released: true, os: this, systemd: true},
-        {id: "focal", numVersion: 2004, lts: true, released: true, os: this, systemd: true},
-        {id: "bionic", numVersion: 1804, lts: true, released: true, os: this, systemd: true},
-        {id: "xenial", numVersion: 1604, lts: true, released: true, os: this, systemd: true}
+        {id: "hirsute", numVersion: 2104, lts: false, released: false, os: this, systemd: true, packageManager: "apt"},
+        {id: "groovy", numVersion: 2010, lts: false, released: true, os: this, systemd: true, packageManager: "apt"},
+        {id: "focal", numVersion: 2004, lts: true, released: true, os: this, systemd: true, packageManager: "apt"},
+        {id: "bionic", numVersion: 1804, lts: true, released: true, os: this, systemd: true, packageManager: "apt"},
+        {id: "xenial", numVersion: 1604, lts: true, released: true, os: this, systemd: true, packageManager: "apt"}
     ];
 }
 
 class Debian extends BaseOS implements IOS {
     id: string = "debian";
     releases: IOSRelease[] = [
-        {id: "buster", numVersion: 10, lts: true, released: true, systemd: true, os: this},
-        {id: "squeeze", numVersion: 9, lts: true, released: true, systemd: true, os: this},
+        {id: "buster", numVersion: 10, lts: true, released: true, systemd: true, os: this, packageManager: "apt"},
+        {id: "squeeze", numVersion: 9, lts: true, released: true, systemd: true, os: this, packageManager: "apt"},
     ];
 }
 
@@ -103,8 +120,8 @@ class CentOS extends BaseOS implements IOS {
     id: string = "centos";
     other_names: string[] = ['centos linux'];
     releases: IOSRelease[] = [
-        {id: "centos8", numVersion: 8, lts: true, released: true, systemd: true, os: this},
-        {id: "centos7", numVersion: 7, lts: true, released: true, systemd: true, os: this},
+        {id: "centos8", numVersion: 8, lts: true, released: true, systemd: true, os: this, packageManager: "yum"},
+        {id: "centos7", numVersion: 7, lts: true, released: true, systemd: true, os: this, packageManager: "yum"},
     ];
 }
 
@@ -113,7 +130,7 @@ class AmazonLinux extends BaseOS implements IOS {
     id: string = "amazonlinux";
     other_names: string[] = ['amazon linux'];
     releases: IOSRelease[] = [
-        {id: "amazonlinux2", numVersion: 2, lts: true, released: true, systemd: true, os: this}
+        {id: "amazonlinux2", numVersion: 2, lts: true, released: true, systemd: true, os: this, packageManager: "yum"}
     ];
 }
 
