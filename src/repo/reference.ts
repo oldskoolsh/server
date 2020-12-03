@@ -7,6 +7,7 @@ export class PathRepoReference {
     id: string;
     basePath: string;
     ownPath: string;
+    public readonly tomlRelativePath: string;
     readonly parentRef: PathRepoReference | undefined;
     readonly refDescriptor: IRepoUsesDescriptor;
     private readonly baseDirectory: string;
@@ -24,9 +25,18 @@ export class PathRepoReference {
             this.ownPath = "";
         }
         let intermediate = path.resolve(this.basePath, this.ownPath);
-        //console.log("intermediate", intermediate);
-        this.baseDirectory = path.resolve(intermediate, ".oldskool");
-        //console.log("baseDirectory", this.baseDirectory);
+        console.log("intermediate", intermediate);
+
+        if (fs.existsSync(path.resolve(intermediate, ".oldskool"))) {
+            this.baseDirectory = path.resolve(intermediate, ".oldskool");
+            console.log("baseDirectory via .oldskool", this.baseDirectory);
+            this.tomlRelativePath = "oldskool.toml";
+        } else {
+            this.baseDirectory = intermediate;
+            console.log("baseDirectory via intermediate", this.baseDirectory);
+            this.tomlRelativePath = ".oldskool.toml";
+        }
+
         // make sure this exists, but the constructor is definitely not the place to do it
         let stats = fs.statSync(this.baseDirectory);
         if (!stats) {

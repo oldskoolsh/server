@@ -26,7 +26,7 @@ export class Repository {
     }
 
     async readTomlDescriptor(): Promise<Repository> {
-        let tomlString = await this.myRef.readFileContents("oldskool.toml");
+        let tomlString = await this.myRef.readFileContents(this.myRef.tomlRelativePath);
         // @ts-ignore
         let descriptor: IRepoDescriptor = TOML.parse(tomlString);
 
@@ -60,8 +60,8 @@ export class Repository {
     }
 
     async recursivelyResolve() {
-        //await console.log(`recursivelyResolve '${this.myRef.id}'...`);
-        //await console.group();
+        await console.log(`recursivelyResolve '${this.myRef.id}'...`);
+        await console.group();
         try {
             await this.readTomlDescriptor();
             await this.processRecipes();
@@ -75,8 +75,8 @@ export class Repository {
             // once done with it release it
             this.rawUsesRef = [];
         } finally {
-            //await console.groupEnd();
-            //await console.log(`done recursivelyResolve '${this.myRef.id}'...`)
+            await console.groupEnd();
+            await console.log(`done recursivelyResolve '${this.myRef.id}'...`)
         }
     }
 
