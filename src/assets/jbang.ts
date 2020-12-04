@@ -11,9 +11,7 @@ export class JBangScriptAsset extends BaseAsset {
     }
 
     async renderFromFile(): Promise<MimeTextFragment> {
-        let mainScript: string = `#!/bin/bash
-        ## **INCLUDE:jbang_launchers.sh
-        set -e\n`;
+        let mainScript: string = `## **INCLUDE:jbang_launchers.sh\n`;
 
         // get the actual path
         let mainJBang: IAssetInfo = await this.repoResolver.getAssetInfo(`${this.assetPath}`);

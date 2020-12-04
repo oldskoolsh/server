@@ -68,6 +68,8 @@ export class BashScriptAsset extends BaseAsset {
             return await this.repoResolver.getRawAsset(`assets/${includedRef}`, 'base64');
         }));
 
-        return new MimeTextFragment("text/x-shellscript", this.assetPath, replaced);
+        let shebang: String = "#!/bin/bash\nset -e\n";
+
+        return new MimeTextFragment("text/x-shellscript", this.assetPath, shebang + replaced);
     }
 }

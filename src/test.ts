@@ -5,7 +5,6 @@ import {TedisPool} from "tedis";
 import {DefaultGeoIPReaders, GeoIpReaders} from "./shared/geoip";
 import {CloudInitExpanderMerger} from "./expander_merger/expandermerger";
 import {BashScriptAsset} from "./assets/bash";
-import {JSScriptAsset} from "./assets/js";
 import {aff} from "./shared/utils";
 import {afterAll, beforeAll, beforeEach, expect, test} from '@jest/globals';
 import {LaunchersAsset} from "./assets/launchers";
@@ -67,7 +66,7 @@ test('default no-param bash', async () => {
     expect(rendered).toContain("Base configuration done");
 });
 
-
+/*
 test('default no-param js asset', async () => {
     let context = new RenderingContext(defaultBaseUrl, tedisPool, geoipReaders, defaultResolver);
     context.clientIP = defaultClientIP;
@@ -82,7 +81,7 @@ test('default no-param js asset', async () => {
     expect(rendered).toContain("jsLauncherDoLaunch");
 
     console.log("Rendered is", rendered.length, "bytes long.");
-});
+});*/
 
 test('default no-param expand and merge', async () => {
     let context = new RenderingContext(defaultBaseUrl, tedisPool, geoipReaders, defaultResolver);
@@ -124,8 +123,8 @@ test('default no-param launchers', async () => {
     expect(body).toContain("#!/bin/bash");
     expect(body).not.toContain("**INCLUDE");
     // @TODO: test for base.sh
-    expect(body).toContain("createLauncherScript \"showoff"); // js launcher
-    expect(body).toContain("createLauncherScript \"example\" \"_/scripts/example.sh\""); // bash launcher
-    expect(body).toContain("createLauncherScript \"tsshow\" \"_/js/tsshow.ts\""); // typescript launcher
+    //expect(body).toContain("createLauncherScript \"showoff"); // js launcher
+    //expect(body).toContain("createLauncherScript \"example\" \"_/scripts/example.sh\""); // bash launcher
+    //expect(body).toContain("createLauncherScript \"tsshow\" \"_/js/tsshow.ts\""); // typescript launcher
 });
 

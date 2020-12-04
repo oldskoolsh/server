@@ -15,7 +15,6 @@ import {AssetFactory} from "../assets/asset_factory";
 
 const debug = false;
 
-
 class RestartProcessingException extends Error {
 
     public wantedRecipes: string[];

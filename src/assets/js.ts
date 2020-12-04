@@ -18,9 +18,7 @@ export class JSScriptAsset extends BaseAsset {
     }
 
     async renderFromFile(): Promise<MimeTextFragment> {
-        let mainScript: string = `#!/bin/bash
-        ## **INCLUDE:js_launchers.sh
-        set -e\n`;
+        let mainScript: string = `## **INCLUDE:js_launchers.sh\n`;
 
         // get the actual path
         let mainJS: IAssetInfo = await this.repoResolver.getAssetInfo(`${this.assetPath}`);

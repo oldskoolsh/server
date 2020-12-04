@@ -102,7 +102,7 @@ export class OldSkoolServer extends OldSkoolMiddleware {
         this.handle(
             [`${this.uriOwnerRepoCommitishRecipes}/cmdline`],
             async (context: RenderingContext, res: Response) => {
-                let bashTemplate = `#!/bin/bash\n## **INCLUDE:ci_launchers.sh\ncmdLineCloudInit "${context.recipesUrl}/"\n`;
+                let bashTemplate = `## **INCLUDE:ci_launchers.sh\ncmdLineCloudInit "${context.recipesUrl}/"\n`;
                 return await (new BashScriptAsset(context, context.resolver, "cmdline_starter")).renderFromString(bashTemplate);
             });
 
@@ -110,7 +110,7 @@ export class OldSkoolServer extends OldSkoolMiddleware {
         this.handle(
             [`${this.uriOwnerRepoCommitishRecipes}/cmdline/docker`],
             async (context: RenderingContext, res: Response) => {
-                let bashTemplate = `#!/bin/bash\n## **INCLUDE:ci_launchers.sh\ncmdLineCloudInitDocker "${context.recipesUrl}/"\n`;
+                let bashTemplate = `## **INCLUDE:ci_launchers.sh\ncmdLineCloudInitDocker "${context.recipesUrl}/"\n`;
                 return await (new BashScriptAsset(context, context.resolver, "cmdline_docker_starter")).renderFromString(bashTemplate);
             });
 

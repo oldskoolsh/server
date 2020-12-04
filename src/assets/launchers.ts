@@ -14,7 +14,7 @@ export class LaunchersAsset extends BaseAsset {
 
         let expandedResults = await this.context.getExpandedMergedResults();
 
-        let bashPrelude = `#!/bin/bash\n## **INCLUDE:bash_launchers.sh\n`;
+        let bashPrelude = `## **INCLUDE:bash_launchers.sh\n`;
 
         let launchersReinstall = `createLauncherRelauncher "${this.context.recipesUrl}/launchers"\n`;
 
