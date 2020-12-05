@@ -2,8 +2,6 @@ import {BaseAsset} from "./base_asset";
 import {BashScriptAsset} from "./bash";
 import {IAssetInfo} from "../repo/resolver";
 import path from "path";
-import fg from "fast-glob";
-import fs from "fs";
 import {MimeTextFragment} from "../shared/mime";
 
 export class JSScriptAsset extends BaseAsset {
@@ -83,26 +81,6 @@ export class JSScriptAsset extends BaseAsset {
         return new MimeTextFragment("text/x-shellscript", this.assetPath, mainScript);
     }
 
-    private async getAllAssetInfoInDir(containingDir: string, globs: string[]): Promise<IAssetInfo[]> {
-        let allFiles: string[] = await globs.asyncFlatMap(i => this.oneGlobDir(containingDir, i));
-        return await allFiles.asyncFlatMap(value => this.assetInfoFromFullPath(value, containingDir));
-    }
-
-    private async oneGlobDir(containingDir: string, glob: string): Promise<string[]> {
-        const entries: string[] = await fg([`${glob}`], {cwd: containingDir, dot: false, ignore: ["node_modules/**"]});
-        return entries.map(value => `${containingDir}/${value}` /** full path **/);
-    }
-
-    private async assetInfoFromFullPath(pathOnDisk: string, containingDir: string): Promise<IAssetInfo> {
-        let name = path.relative(containingDir, pathOnDisk);
-        return {
-            name: name,
-            mkdirName: path.dirname(name),
-            containingDir: containingDir,
-            pathOnDisk: pathOnDisk,
-            base64contents: await fs.promises.readFile(pathOnDisk, {encoding: 'base64'})
-        }
-    }
 
     private async forgeTsConfig(): Promise<IAssetInfo> {
         return {
