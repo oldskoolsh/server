@@ -45,7 +45,6 @@ export class JBangScriptAsset extends BaseAsset {
 
         let repoComments = "//REPOS jcenter,jitpack\n";
         let prelude = cacheBuster + "\n" + depComments + "\n" + sourceComments + "\n" + repoComments + "\n";
-        console.log("prelude", prelude);
         let newScriptText = prelude + mainScriptText;
         let newScriptTextBase64 = Buffer.from(newScriptText).toString("base64");
 
@@ -73,7 +72,6 @@ export class JBangScriptAsset extends BaseAsset {
         let regExpMatchArrays = pomContents.matchAll(gradleDepsRegex);
         for (const oneMatch of regExpMatchArrays) {
             let depTxt = oneMatch[5].trim();
-            console.log("oneMatch:", depTxt);
             ret.push(depTxt)
         }
         return [...new Set(ret)];
