@@ -41,9 +41,10 @@ export class JBangScriptAsset extends BaseAsset {
         let mainScriptText = Buffer.from(mainJBang.base64contents, "base64").toString();
         let depComments = depsFromPoms.map(value => `//DEPS ${value}`).join("\n");
         let sourceComments = otherAssets.map(value => `//SOURCES ${value.name}`).join("\n");
+        let cacheBuster = otherAssets.map(value => `//MD5of ${value.name} modified ${value.timestapModified}`).join("\n");
 
         let repoComments = "//REPOS jcenter,jitpack\n";
-        let prelude = depComments + "\n" + sourceComments + "\n" + repoComments + "\n";
+        let prelude = cacheBuster + "\n" + depComments + "\n" + sourceComments + "\n" + repoComments + "\n";
         console.log("prelude", prelude);
         let newScriptText = prelude + mainScriptText;
         let newScriptTextBase64 = Buffer.from(newScriptText).toString("base64");

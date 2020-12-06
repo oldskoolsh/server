@@ -4,6 +4,7 @@ import {PathRepoReference} from "./reference";
 import {Recipe} from "./recipe";
 
 export interface IAssetInfo {
+    timestapModified: number;
     name: string,
     base64contents: string,
     mkdirName: string,

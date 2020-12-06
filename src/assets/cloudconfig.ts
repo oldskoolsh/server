@@ -60,9 +60,9 @@ export class GatherCloudConfigAsset extends CloudConfigAsset {
         origBootCmds.unshift(
             `echo OldSkool initting from curl  --silent --show-error --user-agent "$(curl --version | head -1 || true); OldSkool-Gather/0.66.6; $(cloud-init --version || true)" --output "/var/lib/cloud/instance/cloud-config.txt" -G ${curlDatas.join(" ")} ${this.context.recipesUrl}/real/cloud/init/yaml`,
             "cp /var/lib/cloud/instance/cloud-config.txt /var/lib/cloud/instance/cloud-config.txt.orig",
-            `sleep 2`,
+            //`sleep 2`,
             `curl --silent --show-error --user-agent "$(curl --version | head -1 || true); OldSkool-Gather/0.66.6; $(cloud-init --version || true)" --output "/var/lib/cloud/instance/cloud-config.txt" -G ${curlDatas.join(" ")} "${this.context.recipesUrl}/real/cloud/init/yaml"`,
-            `sleep 2`,
+            //`sleep 2`,
             "echo Done, continuing..."
         );
         cloudConfig.bootcmd = origBootCmds;

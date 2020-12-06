@@ -16,6 +16,10 @@ export abstract class BaseAsset {
         this.assetPath = assetPath;
     }
 
+    public abstract async renderFromFile(): Promise<MimeTextFragment>;
+
+    public abstract accepts(fileName: string): boolean;
+
     protected async oneGlobDir(containingDir: string, glob: string): Promise<string[]> {
         const entries: string[] = await fg([`${glob}`], {cwd: containingDir, dot: false, ignore: ["node_modules/**"]});
         return entries.map(value => `${containingDir}/${value}` /** full path **/);
@@ -33,13 +37,9 @@ export abstract class BaseAsset {
             mkdirName: path.dirname(name),
             containingDir: containingDir,
             pathOnDisk: pathOnDisk,
-            base64contents: await fs.promises.readFile(pathOnDisk, {encoding: 'base64'})
+            base64contents: await fs.promises.readFile(pathOnDisk, {encoding: 'base64'}),
+            timestapModified: (await fs.promises.stat(pathOnDisk)).mtimeMs
         }
     }
-
-
-    public abstract async renderFromFile(): Promise<MimeTextFragment>;
-
-    public abstract accepts(fileName: string): boolean;
 
 }
