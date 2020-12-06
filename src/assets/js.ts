@@ -103,7 +103,8 @@ export class JSScriptAsset extends BaseAsset {
                 }
             })).toString("base64"),
             name: "tsconfig.json",
-            pathOnDisk: ""
+            pathOnDisk: "",
+            timestapModified: 0
         };
     }
 
@@ -147,7 +148,8 @@ export class JSScriptAsset extends BaseAsset {
             mkdirName: ".",
             base64contents: Buffer.from(forged).toString("base64"),
             name: "package.json",
-            pathOnDisk: ""
+            pathOnDisk: "",
+            timestapModified: 0
         };
     }
 }

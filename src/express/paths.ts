@@ -7,7 +7,7 @@ import {RenderingContext} from "../repo/context";
 import {LaunchersAsset} from "../assets/launchers";
 import {IExecutableScript} from "../schema/results";
 import {AssetFactory} from "../assets/asset_factory";
-import {MetadataAsset} from "../assets/metadata";
+import {MetadataAsset, VendorDataAsset} from "../assets/metadata";
 import {CloudConfigAsset, GatherCloudConfigAsset} from "../assets/cloudconfig";
 
 const {BAD_REQUEST, OK} = StatusCodes;
@@ -122,6 +122,14 @@ export class OldSkoolServer extends OldSkoolMiddleware {
                 `${this.uriNoCloudWithParams}/meta-data`],
             async (context: RenderingContext, res: Response) => {
                 return await (new MetadataAsset(context, context.resolver, "fake_nocloud_metadata")).renderFromString();
+            });
+
+        // recently it also started requesting "vendor-data", serve that as well.
+        this.handle(
+            [`${this.uriNoCloudWithoutParams}/vendor-data`,
+                `${this.uriNoCloudWithParams}/vendor-data`],
+            async (context: RenderingContext, res: Response) => {
+                return await (new VendorDataAsset(context, context.resolver, "fake_vendor_Data")).renderFromString();
             });
 
 

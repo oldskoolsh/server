@@ -31,3 +31,19 @@ export class MetadataAsset extends BaseAsset {
 
     }
 }
+
+export class VendorDataAsset extends BaseAsset {
+    accepts(fileName: string): boolean {
+        return false;
+    }
+
+    async renderFromFile(): Promise<MimeTextFragment> {
+        return await this.renderFromString();
+    }
+
+    public async renderFromString(): Promise<MimeTextFragment> {
+        const prelude: String = `#cloud-config\n# really empty\n`;
+        let yamlString = prelude + YAML.stringify({});
+        return new MimeTextFragment("text/cloud-config", this.assetPath, yamlString);
+    }
+}

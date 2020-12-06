@@ -129,7 +129,8 @@ export class Repository {
                 mkdirName: path.dirname(assetPath),
                 containingDir: parsed.dir,
                 pathOnDisk: pathOnDisk,
-                base64contents: await this.myRef.readFileContents(assetPath, "base64")
+                base64contents: await this.myRef.readFileContents(assetPath, "base64"),
+                timestapModified: 0
             }
         } catch (err) {
             return null;
