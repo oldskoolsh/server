@@ -15,7 +15,12 @@ export class CloudInitYamlProcessorReplaceVariables extends BaseYamlProcessor {
             text = text.replace(new RegExp(`\\[\\[${key}\\]\\]`, "gm"), value)
         })
 
-        return JSON.parse(text);
+        try {
+            return JSON.parse(text);
+        } catch (e) {
+            console.error("Invalid JSON produced: ", text)
+            throw new Error(`CloudInitYamlProcessorReplaceVariables produced invalid JSON.`);
+        }
     }
 
 }
