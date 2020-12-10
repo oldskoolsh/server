@@ -1,6 +1,6 @@
 import {TedisPool} from "tedis";
 import {RepoResolver} from "./resolver";
-import parser from "ua-parser-js";
+import parser, {UAParser} from "ua-parser-js";
 import {BaseOS, IOS, IOSRelease} from "../conditions/os";
 import {Asn, City} from '@maxmind/geoip2-node';
 import {GeoIpReaders} from "../shared/geoip";
@@ -30,7 +30,7 @@ export class RenderingContext {
     private readonly geoipReaders: GeoIpReaders;
     private _os!: IOS;
     private _release!: IOSRelease;
-    private _ua!: IUAParser.IResult;
+    private _ua!: UAParser.IResult;
     private _arch!: IArch;
     private _asn!: Asn;
     private _city!: City;
@@ -212,6 +212,20 @@ export class RenderingContext {
             (new CloudInitExpanderMerger(this, this.resolver, this.initialRecipes ?? [], [], []))
                 .process();
         return this._expandedMergedResults;
+    }
+
+    public async minimalOsReleaseArchQueryString(): Promise<string> {
+        let os = await this.getOS();
+        let release = await this.getRelease();
+        let arch = await this.getArch();
+        let pairs = {os: os.id, release: release.id, arch: arch.id};
+
+        return "?" + Object.entries(pairs)
+            .map((value: [string, string]) => value[1] === "unknown" ? null : `${value[0]}=${value[1]}`)
+            .filter(value => !!value)
+            .join("&");
+
+        //return `?os=${os.id}&release=${release.id}&arch=${arch.id}`;
     }
 
     private isSomeValueBogus(value: string | undefined): boolean {

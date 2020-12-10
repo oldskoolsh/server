@@ -16,7 +16,7 @@ export abstract class BaseAsset {
         this.assetPath = assetPath;
     }
 
-    public abstract async renderFromFile(): Promise<MimeTextFragment>;
+    public abstract renderFromFile(): Promise<MimeTextFragment>;
 
     public abstract accepts(fileName: string): boolean;
 

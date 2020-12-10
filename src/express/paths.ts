@@ -28,6 +28,7 @@ export class OldSkoolServer extends OldSkoolMiddleware {
                 `${this.uriNoCloudWithParams}/user-data`],
             async (context: RenderingContext, res: Response) => {
                 let expandedResults = await context.getExpandedMergedResults();
+                let minimalOsReleaseArchQS = await context.minimalOsReleaseArchQueryString();
 
                 let body = "";
                 body += "#include\n\n";
@@ -48,12 +49,12 @@ export class OldSkoolServer extends OldSkoolMiddleware {
                 // lifting is done by /launchers with is an init-script!
                 // consider: boot-cmd processor; cloud-init-per; etc.
                 body += `# launchers: \n#  - ${expandedResults.launcherScripts.map((value: IExecutableScript) => `${value.callSign} (${context.moduleUrl}/${value.assetPath})`).join("\n#  - ")}\n`;
-                body += `${context.recipesUrl}/launchers\n\n`;
+                body += `${context.recipesUrl}/launchers${minimalOsReleaseArchQS}\n\n`;
 
                 // link to the init-scripts, directly.
                 expandedResults.initScripts.forEach((script: IExecutableScript) => {
                     body += `# - initscript: ${script.callSign}\n`;
-                    body += `${context.moduleUrl}/${script.assetPath}\n\n`;
+                    body += `${context.moduleUrl}/${script.assetPath}${minimalOsReleaseArchQS}\n\n`;
                 });
 
                 return new MimeTextFragment("text/x-include-url", "oldskool-main-include", body);

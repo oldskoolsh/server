@@ -1,6 +1,6 @@
 import {TedisPool} from "tedis";
 import logger from "../shared/Logger";
-import express, {Express, NextFunction, Request, Response} from "express";
+import {Express, NextFunction, Request, Response} from 'express';
 import morgan from "morgan";
 import hljs from 'highlight.js';
 import StatusCodes from "http-status-codes";
@@ -11,6 +11,8 @@ import {MimeTextFragment} from "../shared/mime";
 // Hack into Express to be able to catch exceptions thrown from async handlers.
 // Yes, a "require" here is the only way to make this work.
 import linkifyUrls from "linkify-urls";
+
+const express = require('express');
 
 require('express-async-errors');
 const {BAD_REQUEST, OK} = StatusCodes;
@@ -67,6 +69,7 @@ export abstract class OldSkoolBase {
         this.app.set('trust proxy', ['loopback', 'linklocal', 'uniquelocal']);
 
         // Show routes called in console during development
+        // @ts-ignore // @TODO: what happened?
         this.app.use(morgan('dev'));
 
         // "Security headers"

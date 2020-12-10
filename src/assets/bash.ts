@@ -25,7 +25,7 @@ export class BashScriptAsset extends BaseAsset {
 
     private async doRenderFromString(read: string): Promise<MimeTextFragment> {
         let replaced = read;
-        // resolve the extracted includes in a loop, so includes' includes are included. lol
+        // resolve the extracted includes in a loop, so includes' includes are included
         let loopCounter = 0;
         let hasReplaced = true;
         let includeOnceMap: Set<string> = new Set<string>();
@@ -39,7 +39,7 @@ export class BashScriptAsset extends BaseAsset {
                     includeOnceMap.add(includedRef);
                     return `\n## <OldSkoolInclude:${includedRef}>\n` + included + `\n## </OldSkoolInclude:${includedRef}>\n`;
                 } else {
-                    return `## </OldSkookIncludeSkippedBecauseAlreadyIncluded:${includedRef}\n`;
+                    return `## </OldSkoolIncludeSkippedBecauseAlreadyIncluded:${includedRef}\n`;
                 }
             }));
             replaced = await replaceAsync(replaced, escapedIncludeRegex, (async (substring, includedRef) => {

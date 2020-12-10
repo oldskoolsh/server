@@ -14,7 +14,7 @@ export abstract class BaseYamlProcessor {
         this.repoResolver = resolver;
     }
 
-    abstract async process(input: ExtendedCloudConfig): Promise<StandardCloudConfig>;
+    abstract process(input: ExtendedCloudConfig): Promise<StandardCloudConfig>;
 
     async cached(cacheKey: string, ttl: number, producer: () => Promise<string>): Promise<string> {
         //await console.log("Getting from cache", cacheKey);

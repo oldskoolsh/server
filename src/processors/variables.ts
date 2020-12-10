@@ -8,7 +8,8 @@ export class CloudInitYamlProcessorReplaceVariables extends BaseYamlProcessor {
 
 
         // Stringify and replace... what cloud be slower?
-        let text = JSON.stringify(src);
+        let originalJSON: String;
+        let text = originalJSON = JSON.stringify(src);
         let allVars: Map<string, string> = await this.context.getAllVariables();
 
         allVars.forEach((value, key) => {
@@ -19,6 +20,7 @@ export class CloudInitYamlProcessorReplaceVariables extends BaseYamlProcessor {
             return JSON.parse(text);
         } catch (e) {
             console.error("Invalid JSON produced: ", text)
+            console.error("JSON before processing: ", originalJSON)
             throw new Error(`CloudInitYamlProcessorReplaceVariables produced invalid JSON.`);
         }
     }

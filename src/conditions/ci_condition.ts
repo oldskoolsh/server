@@ -96,7 +96,7 @@ export abstract class SimpleValueOperatorCondition extends BaseCondition impleme
         return operator.resolve(value, actualValue);
     }
 
-    protected abstract async getActualValue(): Promise<string>;
+    protected abstract getActualValue(): Promise<string>;
 
     protected async processValue(value: string): Promise<string> {
         return value;
