@@ -8,7 +8,7 @@ import {LaunchersAsset} from "../assets/launchers";
 import {IExecutableScript} from "../schema/results";
 import {AssetFactory} from "../assets/asset_factory";
 import {MetadataAsset, VendorDataAsset} from "../assets/metadata";
-import {CloudConfigAsset, GatherCloudConfigAsset} from "../assets/cloudconfig";
+import {CloudConfigAsset, DropperAsset, GatherCloudConfigAsset} from "../assets/cloudconfig";
 
 const {BAD_REQUEST, OK} = StatusCodes;
 
@@ -43,6 +43,9 @@ export class OldSkoolServer extends OldSkoolMiddleware {
                 // that in turn brings in the to the yaml-merger in /real/cloud/init/yaml
                 body += `# cloud-config to gather data; has fallback data in case gather fails.\n`
                 body += `${context.recipesUrl}/cloud/init/yaml/data/gather` + "\n\n";
+
+                // @TODO: move these to gather script.
+                //        launchers specially!
 
                 // link to the launcher-creators...
                 // we only list the launchers here, as comments. all the actual heavy
@@ -97,6 +100,16 @@ export class OldSkoolServer extends OldSkoolMiddleware {
                 `${this.uriNoCloudWithParams}/launchers`],
             async (context: RenderingContext, res: Response) => {
                 return await (new LaunchersAsset(context, context.resolver, "oldskool-bundle")).renderFromFile();
+            });
+
+        // This is called by the gather yaml, to produce the actual dropper script.
+        // It calls all the other URLs.
+        this.handle(
+            [`${this.uriOwnerRepoCommitishRecipes}/dropper`,
+                `${this.uriNoCloudWithoutParams}/dropper`,
+                `${this.uriNoCloudWithParams}/dropper`],
+            async (context: RenderingContext, res: Response) => {
+                return await (new DropperAsset(context, context.resolver, "oldskool-dropper")).renderFromFile();
             });
 
         // This produces a "initscript" that runs cloud-init on a preinstalled machine. dangerous?

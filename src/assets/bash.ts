@@ -68,8 +68,23 @@ export class BashScriptAsset extends BaseAsset {
             return await this.repoResolver.getRawAsset(`assets/${includedRef}`, 'base64');
         }));
 
-        let shebang: String = "#!/bin/bash\nset -e\n";
+        let shebang: String = "#!/bin/bash\nset -e\n\n";
 
-        return new MimeTextFragment("text/x-shellscript", this.assetPath, shebang + replaced);
+        // a fun feature, transform bash_XXXX=YYYY querystring parameters into
+        // export XXXX="YYYY"
+        // right after the shebang, so we can influence the script behaviour.
+        let prefixed = this.context.getPrefixedQueryStringParams("bash_");
+
+        console.log("prefixed", prefixed);
+        let entries = Array.from(prefixed);
+        console.log("entries", entries);
+        let vars = entries
+            .map(value => `# from ?bash_${value[0]} query string\nexport OLDSKOOL_${value[0].trim().toUpperCase()}="${value[1]}";`)
+            .join("\n") + "\n\n";
+
+
+        // @TODO: also fun, transform context variables into OLDSKOOL_CONTEXT_xxx=yyyy
+
+        return new MimeTextFragment("text/x-shellscript", this.assetPath, shebang + vars + replaced);
     }
 }

@@ -1,21 +1,30 @@
 import {BaseAsset} from "./base_asset";
 import {MimeTextFragment} from "../shared/mime";
-import {ExpandMergeResults} from "../schema/results";
+import {ExpandMergeResults, IExecutableScript} from "../schema/results";
 import YAML from "yaml";
 import {StandardCloudConfig} from "../schema/cloud-init-schema";
 import {BashScriptAsset} from "./bash";
 
-class GatherFactsAndOverwriteTargetCloudInitAndScriptsAsset extends BashScriptAsset {
+export class DropperAsset extends BashScriptAsset {
 
-    public async renderGatherScript(): Promise<string> {
+    async renderFromFile(): Promise<MimeTextFragment> {
+        let expandedResults = await this.context.getExpandedMergedResults();
         let functionCalls: String = "";
+        functionCalls += "prepareGatherRun\n";
+        functionCalls += `gatherCloudConfigYaml "${this.context.recipesUrl}/real/cloud/init/yaml"\n`;
+        let partCounter = 2;
+        functionCalls += `gatherInitScript "${this.context.recipesUrl}/launchers" "${this.fillZeros(partCounter)}"\n`;
+        expandedResults.initScripts.forEach((script: IExecutableScript) => {
+            partCounter++;
+            functionCalls += `gatherInitScript "${this.context.moduleUrl}/${script.assetPath}" "${this.fillZeros(partCounter)}"\n`;
+        });
         functionCalls += "mainGatherRun\n";
-        let straightScript = await this.renderFromString("## **INCLUDE:ci_gather.sh\n" + functionCalls);
-
-        return straightScript.body; // not really
-        //return this.oneLineEncodeScript(straightScript);
+        return await this.renderFromString("export OLDSKOOL_FORCE_COLOR_LOGGING=yes\n" + "## **INCLUDE:ci_gather.sh\n" + functionCalls);
     }
 
+    private fillZeros(partCounter: number) {
+        return ("" + partCounter).padStart(3, "0");
+    }
 }
 
 export class CloudConfigAsset extends BaseAsset {
@@ -45,43 +54,28 @@ export class CloudConfigAsset extends BaseAsset {
 export class GatherCloudConfigAsset extends CloudConfigAsset {
 
     protected async processCloudConfig(cloudConfig: StandardCloudConfig): Promise<StandardCloudConfig> {
-        let curlDatas = [
-            `--data-urlencode "osg_ci_arch=$(cloud-init query -f "{{machine}}")"`,
-            `--data-urlencode "osg_ci_os=$(cloud-init query -f "{{distro}}")"`,
-            `--data-urlencode "osg_ci_release=$(cloud-init query -f "{{distro_release}}")"`,
-            `--data-urlencode "osg_os_release_pairs=$(cat /etc/os-release | grep -e "_ID" -e "VERSION" -e "NAME" | grep -v -i -e "http" | sed -e 's/\\"//g' | tr "\\n" ";" || true) "`,
-            `--data-urlencode "osg_ci_cloud=$(cloud-init query -f "{{cloud_name}}")"`,
-            `--data-urlencode "osg_ci_platform=$(cloud-init query -f "{{platform}}")"`,
-            `--data-urlencode "osg_ci_az=$(cloud-init query -f "{{availability_zone}}")"`,
-            `--data-urlencode "osg_ci_region=$(cloud-init query -f "{{region}}")"`,
-            `--data-urlencode "osg_ci_iid=$(cloud-init query -f "{{instance_id}}")"`,
-            `--data-urlencode "osg_ci_sys_plat=$(cloud-init query -f "{{system_platform}}")"`,
-            `--data-urlencode "osg_ci_kernel=$(cloud-init query -f "{{kernel_release}}")"`,
-            `--data-urlencode "osg_ci_iid=$(cloud-init query -f "{{instance_id}}")"`,
-            `--data-urlencode "osg_os_arch=$(arch || true) "`,
-            `--data-urlencode "osg_os_ci_version=$(cloud-init --version || true)"`,
-            `--data-urlencode "osg_cpu_info=$(cat /proc/cpuinfo | grep -i -e model -e "^revision" | sort | uniq | head -3 | cut -d ":" -f 2 | xargs || true) "`,
-            `--data-urlencode "osg_cpu_serial=$(cat /proc/cpuinfo  | grep -e "^Serial" | cut -d ":" -f 2 | xargs || true) "`,
-            `--data-urlencode "osg_ip2_intf=$(ip route s | grep "^default" | head -1 | cut -d " " -f 5 | xargs || true)"`,
-            `--data-urlencode "osg_ip2_addr=$(ip addr show dev $(ip route s | grep "^default" | head -1 | cut -d " " -f 5 | xargs || true) scope global up | grep inet | tr -s " " | cut -d " " -f 3 | xargs || true)"`,
-            //`--data-urlencode ""`,
-        ]
+        // --http1.1 is unsupported on old curl versions!
+        // @TODO: let possibleWgets: string[] = ["wget", "/usr/bin/wget", "/bin/wget", "/usr/local/bin/wget"];
+        // @TODO: retries/timeouts
 
-        // --http1.1 is unsupported on old versions
+        let possibleCurls: string[] = ["curl"/*, "/usr/bin/curl", "/bin/curl", "/usr/local/bin/curl"*/].reverse();
+        let possibleBashs: string[] = ["bash"/*, "/bin/bash", "/usr/bin/bash", "/usr/local/bin/bash"*/].reverse();
+
+        // @TODO: this is run in sh ("dash" in Debian/Ubuntu) and I can't really figure out the fucking syntax
+        let dropperCmds: string[] = possibleCurls.map(curlBin => {
+            return possibleBashs.map(bashBin => {
+                return `${curlBin} --silent --show-error "${this.context.recipesUrl}/dropper?bash_force_color_logging=true" | ${bashBin} \n`;
+            });
+        }).flat();
 
         let origBootCmds = cloudConfig.bootcmd || [];
-        origBootCmds.unshift(
-            // No, we should just have smth like
-            // curl xxx/gather_script | bash
-            //await new GatherFactsAndOverwriteTargetCloudInitAndScriptsAsset(this.context, this.repoResolver, this.context.assetRenderPath).renderGatherScript(),
-            `echo OldSkool gathering info...`,
-            `echo OldSkool initting from curl  --silent --show-error --user-agent "$(curl --version | head -1 || true); OldSkool-Gather/0.66.6; $(cloud-init --version || true)" --output "/var/lib/cloud/instance/cloud-config.txt" -G ${curlDatas.join(" ")} ${this.context.recipesUrl}/real/cloud/init/yaml`,
-            "cp /var/lib/cloud/instance/cloud-config.txt /var/lib/cloud/instance/cloud-config.txt.orig",
-            `curl --silent --show-error --user-agent "$(curl --version | head -1 || true); OldSkool-Gather/0.66.6; $(cloud-init --version || true)" --output "/var/lib/cloud/instance/cloud-config.txt" -G ${curlDatas.join(" ")} "${this.context.recipesUrl}/real/cloud/init/yaml"`,
-            "echo OldSkool gather done!",
-            "tree /var/lib/cloud/instance/ || true"
-        );
+        origBootCmds.unshift(...dropperCmds);
         cloudConfig.bootcmd = origBootCmds;
+
+        let origFinalMessage = cloudConfig.final_message || '';
+        origFinalMessage = "[[OLDSKOOL! GATHER/DROPPER DID NOT WORK IF YOU SEE THIS]]\n" + origFinalMessage;
+        cloudConfig.final_message = origFinalMessage;
+
         return cloudConfig;
     }
 }

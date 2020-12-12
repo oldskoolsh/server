@@ -228,6 +228,19 @@ export class RenderingContext {
         //return `?os=${os.id}&release=${release.id}&arch=${arch.id}`;
     }
 
+    public getPrefixedQueryStringParams(prefix: string): Map<string, string> {
+        let ret: Map<string, string> = new Map<string, string>();
+        for (const oneParamQS of this.paramsQS) {
+            let key = oneParamQS[0];
+            if (key.startsWith(prefix)) {
+                let keyWithoutPrefix = key.substr(prefix.length, (key.length - prefix.length));
+                ret.set(keyWithoutPrefix, oneParamQS[1]);
+                console.log("Key no prefix", keyWithoutPrefix, "value", oneParamQS[1], ret);
+            }
+        }
+        return ret;
+    }
+
     private isSomeValueBogus(value: string | undefined): boolean {
         if (!value) return true;
         if (!value.trim()) return true;
