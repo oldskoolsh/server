@@ -71,14 +71,8 @@ export class BashScriptAsset extends BaseAsset {
         let shebang: String = "#!/bin/bash\nset -e\n\n";
 
         // a fun feature, transform bash_XXXX=YYYY querystring parameters into
-        // export XXXX="YYYY"
-        // right after the shebang, so we can influence the script behaviour.
-        let prefixed = this.context.getPrefixedQueryStringParams("bash_");
-
-        console.log("prefixed", prefixed);
-        let entries = Array.from(prefixed);
-        console.log("entries", entries);
-        let vars = entries
+        // export OLDSKOOL_XXXX="YYYY"
+        let vars = Array.from(this.context.getPrefixedQueryStringParams("bash_"))
             .map(value => `# from ?bash_${value[0]} query string\nexport OLDSKOOL_${value[0].trim().toUpperCase()}="${value[1]}";`)
             .join("\n") + "\n\n";
 

@@ -26,7 +26,7 @@ export abstract class BaseOS implements IOS {
     id: string = "unknown";
 
     public static createOS(id: string): IOS {
-        let allOs: IOS[] = [new UnknownOS(), new Ubuntu(), new Debian(), new CentOS(), new AmazonLinux()];
+        let allOs: IOS[] = [new UnknownOS(), new Ubuntu(), new Debian(), new Fedora(), new CentOS(), new AmazonLinux()];
         if (!id) return allOs[0];
         let idMatch = allOs.filter(value => value.id === id);
         if (idMatch.length != 1) {
@@ -122,6 +122,16 @@ class CentOS extends BaseOS implements IOS {
     releases: IOSRelease[] = [
         {id: "centos8", numVersion: 8, lts: true, released: true, systemd: true, os: this, packageManager: "yum"},
         {id: "centos7", numVersion: 7, lts: true, released: true, systemd: true, os: this, packageManager: "yum"},
+    ];
+}
+
+
+class Fedora extends BaseOS implements IOS {
+    id: string = "fedora";
+    other_names: string[] = [];
+    releases: IOSRelease[] = [
+        {id: "fedora33", numVersion: 33, lts: true, released: true, systemd: true, os: this, packageManager: "yum"},
+        {id: "fedora32", numVersion: 32, lts: true, released: true, systemd: true, os: this, packageManager: "yum"},
     ];
 }
 

@@ -235,7 +235,7 @@ export class RenderingContext {
             if (key.startsWith(prefix)) {
                 let keyWithoutPrefix = key.substr(prefix.length, (key.length - prefix.length));
                 ret.set(keyWithoutPrefix, oneParamQS[1]);
-                console.log("Key no prefix", keyWithoutPrefix, "value", oneParamQS[1], ret);
+                //console.log("Key no prefix", keyWithoutPrefix, "value", oneParamQS[1], ret);
             }
         }
         return ret;
