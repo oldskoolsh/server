@@ -118,8 +118,9 @@ class Debian extends BaseOS implements IOS {
 
 class CentOS extends BaseOS implements IOS {
     id: string = "centos";
-    other_names: string[] = ['centos linux'];
+    other_names: string[] = ['centos linux', 'centos stream'];
     releases: IOSRelease[] = [
+        // @TODO: 8-stream is going into 8, /etc/os-release ?
         {id: "centos8", numVersion: 8, lts: true, released: true, systemd: true, os: this, packageManager: "yum"},
         {id: "centos7", numVersion: 7, lts: true, released: true, systemd: true, os: this, packageManager: "yum"},
     ];

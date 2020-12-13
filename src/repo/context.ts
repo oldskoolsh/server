@@ -172,12 +172,17 @@ export class RenderingContext {
                     .reduce((acc, item) =>
                             acc.set(`osg_os_release_${item.key}`, item.value)
                         , new Map<string, string>());
-                //console.log("map", map);
-                //console.log("bla", map.get("osg_os_release_version_id"));
+
                 let value: string | undefined = map.get(name);
-                if (!this.isSomeValueBogus(value)) {
-                    // @ts-ignore
-                    return <string>value.trim();
+                if (value) {
+                    // unquote
+                    if (value.startsWith(`"`) && value.endsWith(`"`)) {
+                        value = value.substr(1, value.length - 2);
+                    }
+                    if (!this.isSomeValueBogus(value)) {
+                        // @ts-ignore
+                        return <string>value.trim();
+                    }
                 }
             }
         }
