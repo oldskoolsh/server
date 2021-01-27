@@ -39,6 +39,7 @@ export class OldSkoolServer extends OldSkoolMiddleware {
                 // comment to link to the cmdline version;
                 body += `# for cmdline usage: \n#  curl --silent "${context.recipesUrlNoParams}/cmdline" | sudo bash\n\n`;
                 body += `#  or if that fails: \n#  curl "${context.recipesUrlNoParams}/cmdline" | bash\n\n`;
+                body += `#  kernel cmdline: \n#  ds=nocloud-net;s=${context.recipesUrlNoParams}/params/param1=value1/dsnocloud/\n\n`;
 
                 // use a launcher-script (that can gather info from the instance) and _then_ process that YAML.
                 // that in turn brings in the to the yaml-merger in /real/cloud/init/yaml
