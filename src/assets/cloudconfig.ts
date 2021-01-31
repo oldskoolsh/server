@@ -9,21 +9,32 @@ export class DropperAsset extends BashScriptAsset {
 
     async renderFromFile(): Promise<MimeTextFragment> {
         let expandedResults = await this.context.getExpandedMergedResults();
-        let functionCalls: String = "";
+        let functionCalls: string = "";
         functionCalls += "prepareGatherRun\n";
         functionCalls += `gatherCloudConfigYaml "${this.context.recipesUrl}/real/cloud/init/yaml"\n`;
+        functionCalls += `gatherViaSubSource "${this.context.recipesUrl}/subdropper"\n`;
+        functionCalls += "mainGatherRun\n";
+        return await this.renderFromString("export OLDSKOOL_FORCE_COLOR_LOGGING=yes\n" + "## **INCLUDE:ci_gather.sh\n" + functionCalls);
+    }
+
+    protected fillZeros(partCounter: number) {
+        return ("" + partCounter).padStart(3, "0");
+    }
+}
+
+
+export class SubDropperAsset extends DropperAsset {
+
+    async renderFromFile(): Promise<MimeTextFragment> {
+        let expandedResults = await this.context.getExpandedMergedResults();
+        let functionCalls: string = "";
         let partCounter = 2;
         functionCalls += `gatherInitScript "${this.context.recipesUrl}/launchers" "${this.fillZeros(partCounter)}"\n`;
         expandedResults.initScripts.forEach((script: IExecutableScript) => {
             partCounter++;
             functionCalls += `gatherInitScript "${this.context.moduleUrl}/${script.assetPath}" "${this.fillZeros(partCounter)}"\n`;
         });
-        functionCalls += "mainGatherRun\n";
-        return await this.renderFromString("export OLDSKOOL_FORCE_COLOR_LOGGING=yes\n" + "## **INCLUDE:ci_gather.sh\n" + functionCalls);
-    }
-
-    private fillZeros(partCounter: number) {
-        return ("" + partCounter).padStart(3, "0");
+        return await this.renderFromString(functionCalls);
     }
 }
 

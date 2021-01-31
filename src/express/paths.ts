@@ -8,7 +8,7 @@ import {LaunchersAsset} from "../assets/launchers";
 import {IExecutableScript} from "../schema/results";
 import {AssetFactory} from "../assets/asset_factory";
 import {MetadataAsset, VendorDataAsset} from "../assets/metadata";
-import {CloudConfigAsset, DropperAsset, GatherCloudConfigAsset} from "../assets/cloudconfig";
+import {CloudConfigAsset, DropperAsset, GatherCloudConfigAsset, SubDropperAsset} from "../assets/cloudconfig";
 
 const {BAD_REQUEST, OK} = StatusCodes;
 
@@ -112,6 +112,15 @@ export class OldSkoolServer extends OldSkoolMiddleware {
                 `${this.uriNoCloudWithParams}/dropper`],
             async (context: RenderingContext, res: Response) => {
                 return await (new DropperAsset(context, context.resolver, "oldskool-dropper")).renderFromFile();
+            });
+
+        // Dropper (above) uses a subdropper for the initscripts. Long story. Go see for yourself.
+        this.handle(
+            [`${this.uriOwnerRepoCommitishRecipes}/subdropper`,
+                `${this.uriNoCloudWithoutParams}/subdropper`,
+                `${this.uriNoCloudWithParams}/subdropper`],
+            async (context: RenderingContext, res: Response) => {
+                return await (new SubDropperAsset(context, context.resolver, "oldskool-subdropper")).renderFromFile();
             });
 
         // This produces a "initscript" that runs cloud-init on a preinstalled machine. dangerous?
