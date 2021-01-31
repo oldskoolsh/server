@@ -36,6 +36,7 @@ export class RenderingContext {
     private _city!: City;
     private _cloud!: ICloud;
     private _expandedMergedResults?: ExpandMergeResults;
+    private _requestMetaCI?: any;
 
     constructor(baseUrl: string, tedisPool: TedisPool, geoipReaders: GeoIpReaders, resolver: RepoResolver) {
         this.baseUrl = baseUrl;
@@ -52,14 +53,14 @@ export class RenderingContext {
 
     public async getOS(): Promise<IOS> {
         if (this._os) return this._os;
-        let os: string = this.getSomeParam(["os", "osg_ci_os", "osg_os_release_name", "osg_os_release_cpe_name"]);
+        let os: string = this.getSomeParam(["os", "ci_meta_distro", "osg_ci_os", "osg_os_release_name", "osg_os_release_cpe_name"]);
         this._os = BaseOS.createOS(os);
         return this._os;
     }
 
     public async getRelease(): Promise<IOSRelease> {
         if (this._release) return this._release;
-        let release: string = this.getSomeParam(["release", "osg_ci_release", "osg_os_release_version_id"]);
+        let release: string = this.getSomeParam(["release", "ci_meta_distro_release", "osg_ci_release", "osg_os_release_version_id"]);
         this._release = (await this.getOS()).getRelease(release);
         return this._release;
     }
@@ -123,7 +124,7 @@ export class RenderingContext {
         map.set("cpu_raw", this.getSomeParam(["cpu", "osg_cpu_info"]) || "unknown");
         map.set("default_route_intf", this.getSomeParam(["osg_ip2_intf"]) || "unknown");
         map.set("default_route_ip", this.getSomeParam(["osg_ip2_addr"]) || "unknown");
-        map.set("instance_id", this.getSomeParam(["iid", "osg_ci_iid"]) || "unknown");
+        map.set("instance_id", this.getSomeParam(["iid", "meta_ci_instance_id", "osg_ci_iid"]) || "unknown");
 
         // stuff from cloud / elquicko
 
@@ -156,6 +157,20 @@ export class RenderingContext {
                 return <string>value.trim();
             }
         }
+        if (name.startsWith("ci_meta_")) {
+            // all cloud-init metadata is in osg_json_ci_meta in a "v1" key, use that
+            if ((!this._requestMetaCI) && (this.paramsQS.get("osg_json_ci_meta"))) {
+                this._requestMetaCI = JSON.parse(this.paramsQS.get("osg_json_ci_meta") || "")
+                this._requestMetaCI = this._requestMetaCI["v1"];
+            }
+            if ((this._requestMetaCI)) {
+                let key = name.substr("ci_meta_".length);
+                let value = this._requestMetaCI[key];
+                console.log(`ci_meta: ${key}: ${value}`);
+                if (!this.isSomeValueBogus(value)) return value;
+            }
+        }
+
         // @TODO: refactor + cache.
         if (name.startsWith("osg_os_release_")) {
             // try osg_os_release_pairs in paramsQS;
@@ -199,7 +214,7 @@ export class RenderingContext {
 
     public async getArch() {
         if (this._arch) return this._arch;
-        let arch: string = this.getSomeParam(["arch", "osg_os_arch", "osg_ci_arch"]);
+        let arch: string = this.getSomeParam(["arch", "ci_meta_machine", "osg_os_arch", "osg_ci_arch"]);
         // there is still chance from the user-agent...
         this._arch = BaseArch.createArch(arch);
         return this._arch;
@@ -207,7 +222,7 @@ export class RenderingContext {
 
     async getCloud(): Promise<ICloud> {
         if (this._cloud) return this._cloud;
-        let cloud: string = this.getSomeParam(["cloud", "osg_ci_cloud", "osg_ci_platform"]);
+        let cloud: string = this.getSomeParam(["cloud", "meta_ci_cloud_name", "osg_ci_cloud", "meta_ci_platform", "osg_ci_platform"]);
         this._cloud = BaseCloud.createCloud(cloud);
         return this._cloud;
     }
