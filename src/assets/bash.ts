@@ -4,6 +4,7 @@ import * as path from "path";
 import {MimeTextFragment} from "../shared/mime";
 
 const includeRegex = /## \*\*INCLUDE:(.+)/gm;
+const envDefaultRegex = /## \*\*ENV_DEFAULT:(.+):(.+)/gm;
 const escapedIncludeRegex = /## \*\*ESCAPEDINCLUDE:(.+)/gm;
 const scriptNameRegex = /##\*\*SCRIPTNAME\*\*##/gm;
 const baseUrlRegex = /##\*\*BASEURL\*\*##/gm;
@@ -68,17 +69,29 @@ export class BashScriptAsset extends BaseAsset {
             return await this.repoResolver.getRawAsset(`assets/${includedRef}`, 'base64');
         }));
 
-        let shebang: String = "#!/bin/bash\nset -e\n\n";
+        // 4) more fun, part of a bash preprocessor stuff almost
+        replaced = await replaceAsync(replaced, envDefaultRegex, async (substring, varName, defaultValue) => {
+            return this.bashEnvDefaultPreprocessor(varName, defaultValue)
+        });
+
 
         // a fun feature, transform bash_XXXX=YYYY querystring parameters into
         // export OLDSKOOL_XXXX="YYYY"
-        let vars = Array.from(this.context.getPrefixedQueryStringParams("bash_"))
+        const vars = Array.from(this.context.getPrefixedQueryStringParams("bash_"))
             .map(value => `# from ?bash_${value[0]} query string\nexport OLDSKOOL_${value[0].trim().toUpperCase()}="${value[1]}";`)
             .join("\n") + "\n\n";
 
 
         // @TODO: also fun, transform context variables into OLDSKOOL_CONTEXT_xxx=yyyy
 
+        const shebang: String = "#!/bin/bash\nset -e\n\n";
         return new MimeTextFragment("text/x-shellscript", this.assetPath, shebang + vars + replaced);
+    }
+
+    private async bashEnvDefaultPreprocessor(varName: string, defaultValue: string) {
+        return `declare ${varName}_DEFAULT=${defaultValue} # Default specified: '${defaultValue}' 
+export ${varName}="\${${varName}:-\${${varName}_DEFAULT}}"
+logDebug "{${varName}}: '\${${varName}}'  [DEFAULT: '\${${varName}_DEFAULT}']"
+[[ ".\${${varName}}." != ".\${${varName}_DEFAULT}." ]] && logInfo "{${varName}}: '\${${varName}}' [overridden default: '\${${varName}_DEFAULT}']"\n`;
     }
 }
