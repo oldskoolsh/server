@@ -87,14 +87,24 @@ export class RenderingContext {
 
     public async resolveASNGeoIP(): Promise<Asn> {
         if (this._asn) return this._asn;
-        this._asn = this.geoipReaders.asn.asn(this.clientIP);
-        return this._asn;
+        try {
+            this._asn = this.geoipReaders.asn.asn(this.clientIP);
+            return this._asn;
+        } catch (ex) {
+            console.error("Error during GeoIP ASN lookup for address '" + this.clientIP + "': " + ex.message);
+            return {} as Asn;
+        }
     }
 
     public async resolveCityGeoIP(): Promise<City> {
         if (this._city) return this._city;
-        this._city = this.geoipReaders.city.city(this.clientIP);
-        return this._city;
+        try {
+            this._city = this.geoipReaders.city.city(this.clientIP);
+            return this._city;
+        } catch (ex) {
+            console.error("Error during GeoIP City lookup for address '" + this.clientIP + "': " + ex.message);
+            return {} as City;
+        }
     }
 
     public async getAllVariables(): Promise<Map<string, string>> {

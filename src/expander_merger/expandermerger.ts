@@ -184,13 +184,23 @@ class CloudInitSuperMerger {
                     await Promise.all(
                         conditionValue.map(async value => {
                             let impl: ICondition = this.createConditionImplementation(conditionKey, value);
-                            await impl.prepare();
-                            if (!await impl.evaluate()) {
-                                if (debug) await console.log(`[array] Condition with key '${conditionKey}' and value '${value}' evaluated to`, false)
+                            try {
+                                await impl.prepare();
+                            } catch (ex) {
+                                console.error(`EXCEPTION during condition prepare(): ${ex.message}`);
                                 return false;
                             }
-                            if (debug) await console.log(`[array] Condition with key '${conditionKey}' and value '${value}' evaluated to`, true)
-                            return true;
+                            try {
+                                if (!await impl.evaluate()) {
+                                    if (debug) await console.log(`[array] Condition with key '${conditionKey}' and value '${value}' evaluated to`, false)
+                                    return false;
+                                }
+                                if (debug) await console.log(`[array] Condition with key '${conditionKey}' and value '${value}' evaluated to`, true)
+                                return true;
+                            } catch (ex) {
+                                console.error(`EXCEPTION during condition evaluate(): ${ex.message}`);
+                                return false;
+                            }
                         })
                     );
                 let anyOfTheConditionsInArray = allConds.some(value => value);
