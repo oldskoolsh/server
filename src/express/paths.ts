@@ -37,7 +37,8 @@ export class OldSkoolServer extends OldSkoolMiddleware {
                 body += `# Final expanded recipes:  ${expandedResults.recipes.map(value => value.id).join(", ")}\n`;
                 // Show a compact view of installed apt sources and packages...
                 body += `# Final packages: ${expandedResults.processedCloudConfig.packages}\n`;
-                let sourcesCompact: String = Object.values(expandedResults.processedCloudConfig.apt.sources).map((one: any) => one.filename).join(', ');
+
+                let sourcesCompact: String = expandedResults.processedCloudConfig.apt && expandedResults.processedCloudConfig.apt.sources ? Object.values(expandedResults.processedCloudConfig.apt.sources).map((one: any) => one.filename).join(', ') : "none";
                 body += `# Final apt sources: ${sourcesCompact}\n`;
                 //let mirrorsCompact: String = Object.values(expandedResults.processedCloudConfig.apt.primary).map((one: any) => one.uri).join(', ');
                 //body += `# Final apt mirrors: ${mirrorsCompact}\n`;
