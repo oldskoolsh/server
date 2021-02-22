@@ -34,7 +34,21 @@ export class OldSkoolServer extends OldSkoolMiddleware {
                 body += "#include\n\n";
 
                 // list final expanded recipes:
-                body += `# Final expanded recipes:  ${expandedResults.recipes.map(value => value.id).join(", ")}\n\n`;
+                body += `# Final expanded recipes:  ${expandedResults.recipes.map(value => value.id).join(", ")}\n`;
+                // Show a compact view of installed apt sources and packages...
+                body += `# Final packages: ${expandedResults.processedCloudConfig.packages}\n`;
+                let sourcesCompact: String = Object.values(expandedResults.processedCloudConfig.apt.sources).map((one: any) => one.filename).join(', ');
+                body += `# Final apt sources: ${sourcesCompact}\n`;
+                //let mirrorsCompact: String = Object.values(expandedResults.processedCloudConfig.apt.primary).map((one: any) => one.uri).join(', ');
+                //body += `# Final apt mirrors: ${mirrorsCompact}\n`;
+                body += `\n`;
+
+                // show all the messages.
+                expandedResults.cloudConfig.messages?.forEach(value => {
+                    body += `# <b>${value}</b>\n`;
+                });
+                body += `\n`;
+
 
                 // comment to link to the cmdline version;
                 body += `# for cmdline usage: \n#  curl --silent "${context.recipesUrlNoParams}/cmdline" | sudo bash\n\n`;
@@ -60,6 +74,14 @@ export class OldSkoolServer extends OldSkoolMiddleware {
                 expandedResults.initScripts.forEach((script: IExecutableScript) => {
                     body += `# - initscript: ${script.callSign}\n`;
                     body += `${context.moduleUrl}/${script.assetPath}${minimalOsReleaseArchQS}\n\n`;
+                });
+
+
+                // Comments show the context variables at the time of rendering.
+                body += `\n# All context variables:\n`;
+                let allVars: Map<string, string> = await context.getAllVariables();
+                allVars.forEach((value, key) => {
+                    body += `#  ${key}: <b>${value}</b>\n`;
                 });
 
                 return new MimeTextFragment("text/x-include-url", "oldskool-main-include", body);

@@ -25,6 +25,8 @@ export abstract class OldSkoolMiddleware extends OldSkoolBase {
 
                 const baseUrl = `${req.secure ? "https://" : "http://"}${req.headers['host']}/`
 
+                //console.dir(req.headers);
+
                 req.oldSkoolContext = new RenderingContext(baseUrl, this.tedisPool, this.geoipReaders, resolver);
                 req.oldSkoolContext.userAgentStr = req.headers['user-agent'];
                 req.oldSkoolContext.clientIP = req.ip;
