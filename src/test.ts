@@ -88,7 +88,7 @@ test('default no-param expand and merge', async () => {
     context.clientIP = defaultClientIP;
 
     // initial expansion.
-    let expanderMerger: CloudInitExpanderMerger = new CloudInitExpanderMerger(context, defaultResolver, initialRecipes, [], []);
+    let expanderMerger: CloudInitExpanderMerger = new CloudInitExpanderMerger(context, defaultResolver, initialRecipes, [], [], []);
     let result: ExpandMergeResults = await expanderMerger.process();
 
     expect(result.cloudConfig).toBeTruthy();
@@ -101,7 +101,7 @@ test('default no-param processor', async () => {
     context.clientIP = defaultClientIP;
 
     // full expansion
-    let expanderMerger: CloudInitExpanderMerger = new CloudInitExpanderMerger(context, defaultResolver, initialRecipes, [], []);
+    let expanderMerger: CloudInitExpanderMerger = new CloudInitExpanderMerger(context, defaultResolver, initialRecipes, [], [], []);
     let expanderMergerResult: ExpandMergeResults = await expanderMerger.process();
 
     let cloudConfigObj: any = expanderMergerResult.processedCloudConfig; // "any" is for testing purposes only

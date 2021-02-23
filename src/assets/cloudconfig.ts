@@ -30,10 +30,20 @@ export class SubDropperAsset extends DropperAsset {
         let functionCalls: string = "";
         let partCounter = 2;
         functionCalls += `gatherInitScript "${this.context.recipesUrl}/launchers" "${this.fillZeros(partCounter)}"\n`;
+
+        // Actually execute the launchers, so that bootscripts can use them.
+        functionCalls += `"/var/lib/cloud/instance/scripts/part-${this.fillZeros(partCounter)}" || logError "Launcher exec failed!"\n`;
+
         expandedResults.initScripts.forEach((script: IExecutableScript) => {
             partCounter++;
             functionCalls += `gatherInitScript "${this.context.moduleUrl}/${script.assetPath}" "${this.fillZeros(partCounter)}"\n`;
         });
+
+        // Now boot scripts...
+        expandedResults.bootScripts.forEach((script: IExecutableScript) => {
+            functionCalls += `runBootScript "${this.context.moduleUrl}/${script.assetPath}" "${script.callSign}" \n`;
+        });
+
         return await this.renderFromString(functionCalls);
     }
 }

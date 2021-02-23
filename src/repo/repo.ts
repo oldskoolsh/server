@@ -185,6 +185,7 @@ export class Repository {
             always_include: false,
             auto_initscripts: [],
             auto_launchers: [],
+            auto_bootscripts: [],
             expand: [],
             include_if_not_recipe: [],
             include_if_recipe: [],

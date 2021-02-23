@@ -67,9 +67,11 @@ export class OldSkoolServer extends OldSkoolMiddleware {
                 // link to the launcher-creators...
                 // we only list the launchers here, as comments. all the actual heavy
                 // lifting is done by /launchers with is an init-script!
-                // consider: boot-cmd processor; cloud-init-per; etc.
+                // consider: boot-cmd processor (DONE); cloud-init-per; etc.
                 body += `# launchers: \n#  - ${expandedResults.launcherScripts.map((value: IExecutableScript) => `${value.callSign} (${context.moduleUrl}/${value.assetPath})`).join("\n#  - ")}\n`;
                 body += `${context.recipesUrl}/launchers${minimalOsReleaseArchQS}\n\n`;
+
+                body += `# bootscripts: \n#  - ${expandedResults.bootScripts.map((value: IExecutableScript) => `${value.callSign} (${context.moduleUrl}/${value.assetPath})`).join("\n#  - ")}\n\n`;
 
                 // link to the init-scripts, directly.
                 expandedResults.initScripts.forEach((script: IExecutableScript) => {

@@ -16,6 +16,10 @@ export interface IScriptComments {
      * Important: this are *NOT* blobs! Scripts have no sourceRecipe and thus no glob()
      */
     initScripts: string[];
+    /**
+     * Important: this are *NOT* blobs! Scripts have no sourceRecipe and thus no glob()
+     */
+    bootScripts: string[];
 
     /**
      * Packages to be included in cloud-config. @TODO: ubuntu/debian->centos/fedora translation, for example.
@@ -28,5 +32,6 @@ export interface ExpandMergeResults {
     processedCloudConfig: StandardCloudConfig;
     recipes: Recipe[];
     launcherScripts: IExecutableScript[];
+    bootScripts: IExecutableScript[];
     initScripts: IExecutableScript[];
 }

@@ -52,6 +52,10 @@ export interface IRecipeResultIncludeDef {
      * Include one or more initialization scripts to the context.
      */
     initScripts?: string | string[];
+    /**
+     * Include one or more boot scripts to the context.
+     */
+    bootScripts?: string | string[];
 }
 
 export interface IRecipeFragmentResultDef {

@@ -8,6 +8,7 @@ import {JBangScriptAsset} from "./jbang";
 
 const includeRecipeRegex: RegExp = /^(\s*)(##|\/\/) \*\*RECIPE:(?<recipe>.+)/gm;
 const includeInitScriptRegex: RegExp = /^(\s*)(##|\/\/) \*\*INITSCRIPT:(?<script>.+)/gm;
+const includeBootScriptRegex: RegExp = /^(\s*)(##|\/\/) \*\*BOOTSCRIPT:(?<script>.+)/gm;
 const includeLauncherScriptRegex: RegExp = /^(\s*)(##|\/\/) \*\*LAUNCHER:(?<script>.+)/gm;
 const includePackageRegex: RegExp = /^(\s*)(##|\/\/) \*\*PACKAGE:(?<package>.+)/gm;
 
@@ -32,6 +33,7 @@ export class AssetFactory {
         return {
             initScripts: this.extractWithRegex(scriptText, includeInitScriptRegex, "script"),
             launcherScripts: this.extractWithRegex(scriptText, includeLauncherScriptRegex, "script"),
+            bootScripts: this.extractWithRegex(scriptText, includeBootScriptRegex, "script"),
             recipes: this.extractWithRegex(scriptText, includeRecipeRegex, "recipe"),
             packages: this.extractWithRegex(scriptText, includePackageRegex, "package")
         } as IScriptComments;

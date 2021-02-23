@@ -14,6 +14,7 @@ export interface IRepoRecipe {
     virtual: boolean;
     expand: string[];
     auto_initscripts: string[];
+    auto_bootscripts: string[];
     auto_launchers: string[];
     node_version: string;
 }

@@ -239,7 +239,7 @@ export class RenderingContext {
 
     public async getExpandedMergedResults(): Promise<ExpandMergeResults> {
         if (!this._expandedMergedResults) this._expandedMergedResults = await
-            (new CloudInitExpanderMerger(this, this.resolver, this.initialRecipes ?? [], [], []))
+            (new CloudInitExpanderMerger(this, this.resolver, this.initialRecipes ?? [], [], [], []))
                 .process();
         return this._expandedMergedResults;
     }

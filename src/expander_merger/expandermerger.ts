@@ -32,16 +32,18 @@ class CloudInitSuperMerger {
     public readonly recipes: Recipe[]; // readonly, cause new recipes immediately cause a restart
     public initScripts: string[] = []; // read-write; initScripts and launchers cause a restart at the end of processing
     public launcherScripts: string[] = [];
+    public bootScripts: string[] = [];
 
     protected readonly context: RenderingContext;
     protected readonly repoResolver: RepoResolver;
 
-    constructor(context: RenderingContext, resolver: RepoResolver, recipes: Recipe[], initScripts: string[], launcherScripts: string[]) {
+    constructor(context: RenderingContext, resolver: RepoResolver, recipes: Recipe[], initScripts: string[], launcherScripts: string[], bootScripts: string[]) {
         this.context = context;
         this.repoResolver = resolver;
         this.recipes = recipes;
         this.initScripts = initScripts;
         this.launcherScripts = launcherScripts;
+        this.bootScripts = bootScripts;
     }
 
     async evaluateAndMergeAll() {
@@ -67,6 +69,14 @@ class CloudInitSuperMerger {
         }
     }
 
+
+    public async includeBootScriptsFromGlob(possiblyNewExecutables: string[], sourceRecipe: Recipe) {
+        if (possiblyNewExecutables.length == 0) return;
+        if (debug) console.warn("Should include BOOTSCRIPT", possiblyNewExecutables);
+        let possiblyNewExpandedGlobs = await sourceRecipe.expandGlobs(possiblyNewExecutables);
+        if (debug) console.warn("resolved included BOOTSCRIPT", possiblyNewExpandedGlobs);
+        this.bootScripts = [...new Set([...this.bootScripts, ...possiblyNewExpandedGlobs])];
+    }
 
     public async includeInitScriptsFromGlob(possiblyNewExecutables: string[], sourceRecipe: Recipe) {
         if (possiblyNewExecutables.length == 0) return;
@@ -153,6 +163,11 @@ class CloudInitSuperMerger {
                     await this.includeLauncherScriptsFromGlob([...resultFrag.include.launchers], superFragment.sourceFragment.recipe);
                 }
 
+                if (resultFrag.include.bootScripts) {
+                    if (debug) console.log("Including bootScripts...", resultFrag.include.bootScripts);
+                    await this.includeBootScriptsFromGlob([...resultFrag.include.bootScripts], superFragment.sourceFragment.recipe);
+                }
+
             }
 
             if (resultFrag.andIf) {
@@ -234,6 +249,10 @@ export class CloudInitExpanderMerger {
 
     protected readonly initialInitScripts: string[];
     protected currentInitScripts: string[];
+
+    protected readonly initialBootScripts: string[];
+    protected currentBootScripts: string[];
+
     protected readonly initialLaunchers: string[];
     protected currentLaunchers: string[];
 
@@ -243,7 +262,7 @@ export class CloudInitExpanderMerger {
 
     protected readonly restartStack: string[] = [];
 
-    constructor(context: RenderingContext, resolver: RepoResolver, initialRecipes: string[], initialInitScripts: string[], initialLaunchers: string[]) {
+    constructor(context: RenderingContext, resolver: RepoResolver, initialRecipes: string[], initialInitScripts: string[], initialLaunchers: string[], initialBootScripts: string[]) {
         this.context = context;
         this.repoResolver = resolver;
 
@@ -252,6 +271,9 @@ export class CloudInitExpanderMerger {
 
         this.initialInitScripts = initialInitScripts;
         this.currentInitScripts = initialInitScripts;
+
+        this.initialBootScripts = initialBootScripts;
+        this.currentBootScripts = initialBootScripts;
 
         this.initialLaunchers = initialLaunchers;
         this.currentLaunchers = initialLaunchers;
@@ -267,6 +289,7 @@ export class CloudInitExpanderMerger {
             if (debug) console.group("Scripts processing...")
             let finalInitScripts = await this.currentMerger.initScripts.asyncFlatMap(value => this.processLauncherScript(value));
             let finalLauncherScripts = await this.currentMerger.launcherScripts.asyncFlatMap(value => this.processLauncherScript(value));
+            let finalBootScripts = await this.currentMerger.bootScripts.asyncFlatMap(value => this.processLauncherScript(value));
             if (debug) console.groupEnd();
 
             // since that worked (did not throw), invoke the processor stack; context could modify the processor stack.
@@ -279,6 +302,7 @@ export class CloudInitExpanderMerger {
                 cloudConfig: this.currentMerger.cloudConfig,
                 recipes: this.currentMerger.recipes,
                 initScripts: finalInitScripts,
+                bootScripts: finalBootScripts,
                 launcherScripts: finalLauncherScripts,
                 processedCloudConfig: processedCloudConfig
             } as ExpandMergeResults;
@@ -292,6 +316,7 @@ export class CloudInitExpanderMerger {
                 this.currentRecipes = rep.wantedRecipes;
                 this.currentInitScripts = this.currentMerger.initScripts;
                 this.currentLaunchers = this.currentMerger.launcherScripts;
+                this.currentBootScripts = this.currentMerger.bootScripts;
                 return await this.process();
             }
             throw e;
@@ -312,6 +337,7 @@ export class CloudInitExpanderMerger {
         }
         await this.currentMerger.includeInitScriptsFromGlob(needs.initScripts, sourceRecipe);
         await this.currentMerger.includeLauncherScriptsFromGlob(needs.launcherScripts, sourceRecipe);
+        await this.currentMerger.includeBootScriptsFromGlob(needs.bootScripts, sourceRecipe);
         // @TODO: needs.packages!
 
         let renderPath = "_/";
@@ -335,13 +361,15 @@ export class CloudInitExpanderMerger {
 
             // Executables: expand according to TOML rules from the recipes.
             let recipeInitScripts: string[] = await resolvedCurrentRecipes.asyncFlatMap((recipe) => recipe.expandGlobs(recipe.def.auto_initscripts));
+            let recipeBootScripts: string[] = await resolvedCurrentRecipes.asyncFlatMap((recipe) => recipe.expandGlobs(recipe.def.auto_bootscripts));
             let recipeLaunchers: string[] = await resolvedCurrentRecipes.asyncFlatMap((recipe) => recipe.expandGlobs(recipe.def.auto_launchers));
 
             // Mix-in the initial ones, keeping unique
             let initialInitScripts: string[] = [...new Set([...recipeInitScripts, ...this.currentInitScripts])];
+            let initialBootScripts: string[] = [...new Set([...recipeBootScripts, ...this.currentBootScripts])];
             let initialLauncherScripts: string[] = [...new Set([...recipeLaunchers, ...this.currentLaunchers])];
 
-            this.currentMerger = new CloudInitSuperMerger(this.context, this.repoResolver, resolvedCurrentRecipes, initialInitScripts, initialLauncherScripts);
+            this.currentMerger = new CloudInitSuperMerger(this.context, this.repoResolver, resolvedCurrentRecipes, initialInitScripts, initialLauncherScripts, initialBootScripts);
             await this.currentMerger.evaluateAndMergeAll();
 
         } finally {
@@ -358,6 +386,11 @@ export class CloudInitExpanderMerger {
         let newLauncherScripts = this.currentMerger.launcherScripts.filter(oneCurrentScript => !this.currentLaunchers.includes(oneCurrentScript));
         if (newLauncherScripts.length > 0) {
             throw new RestartProcessingException("New launcherscripts included: " + newLauncherScripts.join(","), this.currentMerger.recipes.map(value => value.id));
+        }
+
+        let newBootScripts = this.currentMerger.bootScripts.filter(oneCurrentScript => !this.currentBootScripts.includes(oneCurrentScript));
+        if (newBootScripts.length > 0) {
+            throw new RestartProcessingException("New bootscripts included: " + newBootScripts.join(","), this.currentMerger.recipes.map(value => value.id));
         }
     }
 }
