@@ -40,6 +40,7 @@ export class SubDropperAsset extends DropperAsset {
         });
 
         // Now boot scripts...
+        functionCalls += "prepareBootScriptsRun\n";
         expandedResults.bootScripts.forEach((script: IExecutableScript) => {
             functionCalls += `runBootScript "${this.context.moduleUrl}/${script.assetPath}" "${script.callSign}" \n`;
         });
