@@ -287,10 +287,15 @@ export class CloudInitExpanderMerger {
 
             // Now we resolve the scripts into assets, will throw if any recipes or scripts are included.
             if (debug) console.group("Scripts processing...")
-            let finalInitScripts = await this.currentMerger.initScripts.asyncFlatMap(value => this.processLauncherScript(value));
-            let finalLauncherScripts = await this.currentMerger.launcherScripts.asyncFlatMap(value => this.processLauncherScript(value));
-            let finalBootScripts = await this.currentMerger.bootScripts.asyncFlatMap(value => this.processLauncherScript(value));
+            let finalInitScripts: Array<IExecutableScript> = await this.currentMerger.initScripts.asyncFlatMap(value => this.processLauncherScript(value));
+            let finalLauncherScripts: Array<IExecutableScript> = await this.currentMerger.launcherScripts.asyncFlatMap(value => this.processLauncherScript(value));
+            let finalBootScripts: Array<IExecutableScript> = await this.currentMerger.bootScripts.asyncFlatMap(value => this.processLauncherScript(value));
             if (debug) console.groupEnd();
+
+            // Just make sure there are no duplicate scripts, otherwise hell will ensue.
+            await this.checkUniqueScripts(finalInitScripts, "init");
+            await this.checkUniqueScripts(finalLauncherScripts, "launcher");
+            await this.checkUniqueScripts(finalBootScripts, "boot");
 
             // since that worked (did not throw), invoke the processor stack; context could modify the processor stack.
             // processor stack CAN'T add new recipes or executables!
@@ -392,5 +397,20 @@ export class CloudInitExpanderMerger {
         if (newBootScripts.length > 0) {
             throw new RestartProcessingException("New bootscripts included: " + newBootScripts.join(","), this.currentMerger.recipes.map(value => value.id));
         }
+    }
+
+    private async checkUniqueScripts(scripts: Array<IExecutableScript>, what: string) {
+        let callSignsExisting: Set<string> = new Set<string>();
+        let scriptsExisting: Map<string, IExecutableScript> = new Map<string, IExecutableScript>();
+        scripts.forEach(value => {
+            if (callSignsExisting.has(value.callSign)) {
+                let existing = scriptsExisting.get(value.callSign);
+                if (existing) {
+                    throw new Error(`Duplicate ${what} script: ${value.callSign} (${value.assetPath}) duplicates ${existing.assetPath}`);
+                }
+            }
+            callSignsExisting.add(value.callSign);
+            scriptsExisting.set(value.callSign, value);
+        });
     }
 }
