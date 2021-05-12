@@ -112,6 +112,7 @@ export class RenderingContext {
 
         // stuff from os/release.
         map.set("closest_lower_lts", (await this.getOS()).getClosestLowerLTS(await this.getRelease()).id);
+        map.set("closest_released", (await this.getOS()).getClosestReleased(await this.getRelease()).id);
         map.set("package_manager", (await this.getRelease()).packageManager);
         map.set("release_status", (await this.getRelease()).released ? "released" : "unreleased");
         map.set("release_init", (await this.getRelease()).systemd ? "systemd" : "other");

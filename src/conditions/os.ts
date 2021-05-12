@@ -17,6 +17,8 @@ export interface IOS {
     getRelease(slug: string): IOSRelease;
 
     getClosestLowerLTS(release: IOSRelease): IOSRelease;
+
+    getClosestReleased(release: IOSRelease): IOSRelease;
 }
 
 
@@ -93,13 +95,40 @@ export abstract class BaseOS implements IOS {
         return lowerOrEqualLtsReleases[0];
     }
 
+    public getClosestReleased(release: IOSRelease): IOSRelease {
+        const unknownRelease: IOSRelease = {
+            id: "unknown",
+            lts: false,
+            numVersion: 0,
+            os: this,
+            released: false,
+            systemd: true,
+            packageManager: "none"
+        };
+        // unknown OS has no known releases.
+        if (this.id === "unknown") return unknownRelease;
+        if (release.id === "unknown") return unknownRelease;
+
+        let lowerOrEqualReleasedReleases = this.releases ? this.releases
+            // lower or equal...
+            .filter(value => value.numVersion <= release.numVersion)
+            // lts
+            .filter(value => value.released) : [];
+        if (lowerOrEqualReleasedReleases.length < 1) {
+            console.warn(`No getClosestReleased than ${release.id} for OS: ${this.id}`);
+            return unknownRelease;
+        }
+        return lowerOrEqualReleasedReleases[0];
+    }
+
 }
 
 
 class Ubuntu extends BaseOS implements IOS {
     id: string = "ubuntu";
     releases: IOSRelease[] = [
-        {id: "hirsute", numVersion: 2104, lts: false, released: false, os: this, systemd: true, packageManager: "apt"},
+        {id: "impish", numVersion: 2110, lts: false, released: false, os: this, systemd: true, packageManager: "apt"},
+        {id: "hirsute", numVersion: 2104, lts: false, released: true, os: this, systemd: true, packageManager: "apt"},
         {id: "groovy", numVersion: 2010, lts: false, released: true, os: this, systemd: true, packageManager: "apt"},
         {id: "focal", numVersion: 2004, lts: true, released: true, os: this, systemd: true, packageManager: "apt"},
         {id: "bionic", numVersion: 1804, lts: true, released: true, os: this, systemd: true, packageManager: "apt"},
