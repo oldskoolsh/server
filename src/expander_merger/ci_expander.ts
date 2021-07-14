@@ -1,6 +1,7 @@
 import {RenderingContext} from "../repo/context";
 import {RepoResolver} from "../repo/resolver";
 import {Recipe} from "../repo/recipe";
+import logger from "../shared/Logger";
 
 export class CloudInitFlatRecipeExpanderFromRecipeDefs {
     protected readonly context: RenderingContext;
@@ -43,7 +44,12 @@ export class CloudInitFlatRecipeExpanderFromRecipeDefs {
         //  (what if we can't find one?) throw!
         let pickedRecipes: Recipe[] = [];
         for (const initialRecipe of this.preExpandRecipes) {
-            pickedRecipes.push(this.getRecipeById(initialRecipe));
+            let recipeById = this.getRecipeByIdNoThrow(initialRecipe);
+            if (!recipeById) {
+                logger.warn(`Recipe not found: ${initialRecipe} -- using 'base'.`);
+                recipeById = this.getRecipeById("base");
+            }
+            pickedRecipes.push(recipeById);
         }
 
         // now each of those picked can 'expand' into more
@@ -62,6 +68,12 @@ export class CloudInitFlatRecipeExpanderFromRecipeDefs {
     private getRecipeById(initialRecipe: string) {
         let newVar = <Recipe>this.availableRecipesMap.get(initialRecipe);
         if (!newVar) throw new Error("Can't find recipe " + initialRecipe);
+        return newVar;
+    }
+
+    private getRecipeByIdNoThrow(initialRecipe: string) {
+        let newVar = <Recipe>this.availableRecipesMap.get(initialRecipe);
+        if (!newVar) return null;
         return newVar;
     }
 
