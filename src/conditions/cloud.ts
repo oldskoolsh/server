@@ -5,7 +5,7 @@ export interface ICloud {
 
 export class BaseCloud {
     static createCloud(cloud: string): ICloud {
-        let allClouds: ICloud[] = [new UnknownCloud(), new NonCloudCloud(), new DigitalOceanCloud(), new AzureCloud(), new AmazonCloud()];
+        let allClouds: ICloud[] = [new UnknownCloud(), new NonCloudCloud(), new DigitalOceanCloud(), new AzureCloud(), new AmazonCloud(), new OracleCloud()];
 
         if (!cloud) return allClouds[0];
 
@@ -48,3 +48,7 @@ export class AmazonCloud extends BaseCloud implements ICloud {
     other_names = ["ec2"];
 }
 
+export class OracleCloud extends BaseCloud implements ICloud {
+    id = "oracle";
+    other_names = ["oci"];
+}

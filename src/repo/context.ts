@@ -135,7 +135,7 @@ export class RenderingContext {
         map.set("cpu_raw", this.getSomeParam(["cpu", "osg_cpu_info"]) || "unknown");
         map.set("default_route_intf", this.getSomeParam(["osg_ip2_intf"]) || "unknown");
         map.set("default_route_ip", this.getSomeParam(["osg_ip2_addr"]) || "unknown");
-        map.set("instance_id", this.getSomeParam(["iid", "meta_ci_instance_id", "osg_ci_iid"]) || "unknown");
+        map.set("instance_id", this.getSomeParam(["iid", "ci_meta_instance_id", "osg_ci_iid"]) || "unknown");
 
         // stuff from cloud / elquicko
 
@@ -233,7 +233,7 @@ export class RenderingContext {
 
     async getCloud(): Promise<ICloud> {
         if (this._cloud) return this._cloud;
-        let cloud: string = this.getSomeParam(["cloud", "meta_ci_cloud_name", "osg_ci_cloud", "meta_ci_platform", "osg_ci_platform"]);
+        let cloud: string = this.getSomeParam(["cloud", "ci_meta_cloud_name", "osg_ci_cloud", "ci_meta_platform", "osg_ci_platform"]);
         this._cloud = BaseCloud.createCloud(cloud);
         return this._cloud;
     }
