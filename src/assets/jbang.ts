@@ -4,7 +4,7 @@ import {IAssetInfo} from "../repo/resolver";
 import path from "path";
 import {MimeTextFragment} from "../shared/mime";
 
-const gradleDepsRegex = /^(\s)+(compile|compileOnly)(\s)+("|')(.*)("|')/gm;
+const gradleDepsRegex = /^(\s)+(compile|compileOnly|implementation)(\s)+("|')(.*)("|')/gm;
 
 
 export class JBangScriptAsset extends BaseAsset {
@@ -58,7 +58,7 @@ export class JBangScriptAsset extends BaseAsset {
             mainScript += `logDebug "Wrote $JBANG_LAUNCHER_DIR/${mainJBang.mkdirName}/${asset.name}"\n`;
         })
 
-        mainScript += `jbangLauncherPrepareJBang "${mainJBang.name}" "0.55.2" \n`;
+        mainScript += `jbangLauncherPrepareJBang "${mainJBang.name}" "0.78.0" \n`;
 
         // run!
         mainScript += `jbangLauncherDoLaunch "${mainJBang.name}" "$@" \n`;
