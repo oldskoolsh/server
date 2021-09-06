@@ -10,7 +10,7 @@ export class DefaultGeoIPReaders {
     async prepareReaders(): Promise<GeoIpReaders> {
         return {
             asn: await Reader.open(
-                process.env.GEOIP2_CITY_MMDB ||
+                process.env.GEOIP2_ASN_MMDB ||
                 process.env['HOME'] + "/Downloads/GeoLite2-ASN.mmdb"
             )
             ,
