@@ -53,7 +53,9 @@ export class PathRepoReference {
     }
 
     async readFileContents(relativePath: string, encoding: String = 'utf8'): Promise<string> {
+        console.log("Resolving path:", this.baseDirectory, relativePath);
         let fullPath = path.resolve(this.baseDirectory, relativePath);
+        console.log("Resolved path:", fullPath);
         switch (encoding) {
             case 'utf8':
                 return await fs.promises.readFile(fullPath, {encoding: 'utf8'});
