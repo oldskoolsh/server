@@ -3,7 +3,7 @@ import path from "path";
 import fs from "fs";
 import fg from "fast-glob";
 
-const debug: boolean = true;
+const debug: boolean = false;
 
 export class PathRepoReference {
     id: string;

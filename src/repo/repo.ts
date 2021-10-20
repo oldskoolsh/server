@@ -6,7 +6,7 @@ import {PathRepoReference} from "./reference";
 import YAML from 'yaml';
 import path from "path";
 
-const debug: boolean = true;
+const debug: boolean = false;
 
 export class Repository {
     public name: string | undefined;

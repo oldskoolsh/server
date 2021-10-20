@@ -4,6 +4,7 @@ import {RepoResolver} from "../repo/resolver";
 import {RenderingContext} from "../repo/context";
 
 const debug = false;
+const logClientData = false;
 
 export abstract class OldSkoolMiddleware extends OldSkoolBase {
     protected uriOwnerRepoCommitish: string = "/:owner/:repo/:commitish";
@@ -86,12 +87,15 @@ export abstract class OldSkoolMiddleware extends OldSkoolBase {
         this.middleware(
             [`${this.uriOwnerRepoCommitish}`], async (req, res) => {
                 (debug) && console.warn("Common middleware ORC END!");
-                // @TODO: we don't need to await this.
-                req.oldSkoolContext.logClientData().then(value => {
-                    if (value) console.warn(`De-initted: ${value}`);
-                }).catch(reason => {
-                    console.error("Error during deinit", reason);
-                })
+
+                if (logClientData) {
+                    req.oldSkoolContext.logClientData().then(value => {
+                        if (value) console.warn(`De-initted: ${value}`);
+                    }).catch(reason => {
+                        console.error("Error during deinit", reason);
+                    });
+                }
+
             })
     }
 
