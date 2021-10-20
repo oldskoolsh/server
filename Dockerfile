@@ -39,9 +39,14 @@ ENV REDIS_HOST=192.168.66.67
 ENV REDIS_PORT=6379
 ENV GEOIP2_ASN_MMDB=/geoip/GeoLite2-City.mmdb
 ENV GEOIP2_CITY_MMDB=/geoip/GeoLite2-ASN.mmdb
+ENV ROOT_BASEPATH=/repos
+ENV ROOT_DIR=rpardini
 
 # Volumes used, if user wants to override.
 VOLUME /geoip
 
+VOLUME /repos
+
+WORKDIR /app
 ENTRYPOINT ["/tini", "--"]
 CMD ["node", "/app/dist", "--env=production"] 
