@@ -23,9 +23,10 @@ export class PathRepoReference {
             this.basePath = this.parentRef.ownPath;
             this.ownPath = this.refDescriptor.path_ref;
         } else {
-            this.basePath = this.refDescriptor.path_ref;
-            this.ownPath = "";
+            this.basePath = "";
+            this.ownPath = this.refDescriptor.path_ref;
         }
+        if (debug) console.log("will resolve intermediate", "basePath:", this.basePath,  "ownPath:", this.ownPath);
         let intermediate = path.resolve(this.basePath, this.ownPath);
         if (debug) console.log("intermediate", intermediate);
 
@@ -44,6 +45,8 @@ export class PathRepoReference {
         if (!stats) {
             throw new Error(`Can't find directory ${this.baseDirectory}`);
         }
+        this.basePath = intermediate;
+        this.ownPath = intermediate;
     }
 
     async getFileFullPath(relativePath: string): Promise<string> {
@@ -53,9 +56,9 @@ export class PathRepoReference {
     }
 
     async readFileContents(relativePath: string, encoding: String = 'utf8'): Promise<string> {
-        console.log("Resolving path:", this.baseDirectory, relativePath);
+        if (debug) console.log("readFileContents: Resolving path:", this.baseDirectory, relativePath);
         let fullPath = path.resolve(this.baseDirectory, relativePath);
-        console.log("Resolved path:", fullPath);
+        if (debug) console.log("readFileContents: Resolved path:", fullPath);
         switch (encoding) {
             case 'utf8':
                 return await fs.promises.readFile(fullPath, {encoding: 'utf8'});

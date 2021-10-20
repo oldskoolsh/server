@@ -6,7 +6,7 @@ import {PathRepoReference} from "./reference";
 import YAML from 'yaml';
 import path from "path";
 
-const debug: boolean = false;
+const debug: boolean = true;
 
 export class Repository {
     public name: string | undefined;
@@ -69,6 +69,7 @@ export class Repository {
             await this.processRecipes();
             // for each rawUsesRef, resolve it as well...
             for (let rawUseRef of this.rawUsesRef) {
+                if (debug) console.log("Resolving rawUseRef", rawUseRef);
                 let childRef = new PathRepoReference(this.myRef, rawUseRef);
                 let childRepo = new Repository(childRef, this.myResolver);
                 await childRepo.recursivelyResolve();
