@@ -8,8 +8,13 @@ new aff();
 
 // Start the server
 async function index() {
-    // prepare Tedis for Redis caching. @TODO: read from env
-    let tedisPool = new TedisPool({port: 6379, host: "127.0.0.1"});
+    // prepare Tedis for Redis caching.
+    let redisPort: number = 6379;
+    let redisHost: string = "127.0.0.1";
+    if (process.env.REDIS_HOST) redisHost = process.env.REDIS_HOST;
+    if (process.env.REDIS_PORT) redisPort = ~~process.env.REDIS_PORT;
+
+    let tedisPool = new TedisPool({port: redisPort, host: redisHost});
     let oneTedis = await tedisPool.getTedis();
     tedisPool.putTedis(oneTedis);
 
