@@ -8,6 +8,7 @@
     "schema": "typescript-json-schema --required --noExtraProps --out recipe.schema.json tsconfig.json IRecipeFragmentDef",
     "build": "tsc --build tsconfig.prod.json",
     "start": "node ./dist --env=production",
+    "copyright": "copyright-header --fix --templateId apache --copyrightHolder \"Ricardo Pardini\" --include \"src,@types\" ",
     "start:dev": "nodemon",
     "start:fastdev": "node ./dist --env=development"
   },
@@ -49,6 +50,7 @@
     "@types/node-fetch": "^2",
     "@types/openpgp": "^4",
     "@types/ua-parser-js": "^0",
+    "copyright-header": "^0",
     "jest": "~26",
     "nodemon": "^2",
     "ts-jest": "^26",
