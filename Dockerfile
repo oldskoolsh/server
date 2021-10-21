@@ -21,6 +21,9 @@ ADD tsconfig*.json /source/
 # Now build it (typescript)
 RUN npm run build
 
+# Generate the schema
+RUN npm run schema
+
 # Now the final image
 FROM node:16
 
@@ -29,6 +32,7 @@ COPY geoip/mmdb/* /geoip/
 
 WORKDIR /app
 COPY --from=build /source/dist /app/dist
+COPY --from=build /source/recipe.schema.json /app/recipe.schema.json
 COPY --from=build /source/node_modules /app/node_modules
 COPY --from=build /usr/bin/tini /tini
 

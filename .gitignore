@@ -6,4 +6,5 @@ node_modules
 recipe.schema.json
 coverage
 data
+geoip
 

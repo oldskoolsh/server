@@ -70,8 +70,10 @@ export abstract class OldSkoolMiddleware extends OldSkoolBase {
                 let {paramStr, keyValueMap} = this.readParamKV(req);
                 req.oldSkoolContext.paramKV = keyValueMap;
                 req.oldSkoolContext.recipesUrl = `${req.oldSkoolContext.recipesUrl}/params/${paramStr}/dsnocloud`;
-                // just logging, async
-                req.oldSkoolContext.logClientData().then();
+                if (logClientData) {
+                    // just logging, async
+                    req.oldSkoolContext.logClientData().then();
+                }
             })
 
         this.middleware(

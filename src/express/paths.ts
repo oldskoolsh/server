@@ -9,6 +9,7 @@ import {IExecutableScript} from "../schema/results";
 import {AssetFactory} from "../assets/asset_factory";
 import {MetadataAsset, VendorDataAsset} from "../assets/metadata";
 import {CloudConfigAsset, DropperAsset, GatherCloudConfigAsset, SubDropperAsset} from "../assets/cloudconfig";
+import path from "path";
 
 const {BAD_REQUEST, OK} = StatusCodes;
 
@@ -181,6 +182,13 @@ export class OldSkoolServer extends OldSkoolMiddleware {
             async (context: RenderingContext, res: Response) => {
                 return await (new VendorDataAsset(context, context.resolver, "fake_vendor_Data")).renderFromString();
             });
+
+
+        this.app.get('/schema', async (req, res, next) => {
+            let schemaPath = path.join(__dirname, '..', '..', 'recipe.schema.json');
+            console.log("Serving schema: ", schemaPath);
+            res.sendFile(schemaPath, {headers: {'x-producer': 'oldskool', 'cache-control':'public, max-age=600'}});
+        });
 
 
     }
