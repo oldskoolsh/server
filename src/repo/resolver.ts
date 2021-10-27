@@ -34,9 +34,9 @@ export class RepoResolver {
     private readonly rootRepo: Repository;
 
     constructor(basePath: string, thisPath: string) {
-        console.log("RepoResolver: will resolve basePath:", basePath, "thisPath:", thisPath);
+        //console.log("RepoResolver: will resolve basePath:", basePath, "thisPath:", thisPath);
         let resolvedPathRef = path.resolve(basePath, thisPath);
-        console.log("RepoResolver: resolved:", resolvedPathRef);
+        //console.log("RepoResolver: resolved:", resolvedPathRef);
         this.rootRef = new PathRepoReference(undefined, {
             id: "root",
             repo_ref: "",
