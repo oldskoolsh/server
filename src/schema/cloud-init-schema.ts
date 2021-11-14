@@ -25,6 +25,7 @@ export interface StandardCloudConfig {
     package_update?: boolean;
     package_reboot_if_required?: boolean;
     package_upgrade?: boolean;
+    manage_etc_hosts?: boolean;
     ssh_authorized_keys?: string[];
 }
 
