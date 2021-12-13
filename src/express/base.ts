@@ -24,6 +24,8 @@ import {RenderingContext} from "../repo/context";
 import {GeoIpReaders} from "../shared/geoip";
 import {Query} from "express-serve-static-core";
 import {MimeTextFragment} from "../shared/mime";
+import promBundle from "express-prom-bundle";
+
 // Hack into Express to be able to catch exceptions thrown from async handlers.
 // Yes, a "require" here is the only way to make this work.
 import linkifyUrls from "linkify-urls";
@@ -91,6 +93,19 @@ export abstract class OldSkoolBase {
         // "Security headers"
         // import helmet from 'helmet';
         //app.use(helmet());
+
+        // Add the options to the prometheus middleware most option are for http_request_duration_seconds histogram metric
+        // add the prometheus middleware to all routes
+        this.app.use(promBundle({
+            includeMethod: true,
+            includePath: true,
+            includeStatusCode: true,
+            includeUp: true,
+            customLabels: {oldskool: 'server'},
+            promClient: {
+                collectDefaultMetrics: {}
+            }
+        }));
 
         // Print API errors
         this.app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
