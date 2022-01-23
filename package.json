@@ -34,7 +34,7 @@
     "jet-logger": "^1",
     "linkify-urls": "^3",
     "morgan": "^1.7",
-    "node-fetch": "^2",
+    "node-fetch": "^3",
     "openpgp": "^4",
     "prom-client": "^14.0.1",
     "string-replace-async": "^2",
