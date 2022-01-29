@@ -37,7 +37,7 @@ export abstract class OldSkoolMiddleware extends OldSkoolBase {
 
                 // Fake, should come from :owner/:repo/:commitish
                 // Everything under this path is assumed to be public. No secrets should live here
-                const resolver = new RepoResolver(process.env.ROOT_BASEPATH ?? "/Users/pardini/Documents/Projects/sk",
+                const resolver = new RepoResolver(process.env.ROOT_BASEPATH ?? "/Users/rpardini/projects/oldskool",
                     process.env.ROOT_DIR ?? "oldskool-rpardini");
                 await resolver.rootResolve();
                 req.oldSkoolResolver = resolver;

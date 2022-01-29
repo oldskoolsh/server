@@ -106,7 +106,7 @@ export class RenderingContext {
         try {
             this._asn = this.geoipReaders.asn.asn(this.clientIP);
             return this._asn;
-        } catch (ex) {
+        } catch (ex:any) {
             console.error("Error during GeoIP ASN lookup for address '" + this.clientIP + "': " + ex.message);
             return {} as Asn;
         }
@@ -117,7 +117,7 @@ export class RenderingContext {
         try {
             this._city = this.geoipReaders.city.city(this.clientIP);
             return this._city;
-        } catch (ex) {
+        } catch (ex:any) {
             console.error("Error during GeoIP City lookup for address '" + this.clientIP + "': " + ex.message);
             return {} as City;
         }

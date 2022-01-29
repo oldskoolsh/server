@@ -51,7 +51,7 @@ export class Recipe {
                         .filter(value => value != null)
                         .map((value, index) => new CloudConfigSuperFragment(value, this, mentionedFile, index + 1))
                 );
-            } catch (e) {
+            } catch (e:any) {
                 throw new Error("Error parsing doc: " + mentionedFile + " :: " + e.message);
             }
         }
@@ -63,7 +63,7 @@ export class Recipe {
             if ((!scriptGlobs) || (scriptGlobs.length < 1)) return [];
             let solvedGlobs: string[] = (await scriptGlobs.asyncFlatMap(((value: string) => this.repo.resolveGlob(value))));
             return solvedGlobs;
-        } catch (e) {
+        } catch (e:any) {
             throw new Error(`Could not expand globs: recipe '${this.id}': ${e.message}`);
         }
     }

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import Logger from 'jet-logger';
+import Logger, { JetLogger } from 'jet-logger';
 
-const logger = new Logger();
+const logger = JetLogger();
 export default logger;

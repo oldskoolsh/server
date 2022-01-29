@@ -217,7 +217,7 @@ class CloudInitSuperMerger {
                             let impl: ICondition = this.createConditionImplementation(conditionKey, value);
                             try {
                                 await impl.prepare();
-                            } catch (ex) {
+                            } catch (ex:any) {
                                 console.error(`EXCEPTION during condition prepare(): ${ex.message}`);
                                 return false;
                             }
@@ -228,7 +228,7 @@ class CloudInitSuperMerger {
                                 }
                                 if (debug) await console.log(`[array] Condition with key '${conditionKey}' and value '${value}' evaluated to`, true)
                                 return true;
-                            } catch (ex) {
+                            } catch (ex:any) {
                                 console.error(`EXCEPTION during condition evaluate(): ${ex.message}`);
                                 return false;
                             }
