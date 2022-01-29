@@ -3,6 +3,10 @@
   "repository": "https://github.com/oldskoolsh/server",
   "license": "Apache-2.0",
   "version": "0.0.0",
+  "engines": {
+    "node": ">= 16",
+    "npm": ">= 8"
+  },
   "scripts": {
     "test": "npx jest",
     "schema": "typescript-json-schema --required --noExtraProps --out recipe.schema.json tsconfig.json IRecipeFragmentDef",
@@ -26,7 +30,7 @@
     "deepmerge": "^4",
     "express": "^4",
     "express-async-errors": "^3",
-    "express-prom-bundle": "^6.4.1",
+    "express-prom-bundle": "^6",
     "fast-glob": "^3",
     "helmet": "^4",
     "highlight.js": "^10",
@@ -36,7 +40,7 @@
     "morgan": "^1.7",
     "node-fetch": "^2",
     "openpgp": "^4",
-    "prom-client": "^14.0.1",
+    "prom-client": "^14",
     "string-replace-async": "^2",
     "tedis": "^0",
     "typescript-json-schema": "^0",
