@@ -88,7 +88,7 @@ export abstract class OldSkoolBase {
 
         // Show routes called in console during development
         // @ts-ignore // @TODO: what happened?
-        this.app.use(morgan('dev'));
+        this.app.use(morgan('combined'));
 
         // "Security headers"
         // import helmet from 'helmet';
