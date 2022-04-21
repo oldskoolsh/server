@@ -18,6 +18,8 @@ import {TedisPool} from "tedis";
 import logger from "../shared/Logger";
 import {Express, NextFunction, Request, Response} from 'express';
 import morgan from "morgan";
+import bodyParser from "body-parser";
+
 import hljs from 'highlight.js';
 import StatusCodes from "http-status-codes";
 import {RenderingContext} from "../repo/context";
@@ -48,7 +50,7 @@ export abstract class OldSkoolBase {
 
     handle(paths: string[], handler: (context: RenderingContext, res: Response, req: Request) => Promise<MimeTextFragment>) {
         for (const path of paths) {
-            this.app.get(path, async (req, res, next) => {
+            this.app.all(path, async (req, res, next) => {
                 let ret: MimeTextFragment | void = await handler(req.oldSkoolContext, res, req);
                 if (ret) {
                     await this.writeSingleFragmentToResponse(req.oldSkoolContext, res, req, ret);
@@ -85,6 +87,8 @@ export abstract class OldSkoolBase {
 
         // handle reverse proxy (X-Forwarded-For etc)
         this.app.set('trust proxy', ['loopback', 'linklocal', 'uniquelocal']);
+
+        this.app.use(bodyParser.urlencoded({extended: true}));
 
         // Show routes called in console during development
         // @ts-ignore // @TODO: what happened?
@@ -134,9 +138,10 @@ export abstract class OldSkoolBase {
     protected readParamsQS(req: Request) {
         let paramsQS: Map<string, string> = new Map<string, string>();
         let qsKey: string;
-        let expressQS: Query = req.query;
-        for (qsKey of Object.keys(expressQS)) {
-            let qsValue: string | string[] | Query | Query[] | undefined = req.query[qsKey];
+        let expressQS: Query = req.body ? req.body : req.query;
+        let keys = Object.keys(expressQS);
+        for (qsKey of keys) {
+            let qsValue: string | string[] | Query | Query[] | undefined = expressQS[qsKey];
             if (qsValue === undefined) continue;
             if (qsValue instanceof Array) {
                 let lastArrVal = qsValue[qsValue.length - 1]
@@ -145,6 +150,7 @@ export abstract class OldSkoolBase {
                 paramsQS.set(qsKey.toLowerCase(), qsValue.toString().toLowerCase());
             }
         }
+        console.log("Final paramsQS:", paramsQS);
         return paramsQS;
     }
 
