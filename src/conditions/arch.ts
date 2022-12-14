@@ -22,7 +22,7 @@ export interface IArch {
 
 export class BaseArch {
     static createArch(arch: string): IArch {
-        let allArches: IArch[] = [new archUnknown(), new archAmd64(), new archI386(), new archArm64()];
+        let allArches: IArch[] = [new archUnknown(), new archAmd64(), new archI386(), new archArm64(), new riscv64()];
         if (!arch) return allArches[0];
 
         let idMatch = allArches.filter(value => value.id === arch);
@@ -58,5 +58,11 @@ export class archI386 extends BaseArch implements IArch {
 export class archArm64 extends BaseArch implements IArch {
     id: string = "arm64";
     other_names = ["aarch64", "armv8"]
+    is_default = false;
+}
+
+export class riscv64 extends BaseArch implements IArch {
+    id: string = "riscv64";
+    other_names = []
     is_default = false;
 }
