@@ -86,7 +86,8 @@ export abstract class OldSkoolBase {
         //})
 
         // handle reverse proxy (X-Forwarded-For etc)
-        this.app.set('trust proxy', ['loopback', 'linklocal', 'uniquelocal']);
+        //this.app.set('trust proxy', ['loopback', 'linklocal', 'uniquelocal', '::ffff:100.118.142.72']); // '::ffff:100.118.142.72' IPv6 tailnet
+        this.app.set('trust proxy', true);
 
         this.app.use(bodyParser.urlencoded({extended: true}));
 
