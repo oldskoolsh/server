@@ -158,6 +158,7 @@ class Ubuntu extends BaseOS implements IOS {
 class Debian extends BaseOS implements IOS {
     id: string = "debian";
     releases: IOSRelease[] = [
+        {id: "bookworm", numVersion: 12, lts: true, released: true, systemd: true, os: this, packageManager: "apt"},
         {id: "bullseye", numVersion: 11, lts: true, released: true, systemd: true, os: this, packageManager: "apt"},
         {id: "buster", numVersion: 10, lts: true, released: true, systemd: true, os: this, packageManager: "apt"},
         {id: "squeeze", numVersion: 9, lts: true, released: true, systemd: true, os: this, packageManager: "apt"},

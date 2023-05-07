@@ -139,18 +139,23 @@ export abstract class OldSkoolBase {
     protected readParamsQS(req: Request) {
         let paramsQS: Map<string, string> = new Map<string, string>();
         let qsKey: string;
-        let expressQS: Query = req.body ? req.body : req.query;
-        let keys = Object.keys(expressQS);
-        for (qsKey of keys) {
-            let qsValue: string | string[] | Query | Query[] | undefined = expressQS[qsKey];
-            if (qsValue === undefined) continue;
-            if (qsValue instanceof Array) {
-                let lastArrVal = qsValue[qsValue.length - 1]
-                paramsQS.set(qsKey.toLowerCase(), lastArrVal.toString().toLowerCase());
-            } else {
-                paramsQS.set(qsKey.toLowerCase(), qsValue.toString().toLowerCase());
+        
+        let toCheck = [req.query, req.body];
+        let expressQS: Query;
+        for (let expressQS of toCheck) {
+            let keys = Object.keys(expressQS);
+            for (qsKey of keys) {
+                let qsValue: string | string[] | Query | Query[] | undefined = expressQS[qsKey];
+                if (qsValue === undefined) continue;
+                if (qsValue instanceof Array) {
+                    let lastArrVal = qsValue[qsValue.length - 1]
+                    paramsQS.set(qsKey.toLowerCase(), lastArrVal.toString().toLowerCase());
+                } else {
+                    paramsQS.set(qsKey.toLowerCase(), qsValue.toString().toLowerCase());
+                }
             }
         }
+        
         console.log("Final paramsQS:", paramsQS);
         return paramsQS;
     }
