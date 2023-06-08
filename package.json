@@ -44,7 +44,7 @@
     "string-replace-async": "^2",
     "tedis": "^0",
     "typescript-json-schema": "^0",
-    "ua-parser-js": "^0",
+    "ua-parser-js": "^1",
     "yaml": "^2.0.0-1"
   },
   "devDependencies": {
