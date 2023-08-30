@@ -44,11 +44,13 @@ export class CloudInitYamlProcessorAptSources extends BaseYamlProcessor {
 
     private async handleAptSource(sourceDef: any): Promise<any> {
         if (sourceDef["http_key"]) {
+            console.log("Resolving GPG key from http_key: ", sourceDef["http_key"]);
             sourceDef["key"] = await this.resolveHttpKey(sourceDef["http_key"]);
             delete sourceDef["http_key"];
         }
 
         if (sourceDef["keyid"]) {
+            console.log("Resolving GPG key from keyid: ", sourceDef["keyid"]);
             sourceDef["key"] = await this.resolveKeyId(sourceDef["keyid"], sourceDef["keyserver"] ? sourceDef["keyserver"] : "keyserver.ubuntu.com");
             delete sourceDef["keyid"];
         }
