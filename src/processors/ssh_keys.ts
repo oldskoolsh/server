@@ -84,6 +84,7 @@ export class CloudInitYamlProcessorSSHKeys extends BaseYamlProcessor {
             let yamlContents = await this.repoResolver.getRawAsset(`keys/${keySetName}.yaml`);
             return YAML.parse(yamlContents);
         } catch (e) {
+            console.warn("Could not find keyset", keySetName, e);
             //if (keySetName === "default") {
             return [/*keySetName+"_"+*/this.repoResolver.getGithubRootRepoOwner()];
             //}
