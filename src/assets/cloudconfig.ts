@@ -102,7 +102,8 @@ export class GatherCloudConfigAsset extends CloudConfigAsset {
         // @TODO: this is run in sh ("dash" in Debian/Ubuntu) and I can't really figure out the fucking syntax
         let dropperCmds: string[] = possibleCurls.map(curlBin => {
             return possibleBashs.map(bashBin => {
-                return `${curlBin} --silent --show-error "${this.context.recipesUrl}/dropper?bash_force_color_logging=true" | ${bashBin} \n`;
+                // --silent --show-error ?
+                return `echo "Oldskool loading ${this.context.recipesUrl}/dropper?bash_force_color_logging=true ..." >&2; ${curlBin} --retry 10 --retry-max-time 120 --retry-all-errors "${this.context.recipesUrl}/dropper?bash_force_color_logging=true" --output "/tmp/oldskool.dropper.sh" && ${bashBin} "/tmp/oldskool.dropper.sh"\n`;
             });
         }).flat();
 
