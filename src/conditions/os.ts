@@ -143,7 +143,9 @@ export abstract class BaseOS implements IOS {
 class Ubuntu extends BaseOS implements IOS {
     id: string = "ubuntu";
     releases: IOSRelease[] = [
-        {id: "lunar", numVersion: 2304, lts: false, released: false, os: this, systemd: true, packageManager: "apt"},
+        {id: "noble", numVersion: 2404, lts: true, released: false, os: this, systemd: true, packageManager: "apt"},
+        {id: "mantic", numVersion: 2310, lts: false, released: true, os: this, systemd: true, packageManager: "apt"},
+        {id: "lunar", numVersion: 2304, lts: false, released: true, os: this, systemd: true, packageManager: "apt"},
         {id: "kinetic", numVersion: 2210, lts: false, released: true, os: this, systemd: true, packageManager: "apt"},
         {id: "jammy", numVersion: 2204, lts: true, released: true, os: this, systemd: true, packageManager: "apt"},
         {id: "impish", numVersion: 2110, lts: false, released: true, os: this, systemd: true, packageManager: "apt"},
@@ -158,6 +160,8 @@ class Ubuntu extends BaseOS implements IOS {
 class Debian extends BaseOS implements IOS {
     id: string = "debian";
     releases: IOSRelease[] = [
+        {id: "sid", numVersion: 14, lts: false, released: false, systemd: true, os: this, packageManager: "apt"},
+        {id: "trixie", numVersion: 13, lts: true, released: false, systemd: true, os: this, packageManager: "apt"},
         {id: "bookworm", numVersion: 12, lts: true, released: true, systemd: true, os: this, packageManager: "apt"},
         {id: "bullseye", numVersion: 11, lts: true, released: true, systemd: true, os: this, packageManager: "apt"},
         {id: "buster", numVersion: 10, lts: true, released: true, systemd: true, os: this, packageManager: "apt"},
