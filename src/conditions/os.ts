@@ -210,6 +210,7 @@ class Fedora extends BaseOS implements IOS {
     id: string = "fedora";
     other_names: string[] = [];
     releases: IOSRelease[] = [
+        {id: "fedora38", numVersion: 38, lts: true, released: true, systemd: true, os: this, packageManager: "yum"},
         {id: "fedora33", numVersion: 33, lts: true, released: true, systemd: true, os: this, packageManager: "yum"},
         {id: "fedora32", numVersion: 32, lts: true, released: true, systemd: true, os: this, packageManager: "yum"},
     ];
