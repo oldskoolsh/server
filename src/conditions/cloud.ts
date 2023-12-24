@@ -45,13 +45,14 @@ export class UnknownCloud extends BaseCloud implements ICloud {
 
 export class NonCloudCloud extends BaseCloud implements ICloud {
     id = "nocloud";
-    other_names = ["libvirt", "nocloud"];
+    other_names = ["libvirt", "nocloud", "configdrive"];
 }
 
 
 export class DigitalOceanCloud extends BaseCloud implements ICloud {
     id = "digitalocean";
-    other_names = ["configdrive"]; // @TODO: not true. use ASN to determine.
+    //other_names = ["configdrive"]; // @TODO: not true. use ASN to determine.
+    other_names = [];
 }
 
 export class AzureCloud extends BaseCloud implements ICloud {
