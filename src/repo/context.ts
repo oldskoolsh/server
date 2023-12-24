@@ -76,8 +76,8 @@ export class RenderingContext {
 
     public async getRelease(): Promise<IOSRelease> {
         if (this._release) return this._release;
-        let release: string = this.getSomeParam(["release", "ci_meta_distro_release", "osg_ci_release", "osg_os_release_version_id"]);
-        this._release = (await this.getOS()).getRelease(release);
+        let release: string[] = this.getAllParams(["release", "ci_meta_distro_release", "osg_ci_release", "osg_os_release_version_id"]);
+        this._release = (await this.getOS()).tryRelease(release);
         return this._release;
     }
 
@@ -106,7 +106,7 @@ export class RenderingContext {
         try {
             this._asn = this.geoipReaders.asn.asn(this.clientIP);
             return this._asn;
-        } catch (ex:any) {
+        } catch (ex: any) {
             console.error("Error during GeoIP ASN lookup for address '" + this.clientIP + "': " + ex.message);
             return {} as Asn;
         }
@@ -117,7 +117,7 @@ export class RenderingContext {
         try {
             this._city = this.geoipReaders.city.city(this.clientIP);
             return this._city;
-        } catch (ex:any) {
+        } catch (ex: any) {
             console.error("Error during GeoIP City lookup for address '" + this.clientIP + "': " + ex.message);
             return {} as City;
         }
@@ -237,6 +237,15 @@ export class RenderingContext {
             if (val) return val;
         }
         return "";
+    }
+
+    public getAllParams(paramNamesInOrder: string[]): string[] {
+        var ret: string[] = [];
+        for (const name of paramNamesInOrder) {
+            let val = this.getOneParam(name);
+            if (val) ret.push(val);
+        }
+        return ret;
     }
 
     public async getArch() {

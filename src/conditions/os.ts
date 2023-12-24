@@ -35,6 +35,8 @@ export interface IOS {
     getClosestLowerLTS(release: IOSRelease): IOSRelease;
 
     getClosestReleased(release: IOSRelease): IOSRelease;
+
+    tryRelease(slugList: string[]): IOSRelease;
 }
 
 
@@ -57,6 +59,19 @@ export abstract class BaseOS implements IOS {
         return idMatch[0];
     }
 
+    public tryRelease(slugList: string[]): IOSRelease {
+        // loop over slugList using getRelease(slug), return the first one is not unknown. if all are unknown, return unknown.
+        for (let slug of slugList) {
+            console.log(`Trying slug: '${slug}' out of '${slugList.join(", ")}'`)
+            let release = this.getRelease(slug);
+            if (release.id !== "unknown") {
+                console.log(`Found release: '${release.id}' for slug: '${slug}'`);
+                return release;
+            }
+        }
+        return this.getRelease(`unknown after trying ${slugList.join(", ")}`);
+    }
+
     getRelease(slug: string): IOSRelease {
         const unknownRelease: IOSRelease = {
             id: "unknown",
@@ -72,10 +87,10 @@ export abstract class BaseOS implements IOS {
 
         if (!slug) return unknownRelease;
 
-        let slugMatch = this.releases ? this.releases.filter(value => value.id === slug) : [];
+        let slugMatch = this.releases ? this.releases.filter(value => value.id == slug) : [];
         if (slugMatch.length != 1) {
             // try combining the osName with the release. centos8.
-            slugMatch = this.releases ? this.releases.filter(value => value.id === this.id + slug) : [];
+            slugMatch = this.releases ? this.releases.filter(value => value.id == this.id + slug) : [];
         }
 
         if (slugMatch.length != 1) {
@@ -210,9 +225,11 @@ class Fedora extends BaseOS implements IOS {
     id: string = "fedora";
     other_names: string[] = [];
     releases: IOSRelease[] = [
-        {id: "fedora38", numVersion: 38, lts: true, released: true, systemd: true, os: this, packageManager: "yum"},
-        {id: "fedora33", numVersion: 33, lts: true, released: true, systemd: true, os: this, packageManager: "yum"},
-        {id: "fedora32", numVersion: 32, lts: true, released: true, systemd: true, os: this, packageManager: "yum"},
+        {id: "fedora40", numVersion: 40, lts: false, released: false, systemd: true, os: this, packageManager: "yum"},
+        {id: "fedora39", numVersion: 39, lts: false, released: true, systemd: true, os: this, packageManager: "yum"},
+        {id: "fedora38", numVersion: 38, lts: false, released: true, systemd: true, os: this, packageManager: "yum"},
+        {id: "fedora33", numVersion: 33, lts: false, released: true, systemd: true, os: this, packageManager: "yum"},
+        {id: "fedora32", numVersion: 32, lts: false, released: true, systemd: true, os: this, packageManager: "yum"},
     ];
 }
 
