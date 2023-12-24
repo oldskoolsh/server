@@ -103,7 +103,8 @@ export class GatherCloudConfigAsset extends CloudConfigAsset {
         let dropperCmds: string[] = possibleCurls.map(curlBin => {
             return possibleBashs.map(bashBin => {
                 // --silent --show-error ?
-                return `echo "Oldskool loading ${this.context.recipesUrl}/dropper?bash_force_color_logging=true ..." >&2; ${curlBin} --retry 10 --retry-max-time 120 --retry-all-errors "${this.context.recipesUrl}/dropper?bash_force_color_logging=true" --output "/tmp/oldskool.dropper.sh" && ${bashBin} "/tmp/oldskool.dropper.sh"\n`;
+                // --retry-all-errors requires a 7.71+ curl, but is very useful / insistent 
+                return `echo "Oldskool loading ${this.context.recipesUrl}/dropper?bash_force_color_logging=true ..." >&2; ${curlBin} --retry 10 --retry-max-time 120 --retry-connrefused "${this.context.recipesUrl}/dropper?bash_force_color_logging=true" --output "/tmp/oldskool.dropper.sh" && ${bashBin} "/tmp/oldskool.dropper.sh"\n`;
             });
         }).flat();
 
