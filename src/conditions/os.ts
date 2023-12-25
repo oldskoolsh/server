@@ -208,15 +208,8 @@ class RockyLinux extends BaseOS implements IOS {
     id: string = "rocky";
     other_names: string[] = ['rockylinux', 'rocky linux'];
     releases: IOSRelease[] = [
-        {
-            id: "green obsidian",
-            numVersion: 8,
-            lts: true,
-            released: true,
-            systemd: true,
-            os: this,
-            packageManager: "yum"
-        }
+        {id: "blue onyx", numVersion: 9, lts: true, released: true, systemd: true, os: this, packageManager: "yum"},
+        {id: "green obsidian", numVersion: 8, lts: true, released: true, systemd: true, os: this, packageManager: "yum"}
     ];
 }
 
