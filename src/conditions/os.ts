@@ -46,7 +46,7 @@ export abstract class BaseOS implements IOS {
     id: string = "unknown";
 
     public static createOS(id: string): IOS {
-        let allOs: IOS[] = [new UnknownOS(), new Ubuntu(), new Debian(), new Fedora(), new RockyLinux(), new CentOS(), new AmazonLinux()];
+        let allOs: IOS[] = [new UnknownOS(), new Ubuntu(), new Debian(), new Fedora(), new AlmaLinux(), new RockyLinux(), new CentOS(), new AmazonLinux()];
         if (!id) return allOs[0];
         let idMatch = allOs.filter(value => value.id === id);
         if (idMatch.length != 1) {
@@ -210,6 +210,14 @@ class RockyLinux extends BaseOS implements IOS {
     releases: IOSRelease[] = [
         {id: "blue onyx", numVersion: 9, lts: true, released: true, systemd: true, os: this, packageManager: "yum"},
         {id: "green obsidian", numVersion: 8, lts: true, released: true, systemd: true, os: this, packageManager: "yum"}
+    ];
+}
+
+class AlmaLinux extends BaseOS implements IOS {
+    id: string = "alma";
+    other_names: string[] = ['almalinux', 'alma linux'];
+    releases: IOSRelease[] = [
+        {id: "seafoam ocelot", numVersion: 9, lts: true, released: true, systemd: true, os: this, packageManager: "yum"}
     ];
 }
 
