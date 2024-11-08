@@ -20,6 +20,10 @@ import {ExtendedCloudConfig, StandardCloudConfig} from "../schema/cloud-init-sch
 export class CloudInitYamlProcessorPackages extends BaseYamlProcessor {
     async process(src: ExtendedCloudConfig): Promise<StandardCloudConfig> {
         src.packages = src.packages || [];
+        // if empty, add a placeholder 'cloud-init' package. this is to avoid newer cloud-init versions from crapping out with "Cloud config schema errors: packages: [] is too short"
+        if (src.packages.length === 0) {
+            src.packages.push("cloud-init");
+        }
 
         let finalPackages = [];
         let packageSet = new Set<string>();
