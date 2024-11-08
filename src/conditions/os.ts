@@ -69,7 +69,17 @@ export abstract class BaseOS implements IOS {
                 return release;
             }
         }
-        return this.getRelease(`unknown after trying ${slugList.join(", ")}`);
+        // Still harder: for each slug, try cleaning it up (only letters and spaces, trim and replace double-spacing).
+        let cleanedSlugList = slugList.map(value => value.replace(/[^a-zA-Z ]/g, '').replace(/\s\s+/g, ' ').trim());
+        for (let slug of cleanedSlugList) {
+            console.log(`Trying cleaned slug: '${slug}' out of '${cleanedSlugList.join(", ")}'`)
+            let release = this.getRelease(slug);
+            if (release.id !== "unknown") {
+                console.log(`Found release: '${release.id}' for cleaned slug: '${slug}'`);
+                return release;
+            }
+        }
+        return this.getRelease(`unknown after trying "${slugList.join(", ")}" and cleaned "${cleanedSlugList.join(", ")}"`);
     }
 
     getRelease(slug: string): IOSRelease {
